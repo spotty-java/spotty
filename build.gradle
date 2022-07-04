@@ -1,0 +1,54 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'org.unbroken-dome.test-sets' version '4.0.0'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'org.unbroken-dome.test-sets'
+
+    ext {
+        jvmVersion = JavaVersion.VERSION_11
+    }
+
+    java {
+        version = jvmVersion
+        sourceCompatibility = jvmVersion
+        targetCompatibility = jvmVersion
+    }
+
+    compileJava.options.encoding = 'UTF-8'
+
+    repositories {
+        mavenCentral()
+    }
+
+    testSets {
+        testIntegration
+    }
+
+    dependencies {
+        implementation "org.slf4j:slf4j-api:$slf4jApiVersion"
+        implementation "ch.qos.logback:logback-classic:$logbackClassicVersion"
+
+        compileOnly "org.projectlombok:lombok:$lombokVersion"
+        annotationProcessor "org.projectlombok:lombok:$lombokVersion"
+
+
+        testCompileOnly "org.projectlombok:lombok:$lombokVersion"
+        testAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
+
+        testIntegrationCompileOnly "org.projectlombok:lombok:$lombokVersion"
+        testIntegrationAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+
+    testIntegration {
+        useJUnitPlatform()
+    }
+}
