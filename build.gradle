@@ -1,16 +1,18 @@
 plugins {
     id 'java'
+    id 'groovy'
     id 'idea'
     id 'org.unbroken-dome.test-sets' version '4.0.0'
 }
 
 subprojects {
     apply plugin: 'java'
+    apply plugin: 'groovy'
     apply plugin: 'idea'
     apply plugin: 'org.unbroken-dome.test-sets'
 
     ext {
-        jvmVersion = JavaVersion.VERSION_11
+        jvmVersion = JavaVersion.VERSION_17
     }
 
     sourceCompatibility = jvmVersion
@@ -34,9 +36,13 @@ subprojects {
         annotationProcessor "org.projectlombok:lombok:$lombokVersion"
 
 
+        testImplementation "org.codehaus.groovy:groovy-all:$groovyVersion"
+        testImplementation "org.spockframework:spock-core:$spockVersion"
         testCompileOnly "org.projectlombok:lombok:$lombokVersion"
         testAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
 
+        testIntegrationImplementation "org.codehaus.groovy:groovy-all:$groovyVersion"
+        testIntegrationImplementation "org.spockframework:spock-core:$spockVersion"
         testIntegrationCompileOnly "org.projectlombok:lombok:$lombokVersion"
         testIntegrationAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
     }
