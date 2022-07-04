@@ -1,3 +1,9 @@
+pluginManagement {
+    plugins {
+        id 'com.github.johnrengelman.shadow' version "$shadowJarVersion" apply false
+    }
+}
+
 rootProject.name = 'spotty'
 
 include 'server'

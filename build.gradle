@@ -13,11 +13,8 @@ subprojects {
         jvmVersion = JavaVersion.VERSION_11
     }
 
-    java {
-        version = jvmVersion
-        sourceCompatibility = jvmVersion
-        targetCompatibility = jvmVersion
-    }
+    sourceCompatibility = jvmVersion
+    targetCompatibility = jvmVersion
 
     compileJava.options.encoding = 'UTF-8'
 
@@ -51,4 +48,6 @@ subprojects {
     testIntegration {
         useJUnitPlatform()
     }
+
+    check.dependsOn testIntegration
 }

@@ -1,3 +1,19 @@
+plugins {
+    id 'com.github.johnrengelman.shadow'
+}
+
 dependencies {
 
 }
+
+ext {
+    shadowJarVersion = project.findProperty('buildShadowJarVersion') ?: project.version
+}
+
+shadowJar {
+    archiveVersion = shadowJarVersion
+    zip64 true
+    mergeServiceFiles()
+}
+
+build.dependsOn += shadowJar
