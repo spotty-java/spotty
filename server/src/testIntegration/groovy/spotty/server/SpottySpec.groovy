@@ -1,13 +1,13 @@
 package spotty.server
 
-import spock.lang.*
+import spock.lang.Specification
 
 class SpottySpec extends Specification {
 
-    def server = new Spotty()
+    private Spotty server
 
     def setup() {
-
+        server = new Spotty(3333)
     }
 
     def cleanup() {
