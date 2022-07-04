@@ -11,12 +11,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static java.lang.Math.max;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Slf4j
 public class Spotty implements Closeable {
     private static final int DEFAULT_PORT = 4000;
-    private static final int DEFAULT_CONNECTIONS = Runtime.getRuntime().availableProcessors();
+    private static final int DEFAULT_CONNECTIONS = max(10, Runtime.getRuntime().availableProcessors());
 
     private final ExecutorService SERVER_RUN = Executors.newSingleThreadExecutor();
 
