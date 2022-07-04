@@ -4,7 +4,7 @@ import spock.lang.*
 
 class SpottySpec extends Specification {
 
-    private Spotty server = new Spotty()
+    def server = new Spotty()
 
     def setup() {
 
