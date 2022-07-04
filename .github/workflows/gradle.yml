@@ -20,8 +20,9 @@ jobs:
         with:
           gradle-version: 7.4
           arguments: build
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v3
         if: always()
         with:
-          files: "server/build/test-results/**/*.xml"
+          name: test-report
+          path: server/build/reports
