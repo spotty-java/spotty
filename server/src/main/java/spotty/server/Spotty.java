@@ -2,10 +2,18 @@ package spotty.server;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import spotty.server.connection.Connection;
+import spotty.server.connection.subscription.OnCloseSubscription;
+import spotty.server.connection.subscription.OnMessageSubscription;
+import spotty.server.exception.SpottyException;
+import spotty.server.request.SpottyRequest;
+import spotty.server.response.SpottyResponse;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -21,11 +29,13 @@ public class Spotty implements Closeable {
 
     private final ExecutorService SERVER_RUN = Executors.newSingleThreadExecutor();
 
+    private final List<Connection> connections = new CopyOnWriteArrayList<>();
+
     private volatile boolean running = false;
     private volatile boolean started = false;
 
     private final int port;
-    private final int connections;
+    private final int maxConnections;
     private final ExecutorService CONNECTION_WORKERS;
 
     public Spotty() {
@@ -36,13 +46,13 @@ public class Spotty implements Closeable {
         this(port, DEFAULT_CONNECTIONS);
     }
 
-    public Spotty(int port, int connections) {
+    public Spotty(int port, int maxConnections) {
         this.port = port;
-        this.connections = connections;
+        this.maxConnections = maxConnections;
 
         CONNECTION_WORKERS = new ThreadPoolExecutor(
             3,
-            connections,
+            maxConnections,
             60,
             SECONDS,
             new LinkedBlockingQueue<>()
@@ -100,13 +110,20 @@ public class Spotty implements Closeable {
 
     @SneakyThrows
     private void serverInit() {
-        try(final var server = new ServerSocket(port, connections)) {
+        try (final var server = new ServerSocket(port, maxConnections)) {
             log.info("server has been started on port " + server.getLocalPort());
             run();
             started();
 
+            final var subscriber = new SpottyOnCloseSubscription();
             while (running && !Thread.currentThread().isInterrupted()) {
+                final var connection = new Connection(server.accept());
+                connections.add(connection);
 
+                connection.onCloseSubscribe(subscriber);
+                connection.onMessageSubscribe(subscriber);
+
+                CONNECTION_WORKERS.execute(connection::handle);
             }
         } catch (IOException e) {
             log.error("start server error", e);
@@ -132,6 +149,22 @@ public class Spotty implements Closeable {
     private synchronized void stopped() {
         this.started = false;
         notifyAll();
+    }
+
+    private class SpottyOnCloseSubscription implements OnCloseSubscription, OnMessageSubscription {
+        @Override
+        public void onClose(Connection connection) throws SpottyException {
+            connections.remove(connection);
+        }
+
+        @Override
+        public void onMessage(SpottyRequest request, SpottyResponse response) throws SpottyException {
+            try {
+                response.setBody(request.body.readAllBytes());
+            } catch (IOException e) {
+                throw new SpottyException(e);
+            }
+        }
     }
 
 }

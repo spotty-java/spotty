@@ -3,7 +3,8 @@ plugins {
 }
 
 dependencies {
-
+    implementation "org.apache.httpcomponents:httpcore:$apacheHttpVersion"
+    implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 }
 
 ext {
