@@ -22,6 +22,7 @@ class SpottySpec extends Specification {
 
         then:
         !server.isStarted()
+        !server.isRunning()
     }
 
     def "should wait until started"() {
@@ -31,6 +32,7 @@ class SpottySpec extends Specification {
 
         then:
         server.isStarted()
+        server.isRunning()
     }
 
 }
