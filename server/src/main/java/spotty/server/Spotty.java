@@ -2,44 +2,45 @@ package spotty.server;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import spotty.server.connection.Connection;
-import spotty.server.connection.subscription.OnCloseSubscription;
-import spotty.server.connection.subscription.OnMessageSubscription;
-import spotty.server.exception.SpottyException;
-import spotty.server.request.SpottyRequest;
-import spotty.server.response.SpottyResponse;
+import spotty.common.request.RequestValidator;
+import spotty.common.response.ResponseWriter;
+import spotty.server.connection.ConnectionProcessor;
+import spotty.server.handler.RequestHandler;
+import spotty.server.worker.ReactorWorker;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.net.InetSocketAddress;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 
-import static java.lang.Math.max;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static spotty.common.request.RequestValidator.validate;
 
 @Slf4j
 public class Spotty implements Closeable {
     private static final int DEFAULT_PORT = 4000;
-    private static final int DEFAULT_CONNECTIONS = max(10, Runtime.getRuntime().availableProcessors());
+    private static final int DEFAULT_CONNECTIONS = 100;
 
     private final ExecutorService SERVER_RUN = Executors.newSingleThreadExecutor();
-
-    private final List<Connection> connections = new CopyOnWriteArrayList<>();
+    private final ReactorWorker reactorWorker = new ReactorWorker();
 
     private volatile boolean running = false;
     private volatile boolean started = false;
 
     private final int port;
     private final int maxConnections;
-    private final ExecutorService CONNECTION_WORKERS;
+
+    private final Map<UUID, ConnectionProcessor> connections = new HashMap<>();
 
     public Spotty() {
-        this(DEFAULT_PORT, DEFAULT_CONNECTIONS);
+        this(DEFAULT_PORT);
     }
 
     public Spotty(int port) {
@@ -49,14 +50,6 @@ public class Spotty implements Closeable {
     public Spotty(int port, int maxConnections) {
         this.port = port;
         this.maxConnections = maxConnections;
-
-        CONNECTION_WORKERS = new ThreadPoolExecutor(
-            3,
-            maxConnections,
-            60,
-            SECONDS,
-            new LinkedBlockingQueue<>()
-        );
     }
 
     public synchronized void start() {
@@ -70,21 +63,15 @@ public class Spotty implements Closeable {
 
     @Override
     public synchronized void close() {
-        if (!started) {
-            log.warn("server isn't running now");
-            return;
-        }
-
         stop();
         SERVER_RUN.shutdownNow();
-        CONNECTION_WORKERS.shutdownNow();
+        reactorWorker.close();
     }
 
     public synchronized void awaitUntilStart() {
         try {
-            while (!started) {
-                wait();
-            }
+            while (!started)
+                wait(1000);
         } catch (Exception e) {
             log.error("", e);
         }
@@ -92,9 +79,8 @@ public class Spotty implements Closeable {
 
     public synchronized void awaitUntilStop() {
         try {
-            while (started) {
-                wait();
-            }
+            while (started)
+                wait(1000);
         } catch (Exception e) {
             log.error("", e);
         }
@@ -110,27 +96,105 @@ public class Spotty implements Closeable {
 
     @SneakyThrows
     private void serverInit() {
-        try (final var server = new ServerSocket(port, maxConnections)) {
-            log.info("server has been started on port " + server.getLocalPort());
+        try (final var serverSocket = ServerSocketChannel.open();
+             final var selector = Selector.open()) {
+            // Binding this server on the port
+            serverSocket.bind(new InetSocketAddress("localhost", port), maxConnections);
+            serverSocket.configureBlocking(false); // Make Server nonBlocking
+            serverSocket.register(selector, SelectionKey.OP_ACCEPT);
+
+            log.info("server has been started on port " + port);
             run();
             started();
 
-            final var subscriber = new SpottyOnCloseSubscription();
             while (running && !Thread.currentThread().isInterrupted()) {
-                final var connection = new Connection(server.accept());
-                connections.add(connection);
+                selector.select();
+                final var keys = selector.selectedKeys().iterator();
+                while (keys.hasNext()) {
+                    final var key = keys.next();
+                    keys.remove();
 
-                connection.onCloseSubscribe(subscriber);
-                connection.onMessageSubscribe(subscriber);
+                    if (!key.isValid())
+                        continue;
 
-                CONNECTION_WORKERS.execute(connection::handle);
+                    if (key.isAcceptable()) {
+                        accept(key);
+                    } else if (key.isReadable()) {
+                        read(key);
+                    } else if (key.isWritable()) {
+                        write(key);
+                    } else {
+                        log.info("unsupported key ops {}", key.readyOps());
+                    }
+                }
             }
         } catch (IOException e) {
             log.error("start server error", e);
+        } finally {
+            close();
+
+            stopped();
+            log.info("server has been stopped");
+        }
+    }
+
+    private void accept(SelectionKey key) throws IOException {
+        ServerSocketChannel serverSocket = (ServerSocketChannel) key.channel();
+        SocketChannel socket = serverSocket.accept();
+        socket.configureBlocking(false);
+
+        log.info("connection accepted");
+
+        final var connection = new ConnectionProcessor(socket);
+        connections.put(connection.id, connection);
+
+        socket.register(key.selector(), SelectionKey.OP_READ)
+            .attach(connection);
+
+        log.info("connections: {}", connections.size());
+    }
+
+    private void read(SelectionKey key) throws IOException {
+        final var connection = (ConnectionProcessor) key.attachment();
+        connection.read();
+
+        if (connection.isClosed()) {
+            log.info("connection closed");
+            key.cancel();
+            connections.remove(connection.id);
+
+            log.info("connections: {}", connections.size());
+            return;
         }
 
-        log.info("server has been stopped");
-        stopped();
+        if (connection.isMessageReady()) {
+            reactorWorker.addAction(() -> {
+                // TODO: routing handler
+                final var handler = new RequestHandler();
+
+                final var request = connection.request();
+                validate(request);
+
+                final var response = handler.process(request);
+                final var data = ResponseWriter.write(response);
+                connection.setResponse(data);
+
+                key.interestOps(SelectionKey.OP_WRITE);
+                key.selector().wakeup();
+            });
+        }
+    }
+
+    private void write(SelectionKey key) throws IOException {
+        final var connection = (ConnectionProcessor) key.attachment();
+        connection.write();
+
+        if (connection.isWriteCompleted()) {
+            connection.clearResponse();
+            connection.clearRequest();
+
+            key.interestOps(SelectionKey.OP_READ);
+        }
     }
 
     private void run() {
@@ -149,22 +213,6 @@ public class Spotty implements Closeable {
     private synchronized void stopped() {
         this.started = false;
         notifyAll();
-    }
-
-    private class SpottyOnCloseSubscription implements OnCloseSubscription, OnMessageSubscription {
-        @Override
-        public void onClose(Connection connection) throws SpottyException {
-            connections.remove(connection);
-        }
-
-        @Override
-        public void onMessage(SpottyRequest request, SpottyResponse response) throws SpottyException {
-            try {
-                response.setBody(request.body.readAllBytes());
-            } catch (IOException e) {
-                throw new SpottyException(e);
-            }
-        }
     }
 
 }

@@ -33,19 +33,18 @@ subprojects {
         implementation "ch.qos.logback:logback-classic:$logbackClassicVersion"
         implementation "org.apache.commons:commons-lang3:$apacheCommons"
         implementation "org.jetbrains:annotations:$jetbrainsAnnotationVersion"
+        implementation "org.apache.httpcomponents:httpcore:$apacheHttpVersion"
+        implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
         compileOnly "org.projectlombok:lombok:$lombokVersion"
         annotationProcessor "org.projectlombok:lombok:$lombokVersion"
 
 
-        testImplementation "org.assertj:assertj-core:$assertjVersion"
         testImplementation "org.codehaus.groovy:groovy-all:$groovyVersion"
         testImplementation "org.spockframework:spock-core:$spockVersion"
         testCompileOnly "org.projectlombok:lombok:$lombokVersion"
         testAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
 
-
-        testIntegrationImplementation "org.assertj:assertj-core:$assertjVersion"
         testIntegrationImplementation "org.codehaus.groovy:groovy-all:$groovyVersion"
         testIntegrationImplementation "org.spockframework:spock-core:$spockVersion"
         testIntegrationCompileOnly "org.projectlombok:lombok:$lombokVersion"
