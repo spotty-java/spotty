@@ -1,17 +1,30 @@
 package spotty.common.request;
 
+import org.apache.http.entity.ContentType;
+import spotty.common.http.Headers;
+import spotty.common.response.SpottyResponse;
+
+import static java.lang.Integer.parseInt;
+import static spotty.common.http.Headers.ACCEPT;
+import static spotty.common.http.Headers.ACCEPT_ENCODING;
+import static spotty.common.http.Headers.CONNECTION;
+import static spotty.common.http.Headers.CONTENT_LENGTH;
+import static spotty.common.http.Headers.CONTENT_TYPE;
+import static spotty.common.http.Headers.HOST;
+import static spotty.common.http.Headers.USER_AGENT;
+import static spotty.common.http.HttpMethod.POST;
+
 public interface WebRequestTestData {
-    String requestHeaders = """
-            POST / HTTP/1.1
-            Content-Type: text/plain
-            User-Agent: PostmanRuntime/7.29.0
-            Accept: */*
-            Postman-Token: 91219957-e976-41ed-9ece-32f6642d55bf
-            Host: localhost:4000
-            Accept-Encoding: gzip, deflate, br
-            Connection: keep-alive
-            Content-Length: 2808
-        """.stripIndent().trim();
+    Headers headers = new Headers()
+        .add(CONTENT_TYPE, "text/plain")
+        .add(USER_AGENT, "Spotty Agent")
+        .add(ACCEPT, "*/*")
+        .add(HOST, "localhost:4000")
+        .add(ACCEPT_ENCODING, "gzip, deflate, br")
+        .add(CONNECTION, "keep-alive")
+        .add(CONTENT_LENGTH, "2824");
+
+    String requestHeaders = "POST / HTTP/1.1\n" + headers;
 
     String requestBody = """
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris dapibus tortor aliquam metus viverra, id iaculis libero aliquet. Vivamus tempor sapien eu metus sollicitudin laoreet. Aliquam erat volutpat. Quisque nulla augue, posuere et condimentum id, consectetur eu felis. Aenean congue nibh orci, vel lacinia diam commodo eu. Nulla sem eros, venenatis at malesuada iaculis, dapibus quis ante. In iaculis sem quis eros interdum facilisis.
@@ -22,4 +35,29 @@ public interface WebRequestTestData {
         """.stripIndent().trim();
 
     String fullRequest = requestHeaders + "\n\n" + requestBody;
+
+    default SpottyRequest.Builder aSpottyRequest() {
+        final var content = requestBody.getBytes();
+        final var headers = this.headers.copy();
+
+        return SpottyRequest.builder()
+            .protocol("HTTP/1.1")
+            .scheme("http")
+            .method(POST)
+            .path("/")
+            .contentLength(parseInt(headers.remove(CONTENT_LENGTH)))
+            .contentType(ContentType.parse(headers.remove(CONTENT_TYPE)))
+            .headers(headers)
+            .body(content);
+    }
+
+    default SpottyResponse aSpottyResponse(SpottyRequest request) {
+        final var response = new SpottyResponse();
+        response.setProtocol(request.protocol);
+        response.setContentType(request.contentType.get());
+        response.addHeaders(request.headers);
+        response.setBody(request.body);
+
+        return response;
+    }
 }

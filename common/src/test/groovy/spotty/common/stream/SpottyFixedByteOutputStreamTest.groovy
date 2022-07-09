@@ -2,6 +2,8 @@ package spotty.common.stream
 
 import spock.lang.Specification
 
+import java.nio.ByteBuffer
+
 class SpottyFixedByteOutputStreamTest extends Specification {
 
     def "should write batch #text successfully"() {
@@ -66,6 +68,25 @@ class SpottyFixedByteOutputStreamTest extends Specification {
 
         then:
         thrown IndexOutOfBoundsException
+    }
+
+    def "should write ByteBuffer #text successfully"() {
+        given:
+        var stream = new SpottyFixedByteOutputStream(10)
+        var buffer = ByteBuffer.wrap(text.getBytes())
+
+        when:
+        stream.write(buffer)
+
+        then:
+        text == stream.toString()
+
+        where:
+        text         | _
+        "0123456789" | _
+        "01234"      | _
+        ""           | _
+        "123"        | _
     }
 
 }

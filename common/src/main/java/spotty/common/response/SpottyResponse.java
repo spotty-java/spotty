@@ -2,10 +2,8 @@ package spotty.common.response;
 
 import lombok.Data;
 import org.apache.http.entity.ContentType;
+import spotty.common.http.Headers;
 import spotty.common.http.HttpStatus;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static spotty.common.http.HttpStatus.OK;
@@ -17,10 +15,19 @@ public class SpottyResponse {
     private ContentType contentType = TEXT_PLAIN;
     private byte[] body;
 
-    private final Map<String, String> headers = new HashMap<>();
+    private final Headers headers = new Headers();
 
     public void addHeader(String name, String value) {
-        headers.put(name, value);
+        this.headers.add(name, value);
+    }
+
+    public void addHeaders(Headers headers) {
+        this.headers.add(headers);
+    }
+
+    public void replaceHeaders(Headers headers) {
+        this.headers.clear();
+        this.headers.add(headers);
     }
 
     public long getContentLength() {

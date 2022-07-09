@@ -3,6 +3,7 @@ package spotty.common.stream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
@@ -12,8 +13,8 @@ import static java.lang.Math.min;
 public class SpottyFixedByteOutputStream extends OutputStream {
 
     private byte[] data;
-    private int size = 0;
-    private int limit;
+    private volatile int size = 0;
+    private volatile int limit;
 
     public SpottyFixedByteOutputStream(int capacity) {
         this.data = new byte[capacity];
@@ -21,14 +22,19 @@ public class SpottyFixedByteOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(int b) throws IndexOutOfBoundsException {
+    public synchronized void write(int b) throws IndexOutOfBoundsException {
         ensureCapacity();
 
         data[size++] = (byte) b;
     }
 
     @Override
-    public void write(byte @NotNull[] b, int off, int len) throws IndexOutOfBoundsException {
+    public synchronized void write(byte @NotNull [] b) throws IndexOutOfBoundsException {
+        write(b, 0, b.length);
+    }
+
+    @Override
+    public synchronized void write(byte @NotNull [] b, int off, int len) throws IndexOutOfBoundsException {
         ensureCapacity();
         Objects.checkFromIndexSize(off, len, b.length);
 
@@ -40,10 +46,20 @@ public class SpottyFixedByteOutputStream extends OutputStream {
         size += len;
     }
 
-    public void write(ByteBuffer buffer) {
-        ensureCapacity();
+    public synchronized void write(ByteBuffer buffer) {
+        write(buffer, 0, buffer.remaining());
+    }
 
-        int len = min(buffer.remaining(), remaining());
+    public synchronized void write(ByteBuffer buffer, int off, int len) {
+        ensureCapacity();
+        if (len > remaining()) {
+            throw new BufferOverflowException();
+        }
+
+        if (off > 0) {
+            buffer.position(buffer.position() + off);
+        }
+
         buffer.get(data, size, len);
         size += len;
     }
@@ -52,7 +68,7 @@ public class SpottyFixedByteOutputStream extends OutputStream {
         return size == limit;
     }
 
-    public byte[] toByteArray() {
+    public synchronized byte[] toByteArray() {
         return Arrays.copyOf(data, size);
     }
 
@@ -64,7 +80,7 @@ public class SpottyFixedByteOutputStream extends OutputStream {
         return data.length;
     }
 
-    public void capacity(int capacity) {
+    public synchronized void capacity(int capacity) {
         if (capacity < 0) {
             throw new IndexOutOfBoundsException("capacity must be >= 0");
         }
@@ -92,13 +108,13 @@ public class SpottyFixedByteOutputStream extends OutputStream {
         return size;
     }
 
-    public void reset() {
+    public synchronized void reset() {
         this.size = 0;
         this.limit = data.length;
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         return new String(data, 0, size);
     }
 

@@ -2,7 +2,6 @@ package spotty.server;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import spotty.common.request.RequestValidator;
 import spotty.common.response.ResponseWriter;
 import spotty.server.connection.ConnectionProcessor;
 import spotty.server.handler.RequestHandler;
@@ -15,9 +14,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -37,7 +33,7 @@ public class Spotty implements Closeable {
     private final int port;
     private final int maxConnections;
 
-    private final Map<UUID, ConnectionProcessor> connections = new HashMap<>();
+    private int connections = 0;
 
     public Spotty() {
         this(DEFAULT_PORT);
@@ -146,12 +142,12 @@ public class Spotty implements Closeable {
         log.info("connection accepted");
 
         final var connection = new ConnectionProcessor(socket);
-        connections.put(connection.id, connection);
+        connections++;
 
         socket.register(key.selector(), SelectionKey.OP_READ)
             .attach(connection);
 
-        log.info("connections: {}", connections.size());
+        log.info("connections: {}", connections);
     }
 
     private void read(SelectionKey key) throws IOException {
@@ -161,9 +157,9 @@ public class Spotty implements Closeable {
         if (connection.isClosed()) {
             log.info("connection closed");
             key.cancel();
-            connections.remove(connection.id);
+            connections--;
 
-            log.info("connections: {}", connections.size());
+            log.info("connections: {}", connections);
             return;
         }
 
