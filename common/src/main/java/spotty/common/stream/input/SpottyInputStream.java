@@ -1,4 +1,4 @@
-package spotty.common.stream;
+package spotty.common.stream.input;
 
 import org.jetbrains.annotations.NotNull;
 

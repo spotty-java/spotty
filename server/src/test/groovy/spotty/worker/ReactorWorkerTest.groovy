@@ -2,11 +2,9 @@ package spotty.worker
 
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
-import spotty.server.connection.ConnectionProcessor
 import spotty.server.worker.ReactorWorker
 
 import java.nio.ByteBuffer
-import java.util.concurrent.atomic.AtomicLong
 
 class ReactorWorkerTest extends Specification {
 

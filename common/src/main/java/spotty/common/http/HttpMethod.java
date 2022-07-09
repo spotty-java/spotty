@@ -6,13 +6,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum HttpMethod {
-    GET(false),
-    HEAD(false),
-    POST(true),
-    PUT(true),
-    PATCH(true),
-    DELETE(true),
-    OPTIONS(false);
+    GET,
+    HEAD,
+    POST,
+    PUT,
+    PATCH,
+    DELETE,
+    OPTIONS;
 
     private static final Map<String, HttpMethod> MAPPINGS = new HashMap<>(16);
 
@@ -20,12 +20,6 @@ public enum HttpMethod {
         for (HttpMethod httpMethod : values()) {
             MAPPINGS.put(httpMethod.name(), httpMethod);
         }
-    }
-
-    public final boolean hasBody;
-
-    HttpMethod(boolean hasBody) {
-        this.hasBody = hasBody;
     }
 
     /**

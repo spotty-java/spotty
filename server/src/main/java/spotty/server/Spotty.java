@@ -2,8 +2,7 @@ package spotty.server;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import spotty.common.response.ResponseWriter;
-import spotty.server.connection.ConnectionProcessor;
+import spotty.server.connection.Connection;
 import spotty.server.handler.RequestHandler;
 import spotty.server.worker.ReactorWorker;
 
@@ -141,7 +140,7 @@ public class Spotty implements Closeable {
 
         log.info("connection accepted");
 
-        final var connection = new ConnectionProcessor(socket);
+        final var connection = new Connection(socket);
         connections++;
 
         socket.register(key.selector(), SelectionKey.OP_READ)
@@ -151,7 +150,7 @@ public class Spotty implements Closeable {
     }
 
     private void read(SelectionKey key) throws IOException {
-        final var connection = (ConnectionProcessor) key.attachment();
+        final var connection = (Connection) key.attachment();
         connection.read();
 
         if (connection.isClosed()) {
@@ -163,7 +162,8 @@ public class Spotty implements Closeable {
             return;
         }
 
-        if (connection.isMessageReady()) {
+        if (connection.isReadyToHandleRequest()) {
+            connection.requestHandlingState();
             reactorWorker.addAction(() -> {
                 // TODO: routing handler
                 final var handler = new RequestHandler();
@@ -171,9 +171,9 @@ public class Spotty implements Closeable {
                 final var request = connection.request();
                 validate(request);
 
-                final var response = handler.process(request);
-                final var data = ResponseWriter.write(response);
-                connection.setResponse(data);
+                handler.process(request, connection.response());
+                connection.responseReadyState();
+                connection.prepareToWrite();
 
                 key.interestOps(SelectionKey.OP_WRITE);
                 key.selector().wakeup();
@@ -182,12 +182,13 @@ public class Spotty implements Closeable {
     }
 
     private void write(SelectionKey key) throws IOException {
-        final var connection = (ConnectionProcessor) key.attachment();
+        final var connection = (Connection) key.attachment();
         connection.write();
 
         if (connection.isWriteCompleted()) {
-            connection.clearResponse();
-            connection.clearRequest();
+            connection.resetResponse();
+            connection.resetRequest();
+            connection.readyToReadState();
 
             key.interestOps(SelectionKey.OP_READ);
         }

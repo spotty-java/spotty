@@ -17,19 +17,21 @@ public class ResponseWriter {
         final var out = new ByteArrayOutputStream(1024);
         final var writer = new PrintWriter(out);
 
-        writer.println(response.getProtocol() + " " + response.getStatus().code);
-        writer.println(CONTENT_LENGTH + HEADER_SPLITTER + response.getContentLength());
-        writer.println(CONTENT_TYPE + HEADER_SPLITTER + response.getContentType());
-        response.getHeaders().forEach((name, value) -> {
-            writer.println(name + HEADER_SPLITTER + value);
-        });
+        writer.println(response.protocol() + " " + response.status().code);
+        writer.println(CONTENT_LENGTH + HEADER_SPLITTER + response.contentLength());
+        writer.println(CONTENT_TYPE + HEADER_SPLITTER + response.contentType());
+
+        response.headers()
+            .forEach((name, value) -> {
+                writer.println(name + HEADER_SPLITTER + value);
+            });
 
         writer.println();
         writer.flush();
 
-        if (response.getBody() != null) {
+        if (response.body() != null) {
             try {
-                out.write(response.getBody());
+                out.write(response.body());
             } catch (IOException e) {
                 throw new SpottyHttpException(INTERNAL_SERVER_ERROR, "can't write body to response", e);
             }

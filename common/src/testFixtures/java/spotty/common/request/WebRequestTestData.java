@@ -53,10 +53,9 @@ public interface WebRequestTestData {
 
     default SpottyResponse aSpottyResponse(SpottyRequest request) {
         final var response = new SpottyResponse();
-        response.setProtocol(request.protocol);
-        response.setContentType(request.contentType.get());
+        response.contentType(request.contentType.get());
         response.addHeaders(request.headers);
-        response.setBody(request.body);
+        response.body(request.body);
 
         return response;
     }

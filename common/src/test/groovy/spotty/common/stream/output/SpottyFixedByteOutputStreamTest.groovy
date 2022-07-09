@@ -1,4 +1,4 @@
-package spotty.common.stream
+package spotty.common.stream.output
 
 import spock.lang.Specification
 
@@ -87,6 +87,45 @@ class SpottyFixedByteOutputStreamTest extends Specification {
         "01234"      | _
         ""           | _
         "123"        | _
+    }
+
+    def "should write ByteBuffer text '#expected' with offset #offset and len #len correctly"() {
+        given:
+        var stream = new SpottyFixedByteOutputStream(15)
+        var buffer = ByteBuffer.wrap("hello world".getBytes())
+
+        when:
+        stream.write(buffer, offset, len)
+
+        then:
+        expected == stream.toString()
+
+        where:
+        expected      | offset | len
+        "hello world" | 0      | 11
+        "ello world"  | 1      | 10
+        " world"      | 5      | 6
+        "orld"        | 7      | 4
+    }
+
+    def "should change capacity correctly"() {
+        given:
+        var stream = new SpottyFixedByteOutputStream(15)
+
+        when:
+        stream.write("hello world")
+        stream.capacity(capacity)
+
+        then:
+        stream.capacity() == capacity
+        expected == stream.toString()
+
+        where:
+        expected      | capacity
+        "hello world" | 20
+        "hello worl"  | 10
+        "hello"       | 5
+        "he"          | 2
     }
 
 }

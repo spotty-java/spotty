@@ -1,7 +1,8 @@
-package spotty.common.stream
+package spotty.common.stream.input
 
 import spock.lang.Specification
 import spotty.common.request.WebRequestTestData
+import spotty.common.stream.input.SpottyInputStream
 
 class SpottyInputStreamTest extends Specification implements WebRequestTestData {
 
