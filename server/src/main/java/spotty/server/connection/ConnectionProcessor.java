@@ -7,10 +7,12 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ConnectionProcessor implements Closeable {
-    public final UUID id = UUID.randomUUID();
+    private static final AtomicLong ID_GENERATOR = new AtomicLong();
+
+    public final long id = ID_GENERATOR.incrementAndGet();
 
     private final SocketChannel socketChannel;
     private final SpottyNonBlockingRequestProvider requestProvider;

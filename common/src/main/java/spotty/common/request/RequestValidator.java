@@ -3,8 +3,7 @@ package spotty.common.request;
 import lombok.extern.slf4j.Slf4j;
 import spotty.common.exception.SpottyHttpException;
 
-import static org.apache.commons.lang3.Validate.notEmpty;
-import static org.apache.commons.lang3.Validate.notNull;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpHeaders.CONTENT_LENGTH;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
@@ -25,10 +24,21 @@ public class RequestValidator {
             log.warn("empty " + CONTENT_TYPE);
         }
 
-        notEmpty(request.protocol, "protocol");
-        notEmpty(request.scheme, "scheme");
-        notNull(request.method, "method");
-        notEmpty(request.path, "path");
+        if (isBlank(request.protocol)) {
+            throw new SpottyHttpException(BAD_REQUEST, "protocol is empty");
+        }
+
+        if (isBlank(request.scheme)) {
+            throw new SpottyHttpException(BAD_REQUEST, "scheme is empty");
+        }
+
+        if (request.method == null) {
+            throw new SpottyHttpException(BAD_REQUEST, "method is empty");
+        }
+
+        if (isBlank(request.path)) {
+            throw new SpottyHttpException(BAD_REQUEST, "path is empty");
+        }
     }
 
 }

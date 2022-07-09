@@ -8,9 +8,6 @@ import spotty.common.json.Json;
 
 import java.util.Optional;
 
-import static org.apache.commons.lang3.Validate.notBlank;
-import static org.apache.commons.lang3.Validate.notNull;
-
 public class SpottyRequest {
     public final String protocol;
     public final String scheme;
@@ -22,14 +19,14 @@ public class SpottyRequest {
     public final Headers headers;
 
     public SpottyRequest(Builder builder) {
-        this.protocol = notBlank(builder.protocol, "builder.protocol");
-        this.scheme = notBlank(builder.scheme, "builder.scheme");
-        this.method = notNull(builder.method, "builder.method");
-        this.path = notBlank(builder.path, "builder.path");
+        this.protocol = builder.protocol;
+        this.scheme = builder.scheme;
+        this.method = builder.method;
+        this.path = builder.path;
         this.contentLength = builder.contentLength;
         this.contentType = builder.contentType;
-        this.body = notNull(builder.body, "builder.body");
-        this.headers = notNull(builder.headers, "builder.headers").copy();
+        this.body = builder.body;
+        this.headers = builder.headers.copy();
     }
 
     public <T> T parseBody(Class<T> clazz) {

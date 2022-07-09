@@ -2,14 +2,10 @@ package spotty.common.http;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public class Headers {
-    public static final String SPOTTY_SCHEME = "spotty_scheme";
-    public static final String SPOTTY_METHOD = "spotty_method";
-    public static final String SPOTTY_PATH = "spotty_path";
-    public static final String SPOTTY_PROTOCOL = "spotty_protocol";
-
     /** RFC 2616 (HTTP/1.1) Section 14.1 */
     public static final String ACCEPT = "accept";
 
@@ -190,7 +186,6 @@ public class Headers {
     }
 
     public Headers add(Headers headers) {
-        this.headers.clear();
         this.headers.putAll(headers.headers);
         return this;
     }
@@ -201,6 +196,26 @@ public class Headers {
 
     public String remove(String name) {
         return headers.remove(name);
+    }
+
+    public boolean contain(String name) {
+        return headers.containsKey(name);
+    }
+
+    public boolean notContain(String name) {
+        return !headers.containsKey(name);
+    }
+
+    public int size() {
+        return headers.size();
+    }
+
+    public boolean isEmpty() {
+        return headers.size() == 0;
+    }
+
+    public boolean isNotEmpty() {
+        return headers.size() > 0;
     }
 
     public void forEach(BiConsumer<String, String> consumer) {
@@ -217,18 +232,29 @@ public class Headers {
 
     @Override
     public String toString() {
-        final var sb = new StringBuilder(getClass().getSimpleName() + "= {\n");
+        final var sb = new StringBuilder();
         headers.forEach((name, value) -> {
-            sb.append("\"");
             sb.append(name);
-            sb.append("\": ");
-            sb.append("\"");
+            sb.append(": ");
             sb.append(value);
-            sb.append("\"\n");
+            sb.append("\n");
         });
-        sb.append("}");
 
+        sb.append("\n");
         return sb.toString();
     }
 
+    @Override
+    public int hashCode() {
+        return headers.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Headers that = (Headers) o;
+
+        return Objects.equals(headers, that.headers);
+    }
 }
