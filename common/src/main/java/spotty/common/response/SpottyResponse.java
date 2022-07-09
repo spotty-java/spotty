@@ -1,6 +1,5 @@
 package spotty.common.response;
 
-import lombok.Data;
 import org.apache.http.entity.ContentType;
 import spotty.common.http.Headers;
 import spotty.common.http.HttpStatus;
@@ -8,14 +7,50 @@ import spotty.common.http.HttpStatus;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static spotty.common.http.HttpStatus.OK;
 
-@Data
 public class SpottyResponse {
-    private String protocol = "HTTP/1.1";
+    private final String protocol = "HTTP/1.1";
+
     private HttpStatus status = OK;
     private ContentType contentType = TEXT_PLAIN;
     private byte[] body;
 
     private final Headers headers = new Headers();
+
+    public String protocol() {
+        return protocol;
+    }
+
+    public HttpStatus status() {
+        return status;
+    }
+
+    public void status(HttpStatus status) {
+        this.status = status;
+    }
+
+    public ContentType contentType() {
+        return contentType;
+    }
+
+    public void contentType(ContentType contentType) {
+        this.contentType = contentType;
+    }
+
+    public byte[] body() {
+        return body;
+    }
+
+    public void body(byte[] body) {
+        this.body = body;
+    }
+
+    public int contentLength() {
+        return body == null ? 0 : body.length;
+    }
+
+    public Headers headers() {
+        return headers;
+    }
 
     public void addHeader(String name, String value) {
         this.headers.add(name, value);
@@ -28,9 +63,5 @@ public class SpottyResponse {
     public void replaceHeaders(Headers headers) {
         this.headers.clear();
         this.headers.add(headers);
-    }
-
-    public long getContentLength() {
-        return body != null ? body.length : 0;
     }
 }

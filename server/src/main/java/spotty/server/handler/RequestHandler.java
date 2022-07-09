@@ -9,11 +9,8 @@ public class RequestHandler {
 
     }
 
-    public SpottyResponse process(SpottyRequest request) {
-        final var response = new SpottyResponse();
-        response.setContentType(response.getContentType());
-        response.setBody(request.body);
-
-        return response;
+    public void process(SpottyRequest request, SpottyResponse response) {
+        request.contentType.ifPresent(response::contentType);
+        response.body(request.body);
     }
 }

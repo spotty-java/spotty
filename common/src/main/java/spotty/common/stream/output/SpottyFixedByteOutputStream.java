@@ -1,4 +1,4 @@
-package spotty.common.stream;
+package spotty.common.stream.output;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -21,11 +21,15 @@ public class SpottyFixedByteOutputStream extends OutputStream {
         this.limit = capacity;
     }
 
-    @Override
-    public synchronized void write(int b) throws IndexOutOfBoundsException {
+    public synchronized void write(byte b) throws IndexOutOfBoundsException {
         ensureCapacity();
 
-        data[size++] = (byte) b;
+        data[size++] = b;
+    }
+
+    @Override
+    public synchronized void write(int b) throws IndexOutOfBoundsException {
+        write((byte) b);
     }
 
     @Override
@@ -44,6 +48,10 @@ public class SpottyFixedByteOutputStream extends OutputStream {
 
         System.arraycopy(b, off, data, size, len);
         size += len;
+    }
+
+    public synchronized void write(String text) {
+        write(text.getBytes());
     }
 
     public synchronized void write(ByteBuffer buffer) {
@@ -72,7 +80,7 @@ public class SpottyFixedByteOutputStream extends OutputStream {
         return Arrays.copyOf(data, size);
     }
 
-    public int remaining() {
+    public synchronized int remaining() {
         return limit - size;
     }
 
@@ -87,8 +95,14 @@ public class SpottyFixedByteOutputStream extends OutputStream {
 
         if (data.length != capacity) {
             byte[] d = new byte[capacity];
-            System.arraycopy(data, 0, d, 0, min(size, capacity));
+            this.size = min(size, capacity);
+
+            if (size > 0) {
+                System.arraycopy(data, 0, d, 0, size);
+            }
+
             this.data = d;
+            this.limit = capacity;
         }
     }
 
@@ -96,7 +110,7 @@ public class SpottyFixedByteOutputStream extends OutputStream {
         return limit;
     }
 
-    public void limit(int limit) {
+    public synchronized void limit(int limit) {
         if (limit > capacity()) {
             throw new IndexOutOfBoundsException("limit can't be larger than capacity");
         }
@@ -115,7 +129,11 @@ public class SpottyFixedByteOutputStream extends OutputStream {
 
     @Override
     public synchronized String toString() {
-        return new String(data, 0, size);
+        if (size > 0) {
+            return new String(data, 0, size);
+        }
+
+        return "";
     }
 
     private void ensureCapacity() {
