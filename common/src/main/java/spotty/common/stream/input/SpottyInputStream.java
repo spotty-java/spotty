@@ -1,9 +1,9 @@
 package spotty.common.stream.input;
 
 import org.jetbrains.annotations.NotNull;
+import spotty.common.stream.output.SpottyByteArrayOutputStream;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -12,7 +12,7 @@ import static java.lang.Math.min;
 public class SpottyInputStream extends BufferedInputStream {
     public static final SpottyInputStream EMPTY = new SpottyInputStream(nullInputStream(), 1);
 
-    private final ByteArrayOutputStream LINE = new ByteArrayOutputStream(128);
+    private final SpottyByteArrayOutputStream LINE = new SpottyByteArrayOutputStream(256);
 
     private long read = 0;
     private long limitBytes = Long.MAX_VALUE;
@@ -35,10 +35,10 @@ public class SpottyInputStream extends BufferedInputStream {
             return -1;
         }
 
-        final var readByte = super.read();
+        final var b = super.read();
         read++;
 
-        return readByte;
+        return b;
     }
 
     @Override
@@ -48,7 +48,7 @@ public class SpottyInputStream extends BufferedInputStream {
             return -1;
         }
 
-        int read = super.read(b, off, toRead);
+        final var read = super.read(b, off, toRead);
         this.read += read;
 
         return read;

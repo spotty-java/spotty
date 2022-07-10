@@ -1,6 +1,7 @@
 package spotty.server.worker;
 
 import lombok.extern.slf4j.Slf4j;
+import spotty.common.exception.SpottyException;
 import spotty.server.worker.action.ReactorAction;
 
 import java.io.Closeable;
@@ -14,17 +15,51 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Slf4j
 public class ReactorWorker implements Closeable {
+    private static final int DEFAULT_MIN_WORKERS = 3;
+    private static final int DEFAULT_MAX_WORKERS = 24;
+    private static final int DEFAULT_WORKER_KEEP_ALIVE = 60;
+
+    private static volatile ReactorWorker INSTANCE;
+
     private final BlockingQueue<ReactorAction> requests = new LinkedBlockingQueue<>();
     private final ExecutorService CONSUMER = Executors.newSingleThreadExecutor();
-    private final ExecutorService WORKERS = new ThreadPoolExecutor(
-        3,
-        24,
-        60,
-        SECONDS,
-        new LinkedBlockingQueue<>()
-    );
+    private final ExecutorService WORKERS;
 
-    public ReactorWorker() {
+    public static void init() {
+        init(DEFAULT_MAX_WORKERS);
+    }
+
+    public static void init(int maxWorkers) {
+        init(DEFAULT_MIN_WORKERS, maxWorkers);
+    }
+
+    public static void init(int minWorkers, int maxWorkers) {
+        init(minWorkers, maxWorkers, DEFAULT_WORKER_KEEP_ALIVE);
+    }
+
+    public synchronized static void init(int minWorkers, int maxWorkers, int keepAlive) {
+        if (INSTANCE == null) {
+            INSTANCE = new ReactorWorker(minWorkers, maxWorkers, keepAlive);
+        }
+    }
+
+    public static ReactorWorker instance() {
+        if (INSTANCE == null) {
+            init();
+        }
+
+        return INSTANCE;
+    }
+
+    private ReactorWorker(int minWorkers, int maxWorkers, int keepAlive) {
+        WORKERS = new ThreadPoolExecutor(
+            minWorkers,
+            maxWorkers,
+            keepAlive,
+            SECONDS,
+            new LinkedBlockingQueue<>()
+        );
+
         CONSUMER.execute(this::pollingActions);
     }
 

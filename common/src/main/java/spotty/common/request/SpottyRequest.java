@@ -98,7 +98,7 @@ public class SpottyRequest {
             return this;
         }
 
-        public Builder clear() {
+        public void clear() {
             protocol = null;
             scheme = null;
             method = null;
@@ -107,8 +107,6 @@ public class SpottyRequest {
             contentType = Optional.empty();
             body = null;
             headers.clear();
-
-            return this;
         }
 
         public SpottyRequest build() {

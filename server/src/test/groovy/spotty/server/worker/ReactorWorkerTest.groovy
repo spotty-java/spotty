@@ -1,4 +1,4 @@
-package spotty.worker
+package spotty.server.worker
 
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
@@ -8,7 +8,7 @@ import java.nio.ByteBuffer
 
 class ReactorWorkerTest extends Specification {
 
-    private final ReactorWorker reactorWorker = new ReactorWorker()
+    private final ReactorWorker reactorWorker = ReactorWorker.instance()
 
     def "should execute action"() {
         given:

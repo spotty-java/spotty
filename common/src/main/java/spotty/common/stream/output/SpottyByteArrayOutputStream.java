@@ -1,6 +1,9 @@
 package spotty.common.stream.output;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 public class SpottyByteArrayOutputStream extends ByteArrayOutputStream {
     private static final int DEFAULT_SIZE = 1024;
@@ -17,6 +20,11 @@ public class SpottyByteArrayOutputStream extends ByteArrayOutputStream {
         this.initialBufferSize = size;
     }
 
+    @Override
+    public void write(byte @NotNull[] b) throws IOException {
+        writeBytes(b);
+    }
+
     public synchronized void write(String text) {
         writeBytes(text.getBytes());
     }
@@ -27,14 +35,14 @@ public class SpottyByteArrayOutputStream extends ByteArrayOutputStream {
         }
 
         if (buf.length != capacity) {
-            byte[] b = new byte[capacity];
+            final var buffer = new byte[capacity];
             count = Math.min(count, capacity);
 
             if (count > 0) {
-                System.arraycopy(buf, 0, b, 0, count);
+                System.arraycopy(buf, 0, buffer, 0, count);
             }
 
-            buf = b;
+            buf = buffer;
         }
     }
 

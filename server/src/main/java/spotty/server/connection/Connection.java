@@ -1,12 +1,12 @@
 package spotty.server.connection;
 
-import spotty.common.request.SpottyRequest;
-import spotty.common.response.SpottyResponse;
+import spotty.server.connection.state.ConnectionProcessorState;
+import spotty.server.handler.RequestHandler;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 public class Connection implements Closeable {
     private static final AtomicLong ID_GENERATOR = new AtomicLong();
@@ -15,8 +15,8 @@ public class Connection implements Closeable {
 
     private final ConnectionProcessor connectionProcessor;
 
-    public Connection(SocketChannel socketChannel) {
-        this.connectionProcessor = new ConnectionProcessor(socketChannel);
+    public Connection(SocketChannel socketChannel, RequestHandler requestHandler) {
+        this.connectionProcessor = new ConnectionProcessor(socketChannel, requestHandler);
     }
 
     @Override
@@ -24,56 +24,33 @@ public class Connection implements Closeable {
         connectionProcessor.close();
     }
 
-    public void read() throws IOException {
-        connectionProcessor.read();
-    }
-
-    public void write() throws IOException {
-        connectionProcessor.write();
-    }
-
-    public void prepareToWrite() {
-        connectionProcessor.prepareToWrite();
-    }
-
-    public void resetResponse() {
-        connectionProcessor.resetResponse();
-    }
-
-    public void resetRequest() {
-        connectionProcessor.resetRequest();
-    }
-
-    public void requestHandlingState() {
-        connectionProcessor.requestHandlingState();
-    }
-
-    public void readyToReadState() {
-        connectionProcessor.readyToReadState();
-    }
-
-    public void responseReadyState() {
-        connectionProcessor.responseReadyState();
-    }
-
-    public boolean isWriteCompleted() {
-        return connectionProcessor.isWriteCompleted();
-//        return writeBuffer != null && !writeBuffer.hasRemaining();
-    }
-
-    public boolean isReadyToHandleRequest() {
-        return connectionProcessor.isReadyToHandleRequest();
-    }
-
-    public SpottyResponse response() {
-        return connectionProcessor.response();
-    }
-
-    public SpottyRequest request() {
-        return connectionProcessor.request();
+    public void handle() {
+        connectionProcessor.handle();
     }
 
     public boolean isClosed() {
-        return !connectionProcessor.isOpen();
+        return connectionProcessor.isClosed();
+    }
+
+    public void whenStateIs(ConnectionProcessorState state, Consumer<ConnectionProcessorState> subscriber) {
+        connectionProcessor.whenStateIs(state, subscriber);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Connection that = (Connection) o;
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.hashCode(id);
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[id=" + id + "]";
     }
 }
