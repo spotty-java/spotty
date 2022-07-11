@@ -1,7 +1,6 @@
 package spotty.server.worker;
 
 import lombok.extern.slf4j.Slf4j;
-import spotty.common.exception.SpottyException;
 import spotty.server.worker.action.ReactorAction;
 
 import java.io.Closeable;
@@ -14,7 +13,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Slf4j
-public class ReactorWorker implements Closeable {
+public final class ReactorWorker implements Closeable {
     private static final int DEFAULT_MIN_WORKERS = 3;
     private static final int DEFAULT_MAX_WORKERS = 24;
     private static final int DEFAULT_WORKER_KEEP_ALIVE = 60;

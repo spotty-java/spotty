@@ -27,11 +27,6 @@ class ResponseWriterTest extends Specification implements WebRequestTestData {
             HTTP/1.1 200
             content-length: 5
             content-type: text/plain
-            host: localhost:4000
-            connection: keep-alive
-            accept-encoding: gzip, deflate, br
-            user-agent: Spotty Agent
-            accept: */*
             
             hello
         """.stripIndent(true).trim()

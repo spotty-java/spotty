@@ -9,7 +9,7 @@ import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 
 @Slf4j
-public class RequestValidator {
+public final class RequestValidator {
 
     public static void validate(SpottyRequest request) throws SpottyHttpException {
         if (request == null) {

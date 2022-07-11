@@ -4,6 +4,8 @@ plugins {
 
 dependencies {
     implementation project(":common")
+
+    testImplementation testFixtures(project(":common"))
 }
 
 ext {
@@ -11,8 +13,9 @@ ext {
 }
 
 shadowJar {
+    archivesBaseName = rootProject.name
     archiveVersion = shadowJarVersion
-    zip64 true
+    zip64 = true
     mergeServiceFiles()
 }
 

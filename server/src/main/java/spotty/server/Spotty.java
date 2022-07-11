@@ -3,7 +3,7 @@ package spotty.server;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import spotty.server.connection.Connection;
-import spotty.server.handler.RequestHandler;
+import spotty.server.handler.EchoRequestHandler;
 import spotty.server.worker.ReactorWorker;
 
 import java.io.Closeable;
@@ -139,7 +139,7 @@ public final class Spotty implements Closeable {
         final var key = socket.register(acceptKey.selector(), SelectionKey.OP_READ);
 
         // TODO: routing handler
-        final var handler = new RequestHandler();
+        final var handler = new EchoRequestHandler();
         final var connection = new Connection(socket, handler);
         log.info("{} accepted: {}", connection, connections.incrementAndGet());
 
