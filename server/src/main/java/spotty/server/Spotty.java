@@ -15,36 +15,34 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
-import static spotty.common.request.RequestValidator.validate;
+import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
+import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_READ;
+import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_WRITE;
 
 @Slf4j
-public class Spotty implements Closeable {
+public final class Spotty implements Closeable {
     private static final int DEFAULT_PORT = 4000;
-    private static final int DEFAULT_CONNECTIONS = 100;
+
+    static {
+        ReactorWorker.init();
+    }
 
     private final ExecutorService SERVER_RUN = Executors.newSingleThreadExecutor();
-    private final ReactorWorker reactorWorker = new ReactorWorker();
 
     private volatile boolean running = false;
     private volatile boolean started = false;
 
     private final int port;
-    private final int maxConnections;
-
-    private int connections = 0;
+    private final AtomicLong connections = new AtomicLong();
 
     public Spotty() {
         this(DEFAULT_PORT);
     }
 
     public Spotty(int port) {
-        this(port, DEFAULT_CONNECTIONS);
-    }
-
-    public Spotty(int port, int maxConnections) {
         this.port = port;
-        this.maxConnections = maxConnections;
     }
 
     public synchronized void start() {
@@ -60,7 +58,6 @@ public class Spotty implements Closeable {
     public synchronized void close() {
         stop();
         SERVER_RUN.shutdownNow();
-        reactorWorker.close();
     }
 
     public synchronized void awaitUntilStart() {
@@ -94,11 +91,12 @@ public class Spotty implements Closeable {
         try (final var serverSocket = ServerSocketChannel.open();
              final var selector = Selector.open()) {
             // Binding this server on the port
-            serverSocket.bind(new InetSocketAddress("localhost", port), maxConnections);
+            serverSocket.bind(new InetSocketAddress(port));
             serverSocket.configureBlocking(false); // Make Server nonBlocking
             serverSocket.register(selector, SelectionKey.OP_ACCEPT);
 
             log.info("server has been started on port " + port);
+
             run();
             started();
 
@@ -133,65 +131,47 @@ public class Spotty implements Closeable {
         }
     }
 
-    private void accept(SelectionKey key) throws IOException {
-        ServerSocketChannel serverSocket = (ServerSocketChannel) key.channel();
+    private void accept(SelectionKey acceptKey) throws IOException {
+        ServerSocketChannel serverSocket = (ServerSocketChannel) acceptKey.channel();
         SocketChannel socket = serverSocket.accept();
         socket.configureBlocking(false);
 
-        log.info("connection accepted");
+        final var key = socket.register(acceptKey.selector(), SelectionKey.OP_READ);
 
-        final var connection = new Connection(socket);
-        connections++;
+        // TODO: routing handler
+        final var handler = new RequestHandler();
+        final var connection = new Connection(socket, handler);
+        log.info("{} accepted: {}", connection, connections.incrementAndGet());
 
-        socket.register(key.selector(), SelectionKey.OP_READ)
-            .attach(connection);
+        key.attach(connection);
 
-        log.info("connections: {}", connections);
+        connection.whenStateIs(READY_TO_WRITE, __ -> {
+            key.interestOps(SelectionKey.OP_WRITE);
+            key.selector().wakeup();
+        });
+
+        connection.whenStateIs(READY_TO_READ, __ ->
+            key.interestOps(SelectionKey.OP_READ)
+        );
+
+        connection.whenStateIs(CLOSED, __ -> {
+            if (connection.isClosed()) {
+                log.info("{} closed: {}", connection, connections.decrementAndGet());
+                key.cancel();
+            } else {
+                log.error("got CLOSED change state event, but connection didn't closed");
+            }
+        });
     }
 
-    private void read(SelectionKey key) throws IOException {
+    private void read(SelectionKey key) {
         final var connection = (Connection) key.attachment();
-        connection.read();
-
-        if (connection.isClosed()) {
-            log.info("connection closed");
-            key.cancel();
-            connections--;
-
-            log.info("connections: {}", connections);
-            return;
-        }
-
-        if (connection.isReadyToHandleRequest()) {
-            connection.requestHandlingState();
-            reactorWorker.addAction(() -> {
-                // TODO: routing handler
-                final var handler = new RequestHandler();
-
-                final var request = connection.request();
-                validate(request);
-
-                handler.process(request, connection.response());
-                connection.responseReadyState();
-                connection.prepareToWrite();
-
-                key.interestOps(SelectionKey.OP_WRITE);
-                key.selector().wakeup();
-            });
-        }
+        connection.handle();
     }
 
-    private void write(SelectionKey key) throws IOException {
+    private void write(SelectionKey key) {
         final var connection = (Connection) key.attachment();
-        connection.write();
-
-        if (connection.isWriteCompleted()) {
-            connection.resetResponse();
-            connection.resetRequest();
-            connection.readyToReadState();
-
-            key.interestOps(SelectionKey.OP_READ);
-        }
+        connection.handle();
     }
 
     private void run() {

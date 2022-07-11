@@ -1,33 +1,47 @@
 package spotty.common.state;
 
-import spotty.common.exception.SpottyHttpException;
+import org.jetbrains.annotations.NotNull;
 
-import static java.lang.String.format;
-import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
-public abstract class StateMachine<S extends Enum<S> & State<S>> {
+public abstract class StateMachine<S extends Enum<S>> {
+    private final Map<S, List<Consumer<S>>> subscribers = new HashMap<>();
 
-    private S state;
+    @NotNull
+    private volatile S state;
 
-    public StateMachine(S state) {
+    public StateMachine(@NotNull S state) {
         this.state = state;
     }
 
-    protected synchronized void stateTo(S newState) {
+    protected synchronized void changeState(@NotNull S newState) {
         if (state != newState) {
-            if (state != newState.dependsOn() && newState.dependsOn() != null) {
-                throw new SpottyHttpException(
-                    INTERNAL_SERVER_ERROR,
-                    format("newState %s dependsOn %s, but current state is %s", newState, newState.dependsOn(), state)
-                );
-            }
-
+            final var prevState = state;
             state = newState;
+
+            final var stateSubscribers = subscribers.getOrDefault(newState, List.of());
+            stateSubscribers.forEach(s -> s.accept(prevState));
         }
     }
 
     public S state() {
         return state;
+    }
+
+    public synchronized void whenStateIs(@NotNull S state, @NotNull Consumer<S> subscriber) {
+        subscribers.compute(state, (__, subs) -> {
+            var stateSubscribers = subs;
+            if (stateSubscribers == null) {
+                stateSubscribers = new ArrayList<>();
+            }
+
+            stateSubscribers.add(subscriber);
+            return stateSubscribers;
+        });
     }
 
 }
