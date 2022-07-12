@@ -29,13 +29,15 @@ subprojects {
     }
 
     dependencies {
-        implementation "org.slf4j:slf4j-api:$slf4jApiVersion"
-        implementation "ch.qos.logback:logback-classic:$logbackClassicVersion"
         implementation "org.apache.commons:commons-lang3:$apacheCommons"
+        implementation "com.google.guava:guava:$guavaVersion"
         implementation "org.jetbrains:annotations:$jetbrainsAnnotationVersion"
         implementation "org.apache.httpcomponents:httpcore:$apacheHttpVersion"
         implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
+
+        compileOnly "org.slf4j:slf4j-api:$slf4jApiVersion"
+        runtimeOnly "ch.qos.logback:logback-classic:$logbackClassicVersion"
         compileOnly "org.projectlombok:lombok:$lombokVersion"
         annotationProcessor "org.projectlombok:lombok:$lombokVersion"
 

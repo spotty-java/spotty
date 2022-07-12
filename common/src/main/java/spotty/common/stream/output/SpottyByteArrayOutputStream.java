@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class SpottyByteArrayOutputStream extends ByteArrayOutputStream {
+public final class SpottyByteArrayOutputStream extends ByteArrayOutputStream {
     private static final int DEFAULT_SIZE = 1024;
 
     private final int initialBufferSize;

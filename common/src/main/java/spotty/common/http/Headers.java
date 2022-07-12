@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-public class Headers {
+public final class Headers {
     /** RFC 2616 (HTTP/1.1) Section 14.1 */
     public static final String ACCEPT = "accept";
 
@@ -240,8 +240,7 @@ public class Headers {
             sb.append("\n");
         });
 
-        sb.append("\n");
-        return sb.toString();
+        return sb.toString().trim();
     }
 
     @Override

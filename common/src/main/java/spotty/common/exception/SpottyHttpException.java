@@ -5,6 +5,10 @@ import spotty.common.http.HttpStatus;
 public class SpottyHttpException extends SpottyException {
     public final HttpStatus status;
 
+    public SpottyHttpException(HttpStatus status) {
+        this(status, status.reasonPhrase);
+    }
+
     public SpottyHttpException(HttpStatus status, String message) {
         this(status, message, null);
     }

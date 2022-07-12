@@ -6,7 +6,7 @@ import lombok.SneakyThrows;
 
 import java.io.InputStream;
 
-public class Json {
+public final class Json {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @SneakyThrows

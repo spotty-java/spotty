@@ -3,10 +3,16 @@ package spotty.common.state;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import static com.google.common.collect.Lists.asList;
+import static java.util.Objects.requireNonNull;
+import static org.apache.commons.lang3.StringUtils.join;
+import static org.apache.commons.lang3.Validate.validState;
 
 public abstract class StateMachine<S extends Enum<S>> {
     private final Map<S, List<Consumer<S>>> subscribers = new HashMap<>();
@@ -18,18 +24,12 @@ public abstract class StateMachine<S extends Enum<S>> {
         this.state = state;
     }
 
-    protected synchronized void changeState(@NotNull S newState) {
-        if (state != newState) {
-            final var prevState = state;
-            state = newState;
-
-            final var stateSubscribers = subscribers.getOrDefault(newState, List.of());
-            stateSubscribers.forEach(s -> s.accept(prevState));
-        }
-    }
-
     public S state() {
         return state;
+    }
+
+    public boolean is(S state) {
+        return this.state == state;
     }
 
     public synchronized void whenStateIs(@NotNull S state, @NotNull Consumer<S> subscriber) {
@@ -43,5 +43,39 @@ public abstract class StateMachine<S extends Enum<S>> {
             return stateSubscribers;
         });
     }
+
+    protected synchronized void changeState(@NotNull S newState) {
+        requireNonNull(newState, "newState must be not null");
+
+        if (state != newState) {
+            final var prevState = state;
+            state = newState;
+
+            final var stateSubscribers = subscribers.getOrDefault(newState, List.of());
+            stateSubscribers.forEach(s -> s.accept(prevState));
+        }
+    }
+
+    public synchronized void checkStateIs(S from) {
+        validState(is(from), "%s state must be %s, but is %s", getClass().getSimpleName(), from, state);
+    }
+
+    public synchronized void checkStateIsOneOf(S from1, S from2) {
+        validState(is(from1) || is(from2), "%s state must be %s or %s, but is %s", getClass().getSimpleName(), from1, from2, state);
+    }
+
+    public synchronized void checkStateIsOneOf(S from1, S from2, S from3) {
+        validState(is(from1) || is(from2) || is(from3), "%s state must be %s, %s or %s, but is %s", getClass().getSimpleName(), from1, from2, from3, state);
+    }
+
+    @SafeVarargs
+    public synchronized final void checkStateIsOneOf(S first, S second, S... rest) {
+        validState(asList(first, second, rest).contains(state), "%s state must be one of [%s, %s, %s], but is %s", getClass().getSimpleName(), first, second, join(rest, ", "), state);
+    }
+
+    public synchronized void checkStateIsOneOf(Collection<S> states) {
+        validState(states.contains(state), "%s state must be one of %s, but is %s", getClass().getSimpleName(), states, state);
+    }
+
 
 }

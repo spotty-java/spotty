@@ -10,7 +10,7 @@ import java.util.Objects;
 
 import static java.lang.Math.min;
 
-public class SpottyFixedByteOutputStream extends OutputStream {
+public final class SpottyFixedByteOutputStream extends OutputStream {
 
     private byte[] data;
     private volatile int size = 0;

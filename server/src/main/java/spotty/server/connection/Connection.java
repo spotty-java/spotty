@@ -8,7 +8,7 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-public class Connection implements Closeable {
+public final class Connection implements Closeable {
     private static final AtomicLong ID_GENERATOR = new AtomicLong();
 
     public final long id = ID_GENERATOR.incrementAndGet();

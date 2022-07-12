@@ -10,7 +10,7 @@ import static spotty.common.http.Headers.CONTENT_LENGTH;
 import static spotty.common.http.Headers.CONTENT_TYPE;
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
-public class ResponseWriter {
+public final class ResponseWriter {
     private static final String HEADER_SPLITTER = ": ";
 
     public static byte[] write(SpottyResponse response) {

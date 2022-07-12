@@ -9,7 +9,7 @@ import java.io.InputStream;
 
 import static java.lang.Math.min;
 
-public class SpottyInputStream extends BufferedInputStream {
+public final class SpottyInputStream extends BufferedInputStream {
     public static final SpottyInputStream EMPTY = new SpottyInputStream(nullInputStream(), 1);
 
     private final SpottyByteArrayOutputStream LINE = new SpottyByteArrayOutputStream(256);
