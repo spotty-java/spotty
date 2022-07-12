@@ -80,7 +80,7 @@ public final class ReactorWorker implements Closeable {
     private void pollingActions() {
         try {
             while (!Thread.currentThread().isInterrupted()) {
-                final var action = requests.take();
+                final ReactorAction action = requests.take();
                 WORKERS.execute(() -> callAction(action));
             }
         } catch (Exception e) {

@@ -171,7 +171,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
     private boolean readRequestHeadLine() {
         while (readBuffer.hasRemaining()) {
-            final var b = readBuffer.get();
+            final byte b = readBuffer.get();
             if (b == '\r') {
                 continue;
             }
@@ -196,13 +196,13 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
     private boolean readHeaders() {
         while (readBuffer.hasRemaining()) {
-            final var b = readBuffer.get();
+            final byte b = readBuffer.get();
             if (b == '\r') {
                 continue;
             }
 
             if (b == '\n') {
-                final var line = this.line.toString();
+                final String line = this.line.toString();
                 this.line.reset();
 
                 if (line.equals("")) {
@@ -222,7 +222,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private boolean readBody() {
-        final var contentLength = requestBuilder.contentLength;
+        final int contentLength = requestBuilder.contentLength;
         if (contentLength > body.capacity()) {
             body.capacity(contentLength);
         }
@@ -264,7 +264,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
             validate(request);
             requestHandler.handle(request, response);
 
-            final var data = ResponseWriter.write(response);
+            final byte[] data = ResponseWriter.write(response);
             this.writeBuffer = ByteBuffer.wrap(data);
 
             changeState(READY_TO_WRITE);
@@ -317,12 +317,12 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private void parseHeadLine(String line) {
-        final var method = line.split(" ");
+        final String[] method = line.split(" ");
         if (method.length != 3) {
             throw new SpottyHttpException(BAD_REQUEST, "invalid request head line");
         }
 
-        final var scheme = method[2].split("/")[0].toLowerCase();
+        final String scheme = method[2].split("/")[0].toLowerCase();
 
         requestBuilder
             .scheme(scheme)
@@ -333,9 +333,9 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private void parseHeader(String line) {
-        final var header = line.split(":", 2);
-        final var name = header[0].trim().toLowerCase();
-        final var value = header[1].trim();
+        final String[] header = line.split(":", 2);
+        final String name = header[0].trim().toLowerCase();
+        final String value = header[1].trim();
 
         if (CONTENT_LENGTH.equals(name)) {
             requestBuilder.contentLength(parseContentLength(value));

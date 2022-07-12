@@ -40,7 +40,6 @@ public final class SpottyFixedByteOutputStream extends OutputStream {
     @Override
     public synchronized void write(byte @NotNull [] b, int off, int len) throws IndexOutOfBoundsException {
         ensureCapacity();
-        Objects.checkFromIndexSize(off, len, b.length);
 
         if (len > remaining()) {
             throw new IndexOutOfBoundsException("length is bigger than remaining");

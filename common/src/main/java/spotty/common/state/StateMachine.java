@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static com.google.common.collect.Lists.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.apache.commons.lang3.Validate.validState;
@@ -34,7 +35,7 @@ public abstract class StateMachine<S extends Enum<S>> {
 
     public synchronized void whenStateIs(@NotNull S state, @NotNull Consumer<S> subscriber) {
         subscribers.compute(state, (__, subs) -> {
-            var stateSubscribers = subs;
+            List<Consumer<S>> stateSubscribers = subs;
             if (stateSubscribers == null) {
                 stateSubscribers = new ArrayList<>();
             }
@@ -48,10 +49,10 @@ public abstract class StateMachine<S extends Enum<S>> {
         requireNonNull(newState, "newState must be not null");
 
         if (state != newState) {
-            final var prevState = state;
+            final S prevState = state;
             state = newState;
 
-            final var stateSubscribers = subscribers.getOrDefault(newState, List.of());
+            final List<Consumer<S>> stateSubscribers = subscribers.getOrDefault(newState, emptyList());
             stateSubscribers.forEach(s -> s.accept(prevState));
         }
     }

@@ -28,7 +28,7 @@ public final class HeaderUtils {
     }
 
     public static HttpMethod parseHttpMethod(String method) {
-        final var res = HttpMethod.resolve(method.toUpperCase());
+        final HttpMethod res = HttpMethod.resolve(method.toUpperCase());
         if (res == null) {
             throw new SpottyHttpException(BAD_REQUEST, "unsupported method " + method);
         }

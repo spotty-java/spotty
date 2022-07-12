@@ -22,11 +22,11 @@ public final class SpottyByteArrayOutputStream extends ByteArrayOutputStream {
 
     @Override
     public void write(byte @NotNull[] b) throws IOException {
-        writeBytes(b);
+        write(b, 0, b.length);
     }
 
-    public synchronized void write(String text) {
-        writeBytes(text.getBytes());
+    public synchronized void write(String text) throws IOException {
+        write(text.getBytes());
     }
 
     public synchronized void capacity(int capacity) {
@@ -35,7 +35,7 @@ public final class SpottyByteArrayOutputStream extends ByteArrayOutputStream {
         }
 
         if (buf.length != capacity) {
-            final var buffer = new byte[capacity];
+            final byte[] buffer = new byte[capacity];
             count = Math.min(count, capacity);
 
             if (count > 0) {

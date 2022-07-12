@@ -232,7 +232,7 @@ public final class Headers {
 
     @Override
     public String toString() {
-        final var sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         headers.forEach((name, value) -> {
             sb.append(name);
             sb.append(": ");

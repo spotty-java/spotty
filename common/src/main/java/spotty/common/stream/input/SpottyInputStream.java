@@ -10,8 +10,6 @@ import java.io.InputStream;
 import static java.lang.Math.min;
 
 public final class SpottyInputStream extends BufferedInputStream {
-    public static final SpottyInputStream EMPTY = new SpottyInputStream(nullInputStream(), 1);
-
     private final SpottyByteArrayOutputStream LINE = new SpottyByteArrayOutputStream(256);
 
     private long read = 0;
@@ -35,7 +33,7 @@ public final class SpottyInputStream extends BufferedInputStream {
             return -1;
         }
 
-        final var b = super.read();
+        final int b = super.read();
         read++;
 
         return b;
@@ -48,7 +46,7 @@ public final class SpottyInputStream extends BufferedInputStream {
             return -1;
         }
 
-        final var read = super.read(b, off, toRead);
+        final int read = super.read(b, off, toRead);
         this.read += read;
 
         return read;
