@@ -51,8 +51,8 @@ public final class SpottyRequest {
         if (o == null || getClass() != o.getClass()) return false;
         SpottyRequest that = (SpottyRequest) o;
 
-        final var thisContentType = contentType.map(ContentType::toString).orElse("");
-        final var thatContentType = that.contentType.map(ContentType::toString).orElse("");
+        final String thisContentType = contentType.map(ContentType::toString).orElse("");
+        final String thatContentType = that.contentType.map(ContentType::toString).orElse("");
 
         return contentLength == that.contentLength
             && Objects.equals(protocol, that.protocol)

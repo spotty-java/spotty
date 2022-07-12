@@ -13,6 +13,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
@@ -88,8 +89,8 @@ public final class Spotty implements Closeable {
 
     @SneakyThrows
     private void serverInit() {
-        try (final var serverSocket = ServerSocketChannel.open();
-             final var selector = Selector.open()) {
+        try (final ServerSocketChannel serverSocket = ServerSocketChannel.open();
+             final Selector selector = Selector.open()) {
             // Binding this server on the port
             serverSocket.bind(new InetSocketAddress(port));
             serverSocket.configureBlocking(false); // Make Server nonBlocking
@@ -102,9 +103,9 @@ public final class Spotty implements Closeable {
 
             while (running && !Thread.currentThread().isInterrupted()) {
                 selector.select();
-                final var keys = selector.selectedKeys().iterator();
+                final Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
                 while (keys.hasNext()) {
-                    final var key = keys.next();
+                    final SelectionKey key = keys.next();
                     keys.remove();
 
                     if (!key.isValid())
@@ -136,11 +137,11 @@ public final class Spotty implements Closeable {
         SocketChannel socket = serverSocket.accept();
         socket.configureBlocking(false);
 
-        final var key = socket.register(acceptKey.selector(), SelectionKey.OP_READ);
+        final SelectionKey key = socket.register(acceptKey.selector(), SelectionKey.OP_READ);
 
         // TODO: routing handler
-        final var handler = new EchoRequestHandler();
-        final var connection = new Connection(socket, handler);
+        final EchoRequestHandler handler = new EchoRequestHandler();
+        final Connection connection = new Connection(socket, handler);
         log.info("{} accepted: {}", connection, connections.incrementAndGet());
 
         key.attach(connection);
@@ -165,12 +166,12 @@ public final class Spotty implements Closeable {
     }
 
     private void read(SelectionKey key) {
-        final var connection = (Connection) key.attachment();
+        final Connection connection = (Connection) key.attachment();
         connection.handle();
     }
 
     private void write(SelectionKey key) {
-        final var connection = (Connection) key.attachment();
+        final Connection connection = (Connection) key.attachment();
         connection.handle();
     }
 

@@ -14,8 +14,8 @@ public final class ResponseWriter {
     private static final String HEADER_SPLITTER = ": ";
 
     public static byte[] write(SpottyResponse response) {
-        final var out = new ByteArrayOutputStream(1024);
-        final var writer = new PrintWriter(out);
+        final ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
+        final PrintWriter writer = new PrintWriter(out);
 
         writer.println(response.protocol() + " " + response.status().code);
         writer.println(CONTENT_LENGTH + HEADER_SPLITTER + response.contentLength());

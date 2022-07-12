@@ -83,8 +83,8 @@ public final class SpottyResponse {
         if (o == null || getClass() != o.getClass()) return false;
         SpottyResponse that = (SpottyResponse) o;
 
-        final var thisContentType = contentType != null ? contentType.toString() : null;
-        final var thatContentType = that.contentType != null ? that.contentType.toString() : null;
+        final String thisContentType = contentType != null ? contentType.toString() : null;
+        final String thatContentType = that.contentType != null ? that.contentType.toString() : null;
 
         return Objects.equals(protocol, that.protocol)
             && status == that.status

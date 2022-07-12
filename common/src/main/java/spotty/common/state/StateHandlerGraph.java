@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import static java.lang.String.format;
 import static org.apache.commons.lang3.Validate.notNull;
 
 public final class StateHandlerGraph<S extends Enum<S>> {
@@ -16,7 +17,7 @@ public final class StateHandlerGraph<S extends Enum<S>> {
     public void handleState(S state) {
         final Node node = nodes.get(state);
         if (node == null) {
-            throw new SpottyException("node not found for state %s".formatted(state));
+            throw new SpottyException(format("node not found for state %s", state));
         }
 
         final Filter filter = filters.getOrDefault(state, Filter.EMPTY);
