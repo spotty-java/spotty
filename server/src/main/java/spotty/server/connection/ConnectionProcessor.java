@@ -129,16 +129,16 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
                     }
                 }
             )
-            .entry(READY_TO_READ).apply(() -> stateTo(READING_REQUEST_HEAD_LINE))
+            .entry(READY_TO_READ).apply(() -> changeState(READING_REQUEST_HEAD_LINE))
             .node(READING_REQUEST_HEAD_LINE).apply(this::readRequestHeadLine)
-            .node(HEADERS_READY_TO_READ).apply(() -> stateTo(READING_HEADERS))
+            .node(HEADERS_READY_TO_READ).apply(() -> changeState(READING_HEADERS))
             .node(READING_HEADERS).apply(this::readHeaders)
-            .node(BODY_READY_TO_READ).apply(() -> stateTo(READING_BODY))
+            .node(BODY_READY_TO_READ).apply(() -> changeState(READING_BODY))
             .node(READING_BODY).apply(this::readBody)
             .node(BODY_READY).apply(this::prepareRequest)
             .node(REQUEST_READY).apply(this::requestHandling)
 
-            .entry(READY_TO_WRITE).apply(() -> stateTo(RESPONSE_WRITING))
+            .entry(READY_TO_WRITE).apply(() -> changeState(RESPONSE_WRITING))
             .node(RESPONSE_WRITING).apply(this::writeResponse)
             .node(RESPONSE_WRITE_COMPLETED).apply(this::responseWriteCompleted)
         ;
@@ -163,12 +163,6 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         changeState(CLOSED);
     }
 
-    private boolean stateTo(ConnectionProcessorState state) {
-        changeState(state);
-
-        return true;
-    }
-
     private boolean readRequestHeadLine() {
         while (readBuffer.hasRemaining()) {
             final byte b = readBuffer.get();
@@ -183,9 +177,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
                     line.reset();
                 }
 
-                changeState(HEADERS_READY_TO_READ);
-
-                return true;
+                return changeState(HEADERS_READY_TO_READ);
             }
 
             line.write(b);
@@ -206,8 +198,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
                 this.line.reset();
 
                 if (line.equals("")) {
-                    changeState(BODY_READY_TO_READ);
-                    return true;
+                    return changeState(BODY_READY_TO_READ);
                 }
 
                 parseHeader(line);
@@ -236,9 +227,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         }
 
         if (body.isFull()) {
-            changeState(BODY_READY);
-
-            return true;
+            return changeState(BODY_READY);
         }
 
         return false;
@@ -252,9 +241,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
         resetBuilders();
 
-        changeState(REQUEST_READY);
-
-        return true;
+        return changeState(REQUEST_READY);
     }
 
     private boolean requestHandling() {
@@ -278,8 +265,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
             socketChannel.write(writeBuffer);
 
             if (!writeBuffer.hasRemaining()) {
-                changeState(RESPONSE_WRITE_COMPLETED);
-                return true;
+                return changeState(RESPONSE_WRITE_COMPLETED);
             }
 
             return false;
