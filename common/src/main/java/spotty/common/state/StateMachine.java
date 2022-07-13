@@ -45,7 +45,7 @@ public abstract class StateMachine<S extends Enum<S>> {
         });
     }
 
-    protected synchronized void changeState(@NotNull S newState) {
+    protected synchronized boolean changeState(@NotNull S newState) {
         requireNonNull(newState, "newState must be not null");
 
         if (state != newState) {
@@ -54,7 +54,11 @@ public abstract class StateMachine<S extends Enum<S>> {
 
             final List<Consumer<S>> stateSubscribers = subscribers.getOrDefault(newState, emptyList());
             stateSubscribers.forEach(s -> s.accept(prevState));
+
+            return true;
         }
+
+        return false;
     }
 
     public synchronized void checkStateIs(S from) {
