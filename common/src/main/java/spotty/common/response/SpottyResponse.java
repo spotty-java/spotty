@@ -45,6 +45,10 @@ public final class SpottyResponse {
         return body;
     }
 
+    public void body(String body) {
+        body(body == null ? null :body.getBytes());
+    }
+
     public void body(byte[] body) {
         this.body = body;
     }

@@ -7,11 +7,13 @@ import java.util.Map;
 
 public enum HttpMethod {
     GET,
-    HEAD,
     POST,
     PUT,
     PATCH,
     DELETE,
+    HEAD,
+    TRACE,
+    CONNECT,
     OPTIONS;
 
     private static final Map<String, HttpMethod> MAPPINGS = new HashMap<>(16);
