@@ -1,8 +1,12 @@
 package spotty.common.utils;
 
 import org.apache.http.entity.ContentType;
+import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.http.HttpMethod;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import static spotty.common.http.Headers.CONTENT_LENGTH;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
@@ -34,5 +38,13 @@ public final class HeaderUtils {
         }
 
         return res;
+    }
+
+    public static URI parseUri(String uri) {
+        try {
+            return new URI(uri);
+        } catch (URISyntaxException e) {
+            throw new SpottyException("invalid uri syntax %s", e, uri);
+        }
     }
 }

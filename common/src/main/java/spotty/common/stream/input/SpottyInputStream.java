@@ -1,5 +1,6 @@
 package spotty.common.stream.input;
 
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import spotty.common.stream.output.SpottyByteArrayOutputStream;
 
@@ -89,6 +90,10 @@ public final class SpottyInputStream extends BufferedInputStream {
         } finally {
             LINE.reset();
         }
+    }
+
+    public byte[] readAllBytes() throws IOException {
+        return IOUtils.toByteArray(this);
     }
 
 }

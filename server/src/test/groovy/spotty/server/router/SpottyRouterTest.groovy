@@ -12,11 +12,10 @@ import static spotty.common.http.HttpMethod.PATCH
 import static spotty.common.http.HttpMethod.POST
 import static spotty.common.http.HttpMethod.PUT
 import static spotty.common.http.HttpMethod.TRACE
-import static spotty.server.router.RouteContainer.NOT_FOUND_ROUTE
 
 class SpottyRouterTest extends Specification {
 
-    private def container = new RouteContainer()
+    private def container = new Routable()
     private def router = new SpottyRouter(container)
 
     def "should register routers correctly"() {
@@ -53,15 +52,15 @@ class SpottyRouterTest extends Specification {
         var optionsFound = container.getRoute("/hello", OPTIONS)
 
         then:
-        get == getFound
-        post == postFound
-        put == putFound
-        patch == patchFound
-        delete == deleteFound
-        head == headFound
-        trace == traceFound
-        connect == connectFound
-        options == optionsFound
+        get == getFound.route
+        post == postFound.route
+        put == putFound.route
+        patch == patchFound.route
+        delete == deleteFound.route
+        head == headFound.route
+        trace == traceFound.route
+        connect == connectFound.route
+        options == optionsFound.route
     }
 
     def "should register routers with path group correctly"() {
@@ -80,9 +79,9 @@ class SpottyRouterTest extends Specification {
         var postFound = container.getRoute("/user/hello", POST)
 
         then:
-        notFound == NOT_FOUND_ROUTE
-        get == getFound
-        post == postFound
+        notFound == null
+        get == getFound.route
+        post == postFound.route
     }
 
     def "should register routers with chain of path groups correctly"() {
@@ -118,12 +117,12 @@ class SpottyRouterTest extends Specification {
 
         then:
         router.getPathPrefix() == ""
-        notFound == NOT_FOUND_ROUTE
-        get == getFound
-        post == postFound
-        put == putFound
-        patch == patchFound
-        delete == deleteFound
+        notFound == null
+        get == getFound.route
+        post == postFound.route
+        put == putFound.route
+        patch == patchFound.route
+        delete == deleteFound.route
     }
 
 }

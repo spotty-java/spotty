@@ -313,7 +313,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         requestBuilder
             .scheme(scheme)
             .method(parseHttpMethod(method[0]))
-            .path(method[1])
+            .pathString(method[1])
             .protocol(method[2])
         ;
     }

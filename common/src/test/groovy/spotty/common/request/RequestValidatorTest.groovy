@@ -46,7 +46,7 @@ class RequestValidatorTest extends Specification implements WebRequestTestData {
                 .protocol(protocol)
                 .scheme(scheme)
                 .method(method)
-                .path(path)
+                .pathUri(path)
                 .build()
 
         when:
@@ -58,10 +58,10 @@ class RequestValidatorTest extends Specification implements WebRequestTestData {
 
         where:
         protocol   | scheme | method | path
-        "HTTP/1.1" | "http" | POST   | ""
-        "HTTP/1.1" | "http" | null   | "/"
-        "HTTP/1.1" | ""     | POST   | "/"
-        ""         | "http" | POST   | "/"
+        "HTTP/1.1" | "http" | POST   | null
+        "HTTP/1.1" | "http" | null   | new URI("/")
+        "HTTP/1.1" | ""     | POST   | new URI("/")
+        ""         | "http" | POST   | new URI("/")
     }
 
 }
