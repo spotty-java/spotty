@@ -21,10 +21,10 @@ import static spotty.common.http.HttpMethod.TRACE;
 public final class SpottyRouter {
 
     private final Deque<String> pathPrefixStack = new LinkedList<>();
-    private final RouteContainer routeContainer;
+    private final Routable routable;
 
-    public SpottyRouter(RouteContainer routeContainer) {
-        this.routeContainer = routeContainer;
+    public SpottyRouter(Routable routable) {
+        this.routable = routable;
     }
 
     public void path(String path, RouteGroup group) {
@@ -34,39 +34,39 @@ public final class SpottyRouter {
     }
 
     public void get(String path, Route route) {
-        routeContainer.addRoute(pathWithPrefix(path), GET, route);
+        routable.addRoute(pathWithPrefix(path), GET, route);
     }
 
     public void post(String path, Route route) {
-        routeContainer.addRoute(pathWithPrefix(path), POST, route);
+        routable.addRoute(pathWithPrefix(path), POST, route);
     }
 
     public void put(String path, Route route) {
-        routeContainer.addRoute(pathWithPrefix(path), PUT, route);
+        routable.addRoute(pathWithPrefix(path), PUT, route);
     }
 
     public void patch(String path, Route route) {
-        routeContainer.addRoute(pathWithPrefix(path), PATCH, route);
+        routable.addRoute(pathWithPrefix(path), PATCH, route);
     }
 
     public void delete(String path, Route route) {
-        routeContainer.addRoute(pathWithPrefix(path), DELETE, route);
+        routable.addRoute(pathWithPrefix(path), DELETE, route);
     }
 
     public void head(String path, Route route) {
-        routeContainer.addRoute(pathWithPrefix(path), HEAD, route);
+        routable.addRoute(pathWithPrefix(path), HEAD, route);
     }
 
     public void trace(String path, Route route) {
-        routeContainer.addRoute(pathWithPrefix(path), TRACE, route);
+        routable.addRoute(pathWithPrefix(path), TRACE, route);
     }
 
     public void connect(String path, Route route) {
-        routeContainer.addRoute(pathWithPrefix(path), CONNECT, route);
+        routable.addRoute(pathWithPrefix(path), CONNECT, route);
     }
 
     public void options(String path, Route route) {
-        routeContainer.addRoute(pathWithPrefix(path), OPTIONS, route);
+        routable.addRoute(pathWithPrefix(path), OPTIONS, route);
     }
 
     @NotNull

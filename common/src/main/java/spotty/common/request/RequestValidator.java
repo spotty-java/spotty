@@ -36,7 +36,7 @@ public final class RequestValidator {
             throw new SpottyHttpException(BAD_REQUEST, "method is empty");
         }
 
-        if (isBlank(request.path)) {
+        if (request.path == null) {
             throw new SpottyHttpException(BAD_REQUEST, "path is empty");
         }
     }

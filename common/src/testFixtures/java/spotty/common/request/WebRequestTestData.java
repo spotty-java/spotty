@@ -43,7 +43,7 @@ public interface WebRequestTestData {
             .protocol("HTTP/1.1")
             .scheme("http")
             .method(POST)
-            .path("/")
+            .pathString("/")
             .contentLength(parseInt(headers.remove(CONTENT_LENGTH)))
             .contentType(ContentType.parse(headers.remove(CONTENT_TYPE)))
             .headers(headers)

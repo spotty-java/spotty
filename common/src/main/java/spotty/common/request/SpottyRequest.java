@@ -7,16 +7,19 @@ import spotty.common.http.Headers;
 import spotty.common.http.HttpMethod;
 import spotty.common.json.Json;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+
+import static spotty.common.utils.HeaderUtils.parseUri;
 
 @ToString
 public final class SpottyRequest {
     public final String protocol;
     public final String scheme;
     public final HttpMethod method;
-    public final String path;
+    public final URI path;
     public final int contentLength;
     public final Optional<ContentType> contentType;
     public final byte[] body;
@@ -76,7 +79,7 @@ public final class SpottyRequest {
         public String protocol;
         public String scheme;
         public HttpMethod method;
-        public String path;
+        public URI path;
         public int contentLength;
         public Optional<ContentType> contentType = Optional.empty();
         public byte[] body;
@@ -93,7 +96,11 @@ public final class SpottyRequest {
             return this;
         }
 
-        public Builder path(String path) {
+        public Builder pathString(String path) {
+            return pathUri(parseUri(path));
+        }
+
+        public Builder pathUri(URI path) {
             this.path = path;
             return this;
         }
