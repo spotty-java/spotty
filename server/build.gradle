@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation project(":common")
 
+    testImplementation "org.apache.httpcomponents:httpclient:$apacheHttpClientVersion"
     testImplementation testFixtures(project(":common"))
 }
 

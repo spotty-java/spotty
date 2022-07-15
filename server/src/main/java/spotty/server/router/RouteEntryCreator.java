@@ -2,6 +2,7 @@ package spotty.server.router;
 
 import org.jetbrains.annotations.VisibleForTesting;
 import spotty.common.http.HttpMethod;
+import spotty.server.router.route.ParamName;
 import spotty.server.router.route.Route;
 import spotty.server.router.route.RouteEntry;
 
@@ -16,33 +17,34 @@ final class RouteEntryCreator {
     private static final String REGEX = "(:\\w+?)(/|$)";
     private static final Pattern PATTERN = Pattern.compile(REGEX);
 
-    static final String PARAM_REPLACEMENT = "(\\w+?)";
-    static final String ALL_REPLACEMENT = "(.+?)";
+    public static final String PARAM_REPLACEMENT = "(?<name>\\w+?)";
+    public static final String ALL_REPLACEMENT = "(.+?)";
 
-    static RouteEntry create(String rawPath, HttpMethod httpMethod, Route route) {
-        notNull(rawPath, "rawPath");
+    static RouteEntry create(String path, HttpMethod httpMethod, Route route) {
+        notNull(path, "path");
         notNull(httpMethod, "httpMethod");
         notNull(route, "route");
 
-        final Matcher m = PATTERN.matcher(rawPath);
+        final Matcher m = PATTERN.matcher(path);
 
-        String pathNormalized = rawPath;
-        String matcher = "^" + rawPath.replace("*", ALL_REPLACEMENT) + "$";
-        final ArrayList<String> params = new ArrayList<>();
+        String pathNormalized = path;
+        String matcher = "^" + path.replace("*", ALL_REPLACEMENT) + "$";
+        final ArrayList<ParamName> params = new ArrayList<>();
         while (m.find()) {
             final String name = m.group(1);
-            params.add(name);
+            final ParamName paramName = new ParamName(name);
+            params.add(paramName);
 
-            matcher = matcher.replace(name, PARAM_REPLACEMENT);
+            matcher = matcher.replace(name, PARAM_REPLACEMENT.replace("name", paramName.groupName));
             pathNormalized = pathNormalized.replace(name, "*");
         }
 
         return RouteEntry.builder()
-            .path(rawPath)
+            .path(path)
             .httpMethod(httpMethod)
             .pathNormalized(pathNormalized)
             .matcher(Pattern.compile(matcher))
-            .params(params)
+            .pathParamKeys(params)
             .route(route)
             .build();
     }

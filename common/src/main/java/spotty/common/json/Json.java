@@ -38,4 +38,14 @@ public final class Json {
     public static JsonNode parse(InputStream content) {
         return OBJECT_MAPPER.readTree(content);
     }
+
+    @SneakyThrows
+    public static String writeValueAsString(Object object) {
+        return OBJECT_MAPPER.writeValueAsString(object);
+    }
+
+    @SneakyThrows
+    public static byte[] writeValueAsBytes(Object object) {
+        return OBJECT_MAPPER.writeValueAsBytes(object);
+    }
 }

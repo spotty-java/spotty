@@ -1,10 +1,9 @@
 package spotty.server.router;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.NotNull;
 import spotty.common.exception.SpottyException;
+import spotty.common.exception.SpottyHttpException;
 import spotty.common.http.HttpMethod;
-import spotty.server.router.route.NotFoundRoute;
 import spotty.server.router.route.Route;
 import spotty.server.router.route.RouteEntry;
 
@@ -15,18 +14,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.Validate.notNull;
+import static spotty.common.http.HttpStatus.NOT_FOUND;
 
-@VisibleForTesting
-final class Routable {
-    public static final Route NOT_FOUND_ROUTE = new NotFoundRoute();
-
+public final class Routable {
     final SortedList sortedList = new SortedList();
     final Map<String, Map<HttpMethod, RouteEntry>> routes = new HashMap<>();
 
-    void addRoute(String routePath, HttpMethod method, Route route) {
+    public void addRoute(String routePath, HttpMethod method, Route route) {
         notNull(method, "method is null");
         notNull(route, "route is null");
 
@@ -50,14 +48,19 @@ final class Routable {
         routeHandlers.put(method, routeEntry);
     }
 
-    @Nullable
-    RouteEntry getRoute(String rawPath, HttpMethod method) {
+    @NotNull
+    public RouteEntry getRoute(String rawPath, HttpMethod method) throws SpottyHttpException {
         Map<HttpMethod, RouteEntry> routes = this.routes.get(rawPath);
         if (routes == null) {
             routes = findMatch(rawPath);
         }
 
-        return routes.get(method);
+        final RouteEntry entry = routes.get(method);
+        if (entry == null) {
+            throw new SpottyHttpException(NOT_FOUND, format("route not found for path %s and method %s", rawPath, method));
+        }
+
+        return entry;
     }
 
     private Map<HttpMethod, RouteEntry> findMatch(String rawPath) {

@@ -14,7 +14,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
 
     def "should read request correctly"() {
         given:
-        var expectedRequest = aSpottyRequest().build()
+        var expectedRequest = aSpottyRequest()
         var socket = new SocketChannelStub(fullRequest.length())
         socket.configureBlocking(false)
         socket.write(fullRequest)
@@ -37,7 +37,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write(fullRequest)
         socket.flip()
 
-        var request = aSpottyRequest().build()
+        var request = aSpottyRequest()
         var expectedResponse = new String(ResponseWriter.write(aSpottyResponse(request)))
 
         var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), fullRequest.length())

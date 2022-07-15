@@ -1,154 +1,45 @@
 package spotty.common.request;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import lombok.ToString;
 import org.apache.http.entity.ContentType;
 import spotty.common.http.Headers;
 import spotty.common.http.HttpMethod;
-import spotty.common.json.Json;
 
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
-import static spotty.common.utils.HeaderUtils.parseUri;
+public interface SpottyRequest {
+    String protocol();
 
-@ToString
-public final class SpottyRequest {
-    public final String protocol;
-    public final String scheme;
-    public final HttpMethod method;
-    public final URI path;
-    public final int contentLength;
-    public final Optional<ContentType> contentType;
-    public final byte[] body;
-    public final Headers headers;
+    String scheme();
 
-    public SpottyRequest(Builder builder) {
-        this.protocol = builder.protocol;
-        this.scheme = builder.scheme;
-        this.method = builder.method;
-        this.path = builder.path;
-        this.contentLength = builder.contentLength;
-        this.contentType = builder.contentType;
-        this.body = builder.body;
-        this.headers = builder.headers.copy();
-    }
+    HttpMethod method();
 
-    public <T> T parseBody(Class<T> clazz) {
-        return Json.parse(body, clazz);
-    }
+    String path();
 
-    public JsonNode parseBody() {
-        return Json.parse(body);
-    }
+    int contentLength();
 
-    public static Builder builder() {
-        return new Builder();
-    }
+    Optional<ContentType> contentType();
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SpottyRequest that = (SpottyRequest) o;
+    Headers headers();
 
-        final String thisContentType = contentType.map(ContentType::toString).orElse("");
-        final String thatContentType = that.contentType.map(ContentType::toString).orElse("");
+    Map<String, String> params();
 
-        return contentLength == that.contentLength
-            && Objects.equals(protocol, that.protocol)
-            && Objects.equals(scheme, that.scheme)
-            && method == that.method
-            && Objects.equals(path, that.path)
-            && Objects.equals(thisContentType, thatContentType)
-            && Arrays.equals(body, that.body)
-            && Objects.equals(headers, that.headers);
-    }
+    String param(String name);
 
-    @Override
-    public int hashCode() {
-        int contentTypeHash = contentType.map(ContentType::toString).map(String::hashCode).orElse(0);
-        int result = Objects.hash(protocol, scheme, method, path, contentLength, contentTypeHash, headers);
-        result = 31 * result + Arrays.hashCode(body);
-        return result;
-    }
+    Map<String, Set<String>> queryParamsMap();
 
-    public static class Builder {
-        public String protocol;
-        public String scheme;
-        public HttpMethod method;
-        public URI path;
-        public int contentLength;
-        public Optional<ContentType> contentType = Optional.empty();
-        public byte[] body;
+    Set<String> queryParams();
 
-        private final Headers headers = new Headers();
+    Set<String> queryParams(String name);
 
-        public Builder protocol(String protocol) {
-            this.protocol = protocol;
-            return this;
-        }
+    String queryParam(String name);
 
-        public Builder method(HttpMethod method) {
-            this.method = method;
-            return this;
-        }
+    byte[] body();
 
-        public Builder pathString(String path) {
-            return pathUri(parseUri(path));
-        }
+    <T> T parseBody(Class<T> clazz);
 
-        public Builder pathUri(URI path) {
-            this.path = path;
-            return this;
-        }
+    JsonNode parseBody();
 
-        public Builder scheme(String scheme) {
-            this.scheme = scheme;
-            return this;
-        }
-
-        public Builder contentLength(int contentLength) {
-            this.contentLength = contentLength;
-            return this;
-        }
-
-        public Builder contentType(ContentType contentType) {
-            this.contentType = Optional.ofNullable(contentType);
-            return this;
-        }
-
-        public Builder body(byte[] body) {
-            this.body = body;
-            return this;
-        }
-
-        public Builder header(String name, String value) {
-            headers.add(name, value);
-            return this;
-        }
-
-        public Builder headers(Headers headers) {
-            this.headers.clear();
-            this.headers.add(headers);
-            return this;
-        }
-
-        public void clear() {
-            protocol = null;
-            scheme = null;
-            method = null;
-            path = null;
-            contentLength = 0;
-            contentType = Optional.empty();
-            body = null;
-            headers.clear();
-        }
-
-        public SpottyRequest build() {
-            return new SpottyRequest(this);
-        }
-    }
 }

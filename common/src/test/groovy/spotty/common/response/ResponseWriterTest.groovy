@@ -11,7 +11,6 @@ class ResponseWriterTest extends Specification implements WebRequestTestData {
         var request = aSpottyRequest()
                 .contentLength(content.length)
                 .body(content)
-                .build()
 
         var response = aSpottyResponse(request)
 

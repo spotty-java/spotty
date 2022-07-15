@@ -1,6 +1,7 @@
 package spotty.server.router
 
 import spock.lang.Specification
+import spotty.server.router.route.ParamName
 import spotty.server.router.route.RouteEntry
 
 import static spotty.common.http.HttpMethod.GET
@@ -13,11 +14,13 @@ class RouteEntryCreatorTest extends Specification {
     def "should create route entry correctly"() {
         given:
         var path = "/api/*/product/:id/:category"
-        var matcher = "^/api/$ALL_REPLACEMENT/product/$PARAM_REPLACEMENT/$PARAM_REPLACEMENT\$"
+        var matcher = "^/api/$ALL_REPLACEMENT/product/${PARAM_REPLACEMENT.replace("name", "id")}/${PARAM_REPLACEMENT.replace("name", "category")}\$"
 
         var expectedEntry = RouteEntry.builder()
             .path(path)
-            .params([":id", ":category"])
+            .pathNormalized("/api/*/product/*/*")
+            .pathParamKeys([new ParamName(":id"), new ParamName(":category")])
+            .httpMethod(GET)
             .route({})
             .matcher(~matcher)
             .build()
@@ -27,8 +30,9 @@ class RouteEntryCreatorTest extends Specification {
 
         then:
         routeEntry.path == expectedEntry.path
-        routeEntry.params == expectedEntry.params
+        routeEntry.pathParamKeys == expectedEntry.pathParamKeys
         routeEntry.matcher.pattern() == expectedEntry.matcher.pattern()
+        routeEntry.matches("/api/v1/product/7/iphone")
     }
 
     def "should match path template"() {
@@ -39,13 +43,15 @@ class RouteEntryCreatorTest extends Specification {
         routeEntry.matches(path) == expectedMatch
 
         where:
-        template                              | path                                  | expectedMatch
-        "/api/product/:id/:category"          | "/api/product/1/phone"                | true
-        "/api/product/:id/:category"          | "/api/product/1/phone/enable"         | false
-        "/api/*"                              | "/api/product/1/phone/enable"         | true
-        "/api/*/product/*/category/:category" | "/api/v1/product/1/category/phone"    | true
-        "/api/*/product/*/category/:category" | "/api/v1/product/1/category/"         | false
-        "/api/*/product/*/category/:category" | "/api/v1/product/1/category/phone/13" | false
+        template                              | path                                   | expectedMatch
+        "/api/product/:id/:category"          | "/api/product/1/phone"                 | true
+        "/api/*/product/:id/:category"        | "/api/v1/product/1/iphone"             | true
+        "/api/product/:id/:category"          | "/api/product/1/phone/enable"          | false
+        "/api/*"                              | "/api/product/1/phone/enable"          | true
+        "/api/*/product/*/category/:category" | "/api/v1/product/1/category/phone"     | true
+        "/api/*/product/*/category/:category" | "/api/v1/product/1/category/iphone_13" | true
+        "/api/*/product/*/category/:category" | "/api/v1/product/1/category/"          | false
+        "/api/*/product/*/category/:category" | "/api/v1/product/1/category/phone/13"  | false
     }
 
     def "should normalize path correctly"() {

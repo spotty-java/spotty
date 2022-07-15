@@ -1,174 +1,286 @@
 package spotty.common.http;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public final class Headers {
-    /** RFC 2616 (HTTP/1.1) Section 14.1 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.1
+     */
     public static final String ACCEPT = "accept";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.2 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.2
+     */
     public static final String ACCEPT_CHARSET = "accept-charset";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.3 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.3
+     */
     public static final String ACCEPT_ENCODING = "accept-encoding";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.4 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.4
+     */
     public static final String ACCEPT_LANGUAGE = "accept-language";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.5 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.5
+     */
     public static final String ACCEPT_RANGES = "accept-ranges";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.6 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.6
+     */
     public static final String AGE = "age";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.1, RFC 2616 (HTTP/1.1) Section 14.7 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.1, RFC 2616 (HTTP/1.1) Section 14.7
+     */
     public static final String ALLOW = "allow";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.2, RFC 2616 (HTTP/1.1) Section 14.8 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.2, RFC 2616 (HTTP/1.1) Section 14.8
+     */
     public static final String AUTHORIZATION = "authorization";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.9 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.9
+     */
     public static final String CACHE_CONTROL = "cache-control";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.10 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.10
+     */
     public static final String CONNECTION = "connection";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.3, RFC 2616 (HTTP/1.1) Section 14.11 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.3, RFC 2616 (HTTP/1.1) Section 14.11
+     */
     public static final String CONTENT_ENCODING = "content-encoding";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.12 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.12
+     */
     public static final String CONTENT_LANGUAGE = "content-language";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.4, RFC 2616 (HTTP/1.1) Section 14.13 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.4, RFC 2616 (HTTP/1.1) Section 14.13
+     */
     public static final String CONTENT_LENGTH = "content-length";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.14 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.14
+     */
     public static final String CONTENT_LOCATION = "content-location";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.15 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.15
+     */
     public static final String CONTENT_MD5 = "content-md5";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.16 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.16
+     */
     public static final String CONTENT_RANGE = "content-range";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.5, RFC 2616 (HTTP/1.1) Section 14.17 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.5, RFC 2616 (HTTP/1.1) Section 14.17
+     */
     public static final String CONTENT_TYPE = "content-type";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.6, RFC 2616 (HTTP/1.1) Section 14.18 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.6, RFC 2616 (HTTP/1.1) Section 14.18
+     */
     public static final String DATE = "date";
 
-    /** RFC 2518 (WevDAV) Section 9.1 */
+    /**
+     * RFC 2518 (WevDAV) Section 9.1
+     */
     public static final String DAV = "dav";
 
-    /** RFC 2518 (WevDAV) Section 9.2 */
+    /**
+     * RFC 2518 (WevDAV) Section 9.2
+     */
     public static final String DEPTH = "depth";
 
-    /** RFC 2518 (WevDAV) Section 9.3 */
+    /**
+     * RFC 2518 (WevDAV) Section 9.3
+     */
     public static final String DESTINATION = "destination";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.19 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.19
+     */
     public static final String ETAG = "etag";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.20 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.20
+     */
     public static final String EXPECT = "expect";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.7, RFC 2616 (HTTP/1.1) Section 14.21 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.7, RFC 2616 (HTTP/1.1) Section 14.21
+     */
     public static final String EXPIRES = "expires";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.8, RFC 2616 (HTTP/1.1) Section 14.22 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.8, RFC 2616 (HTTP/1.1) Section 14.22
+     */
     public static final String FROM = "from";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.23 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.23
+     */
     public static final String HOST = "host";
 
-    /** RFC 2518 (WevDAV) Section 9.4 */
+    /**
+     * RFC 2518 (WevDAV) Section 9.4
+     */
     public static final String IF = "if";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.24 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.24
+     */
     public static final String IF_MATCH = "if-match";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.9, RFC 2616 (HTTP/1.1) Section 14.25 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.9, RFC 2616 (HTTP/1.1) Section 14.25
+     */
     public static final String IF_MODIFIED_SINCE = "if-modified-since";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.26 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.26
+     */
     public static final String IF_NONE_MATCH = "if-none-match";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.27 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.27
+     */
     public static final String IF_RANGE = "if-range";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.28 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.28
+     */
     public static final String IF_UNMODIFIED_SINCE = "if-unmodified-since";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.10, RFC 2616 (HTTP/1.1) Section 14.29 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.10, RFC 2616 (HTTP/1.1) Section 14.29
+     */
     public static final String LAST_MODIFIED = "last-modified";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.11, RFC 2616 (HTTP/1.1) Section 14.30 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.11, RFC 2616 (HTTP/1.1) Section 14.30
+     */
     public static final String LOCATION = "location";
 
-    /** RFC 2518 (WevDAV) Section 9.5 */
+    /**
+     * RFC 2518 (WevDAV) Section 9.5
+     */
     public static final String LOCK_TOKEN = "lock-token";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.31 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.31
+     */
     public static final String MAX_FORWARDS = "max-forwards";
 
-    /** RFC 2518 (WevDAV) Section 9.6 */
+    /**
+     * RFC 2518 (WevDAV) Section 9.6
+     */
     public static final String OVERWRITE = "overwrite";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.12, RFC 2616 (HTTP/1.1) Section 14.32 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.12, RFC 2616 (HTTP/1.1) Section 14.32
+     */
     public static final String PRAGMA = "pragma";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.33 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.33
+     */
     public static final String PROXY_AUTHENTICATE = "proxy-authenticate";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.34 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.34
+     */
     public static final String PROXY_AUTHORIZATION = "proxy-authorization";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.35 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.35
+     */
     public static final String RANGE = "range";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.13, RFC 2616 (HTTP/1.1) Section 14.36 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.13, RFC 2616 (HTTP/1.1) Section 14.36
+     */
     public static final String REFERER = "referer";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.37 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.37
+     */
     public static final String RETRY_AFTER = "retry-after";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.14, RFC 2616 (HTTP/1.1) Section 14.38 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.14, RFC 2616 (HTTP/1.1) Section 14.38
+     */
     public static final String SERVER = "server";
 
-    /** RFC 2518 (WevDAV) Section 9.7 */
+    /**
+     * RFC 2518 (WevDAV) Section 9.7
+     */
     public static final String STATUS_URI = "status-uri";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.39 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.39
+     */
     public static final String TE = "te";
 
-    /** RFC 2518 (WevDAV) Section 9.8 */
+    /**
+     * RFC 2518 (WevDAV) Section 9.8
+     */
     public static final String TIMEOUT = "timeout";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.40 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.40
+     */
     public static final String TRAILER = "trailer";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.41 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.41
+     */
     public static final String TRANSFER_ENCODING = "transfer-encoding";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.42 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.42
+     */
     public static final String UPGRADE = "upgrade";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.15, RFC 2616 (HTTP/1.1) Section 14.43 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.15, RFC 2616 (HTTP/1.1) Section 14.43
+     */
     public static final String USER_AGENT = "user-agent";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.44 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.44
+     */
     public static final String VARY = "vary";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.45 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.45
+     */
     public static final String VIA = "via";
 
-    /** RFC 2616 (HTTP/1.1) Section 14.46 */
+    /**
+     * RFC 2616 (HTTP/1.1) Section 14.46
+     */
     public static final String WARNING = "warning";
 
-    /** RFC 1945 (HTTP/1.0) Section 10.16, RFC 2616 (HTTP/1.1) Section 14.47 */
+    /**
+     * RFC 1945 (HTTP/1.0) Section 10.16, RFC 2616 (HTTP/1.1) Section 14.47
+     */
     public static final String WWW_AUTHENTICATE = "www-authenticate";
 
     private final Map<String, String> headers = new HashMap<>();
@@ -226,6 +338,7 @@ public final class Headers {
         headers.clear();
     }
 
+    @NotNull
     public Headers copy() {
         return new Headers(this);
     }

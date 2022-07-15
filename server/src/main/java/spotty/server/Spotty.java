@@ -3,7 +3,10 @@ package spotty.server;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import spotty.server.connection.Connection;
-import spotty.server.handler.EchoRequestHandler;
+import spotty.server.handler.RequestHandler;
+import spotty.server.handler.RouterRequestHandler;
+import spotty.server.router.Routable;
+import spotty.server.router.SpottyRouter;
 import spotty.server.worker.ReactorWorker;
 
 import java.io.Closeable;
@@ -37,6 +40,11 @@ public final class Spotty implements Closeable {
 
     private final int port;
     private final AtomicLong connections = new AtomicLong();
+
+    private final Routable routable = new Routable();
+    private final RequestHandler requestHandler = new RouterRequestHandler(routable);
+
+    public final SpottyRouter router = new SpottyRouter(routable);
 
     public Spotty() {
         this(DEFAULT_PORT);
@@ -139,9 +147,7 @@ public final class Spotty implements Closeable {
 
         final SelectionKey key = socket.register(acceptKey.selector(), SelectionKey.OP_READ);
 
-        // TODO: routing handler
-        final EchoRequestHandler handler = new EchoRequestHandler();
-        final Connection connection = new Connection(socket, handler);
+        final Connection connection = new Connection(socket, requestHandler);
         log.info("{} accepted: {}", connection, connections.incrementAndGet());
 
         key.attach(connection);

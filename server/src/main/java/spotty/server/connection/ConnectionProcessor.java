@@ -5,9 +5,9 @@ import org.jetbrains.annotations.VisibleForTesting;
 import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyStreamException;
-import spotty.common.http.Headers;
 import spotty.common.http.HttpStatus;
-import spotty.common.request.SpottyRequest;
+import spotty.common.request.params.QueryParams;
+import spotty.common.request.SpottyInnerRequest;
 import spotty.common.response.ResponseWriter;
 import spotty.common.response.SpottyResponse;
 import spotty.common.state.StateHandlerGraph;
@@ -21,6 +21,7 @@ import spotty.server.worker.ReactorWorker;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
@@ -28,10 +29,11 @@ import static org.apache.commons.lang3.Validate.notNull;
 import static spotty.common.http.Headers.CONTENT_LENGTH;
 import static spotty.common.http.Headers.CONTENT_TYPE;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
-import static spotty.common.request.RequestValidator.validate;
+import static spotty.common.request.validator.RequestValidator.validate;
 import static spotty.common.utils.HeaderUtils.parseContentLength;
 import static spotty.common.utils.HeaderUtils.parseContentType;
 import static spotty.common.utils.HeaderUtils.parseHttpMethod;
+import static spotty.common.utils.HeaderUtils.parseUri;
 import static spotty.server.connection.state.ConnectionProcessorState.BODY_READY;
 import static spotty.server.connection.state.ConnectionProcessorState.BODY_READY_TO_READ;
 import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
@@ -53,12 +55,8 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
     private static final ReactorWorker REACTOR_WORKER = ReactorWorker.instance();
 
-    private final Headers headers = new Headers();
-
-    private final SpottyRequest.Builder requestBuilder = SpottyRequest.builder();
-
     @VisibleForTesting
-    SpottyRequest request;
+    final SpottyInnerRequest request = new SpottyInnerRequest();
 
     @VisibleForTesting
     final SpottyResponse response = new SpottyResponse();
@@ -213,13 +211,12 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private boolean readBody() {
-        final int contentLength = requestBuilder.contentLength;
-        if (contentLength > body.capacity()) {
-            body.capacity(contentLength);
+        if (request.contentLength() > body.capacity()) {
+            body.capacity(request.contentLength());
         }
 
-        if (contentLength >= 0 && body.limit() != contentLength) {
-            body.limit(contentLength);
+        if (request.contentLength() >= 0 && body.limit() != request.contentLength()) {
+            body.limit(request.contentLength());
         }
 
         if (readBuffer.hasRemaining()) {
@@ -234,11 +231,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private boolean prepareRequest() {
-        request = requestBuilder
-            .body(body.toByteArray())
-            .headers(headers)
-            .build();
-
+        request.body(body.toByteArray());
         resetBuilders();
 
         return changeState(REQUEST_READY);
@@ -276,7 +269,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
     private boolean responseWriteCompleted() {
         resetResponse();
-        resetRequest();
+        request.reset();
 
         changeState(READY_TO_READ);
 
@@ -284,17 +277,10 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private void resetBuilders() {
-        headers.clear();
-        requestBuilder.clear();
-
         body.capacity(DEFAULT_BUFFER_SIZE);
         body.reset();
 
         line.reset();
-    }
-
-    private void resetRequest() {
-        request = null;
     }
 
     private void resetResponse() {
@@ -304,16 +290,18 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
     private void parseHeadLine(String line) {
         final String[] method = line.split(" ");
-        if (method.length != 3) {
+        if (method.length != 3 || !line.contains("/")) {
             throw new SpottyHttpException(BAD_REQUEST, "invalid request head line");
         }
 
         final String scheme = method[2].split("/")[0].toLowerCase();
+        final URI uri = parseUri(method[1]);
 
-        requestBuilder
+        request
             .scheme(scheme)
             .method(parseHttpMethod(method[0]))
-            .pathString(method[1])
+            .path(uri.getPath())
+            .queryParams(QueryParams.parse(uri.getQuery()))
             .protocol(method[2])
         ;
     }
@@ -324,11 +312,11 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         final String value = header[1].trim();
 
         if (CONTENT_LENGTH.equals(name)) {
-            requestBuilder.contentLength(parseContentLength(value));
+            request.contentLength(parseContentLength(value));
         } else if (CONTENT_TYPE.equals(name)) {
-            requestBuilder.contentType(parseContentType(value));
+            request.contentType(parseContentType(value));
         } else {
-            headers.add(name, value);
+            request.addHeader(name, value);
         }
     }
 

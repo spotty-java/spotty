@@ -1,5 +1,6 @@
 package spotty.common.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ContentType;
 import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
@@ -11,6 +12,7 @@ import java.net.URISyntaxException;
 import static spotty.common.http.Headers.CONTENT_LENGTH;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 
+@Slf4j
 public final class HeaderUtils {
     private HeaderUtils() {
     }
@@ -27,6 +29,7 @@ public final class HeaderUtils {
         try {
             return ContentType.parse(contentType);
         } catch (Exception e) {
+            log.warn("invalid content type {}", contentType, e);
             return null;
         }
     }
