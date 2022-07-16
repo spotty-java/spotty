@@ -35,25 +35,26 @@ public interface WebRequestTestData {
 
     String fullRequest = requestHeaders + "\n\n" + requestBody;
 
-    default SpottyRequest.Builder aSpottyRequest() {
+    default SpottyInnerRequest aSpottyRequest() {
         final byte[] content = requestBody.getBytes();
         final Headers headers = this.headers.copy();
 
-        return SpottyRequest.builder()
+        final SpottyInnerRequest request = new SpottyInnerRequest();
+        return request
             .protocol("HTTP/1.1")
             .scheme("http")
             .method(POST)
-            .pathString("/")
+            .path("/")
             .contentLength(parseInt(headers.remove(CONTENT_LENGTH)))
             .contentType(ContentType.parse(headers.remove(CONTENT_TYPE)))
-            .headers(headers)
+            .addHeaders(headers)
             .body(content);
     }
 
     default SpottyResponse aSpottyResponse(SpottyRequest request) {
         final SpottyResponse response = new SpottyResponse();
-        response.contentType(request.contentType.get());
-        response.body(request.body);
+        response.contentType(request.contentType());
+        response.body(request.body());
 
         return response;
     }

@@ -15,8 +15,7 @@ import static spotty.common.http.HttpMethod.TRACE
 
 class SpottyRouterTest extends Specification {
 
-    private def container = new Routable()
-    private def router = new SpottyRouter(container)
+    private def router = new SpottyRouter()
 
     def "should register routers correctly"() {
         given:
@@ -41,15 +40,15 @@ class SpottyRouterTest extends Specification {
         router.options("/hello", options)
 
         when:
-        var getFound = container.getRoute("/hello", GET)
-        var postFound = container.getRoute("/hello", POST)
-        var putFound = container.getRoute("/hello", PUT)
-        var patchFound = container.getRoute("/hello", PATCH)
-        var deleteFound = container.getRoute("/hello", DELETE)
-        var headFound = container.getRoute("/hello", HEAD)
-        var traceFound = container.getRoute("/hello", TRACE)
-        var connectFound = container.getRoute("/hello", CONNECT)
-        var optionsFound = container.getRoute("/hello", OPTIONS)
+        var getFound = router.getRoute("/hello", GET)
+        var postFound = router.getRoute("/hello", POST)
+        var putFound = router.getRoute("/hello", PUT)
+        var patchFound = router.getRoute("/hello", PATCH)
+        var deleteFound = router.getRoute("/hello", DELETE)
+        var headFound = router.getRoute("/hello", HEAD)
+        var traceFound = router.getRoute("/hello", TRACE)
+        var connectFound = router.getRoute("/hello", CONNECT)
+        var optionsFound = router.getRoute("/hello", OPTIONS)
 
         then:
         get == getFound.route
@@ -74,12 +73,10 @@ class SpottyRouterTest extends Specification {
         })
 
         when:
-        var notFound = container.getRoute("/hello", GET)
-        var getFound = container.getRoute("/user/hello", GET)
-        var postFound = container.getRoute("/user/hello", POST)
+        var getFound = router.getRoute("/user/hello", GET)
+        var postFound = router.getRoute("/user/hello", POST)
 
         then:
-        notFound == null
         get == getFound.route
         post == postFound.route
     }
@@ -108,16 +105,14 @@ class SpottyRouterTest extends Specification {
         })
 
         when:
-        var notFound = container.getRoute("/hello", GET)
-        var getFound = container.getRoute("/api/v1/user/hello", GET)
-        var postFound = container.getRoute("/api/v1/user/hello", POST)
-        var putFound = container.getRoute("/api/put", PUT)
-        var patchFound = container.getRoute("/api/v1/patch", PATCH)
-        var deleteFound = container.getRoute("/api/v1/user", DELETE)
+        var getFound = router.getRoute("/api/v1/user/hello", GET)
+        var postFound = router.getRoute("/api/v1/user/hello", POST)
+        var putFound = router.getRoute("/api/put", PUT)
+        var patchFound = router.getRoute("/api/v1/patch", PATCH)
+        var deleteFound = router.getRoute("/api/v1/user", DELETE)
 
         then:
         router.getPathPrefix() == ""
-        notFound == null
         get == getFound.route
         post == postFound.route
         put == putFound.route

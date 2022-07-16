@@ -33,7 +33,7 @@ subprojects {
         implementation "commons-io:commons-io:$apacheCommonsIOVersion"
         implementation "com.google.guava:guava:$guavaVersion"
         implementation "org.jetbrains:annotations:$jetbrainsAnnotationVersion"
-        implementation "org.apache.httpcomponents:httpcore:$apacheHttpVersion"
+        implementation "org.apache.httpcomponents:httpcore:$apacheHttpCoreVersion"
         implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
 

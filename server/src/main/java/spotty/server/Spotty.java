@@ -3,7 +3,10 @@ package spotty.server;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import spotty.server.connection.Connection;
-import spotty.server.handler.EchoRequestHandler;
+import spotty.server.handler.RequestHandler;
+import spotty.server.handler.RouterRequestHandler;
+import spotty.server.router.SpottyRouter;
+import spotty.server.router.route.Route;
 import spotty.server.worker.ReactorWorker;
 
 import java.io.Closeable;
@@ -37,6 +40,9 @@ public final class Spotty implements Closeable {
 
     private final int port;
     private final AtomicLong connections = new AtomicLong();
+
+    private final SpottyRouter router = new SpottyRouter();
+    private final RequestHandler requestHandler = new RouterRequestHandler(router);
 
     public Spotty() {
         this(DEFAULT_PORT);
@@ -85,6 +91,42 @@ public final class Spotty implements Closeable {
 
     public boolean isStarted() {
         return started;
+    }
+
+    public void get(String path, Route route) {
+        router.get(path, route);
+    }
+
+    public void post(String path, Route route) {
+        router.post(path, route);
+    }
+
+    public void put(String path, Route route) {
+        router.put(path, route);
+    }
+
+    public void patch(String path, Route route) {
+        router.patch(path, route);
+    }
+
+    public void delete(String path, Route route) {
+        router.delete(path, route);
+    }
+
+    public void head(String path, Route route) {
+        router.head(path, route);
+    }
+
+    public void trace(String path, Route route) {
+        router.trace(path, route);
+    }
+
+    public void connect(String path, Route route) {
+        router.connect(path, route);
+    }
+
+    public void options(String path, Route route) {
+        router.options(path, route);
     }
 
     @SneakyThrows
@@ -139,9 +181,7 @@ public final class Spotty implements Closeable {
 
         final SelectionKey key = socket.register(acceptKey.selector(), SelectionKey.OP_READ);
 
-        // TODO: routing handler
-        final EchoRequestHandler handler = new EchoRequestHandler();
-        final Connection connection = new Connection(socket, handler);
+        final Connection connection = new Connection(socket, requestHandler);
         log.info("{} accepted: {}", connection, connections.incrementAndGet());
 
         key.attach(connection);
