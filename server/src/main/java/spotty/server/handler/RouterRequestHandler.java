@@ -43,10 +43,10 @@ public final class RouterRequestHandler implements RequestHandler {
             return;
         }
 
-        if (APPLICATION_JSON.getMimeType().equals(response.contentType().getMimeType())) {
-            response.body(Json.writeValueAsBytes(result));
-        } else if (result instanceof byte[]) {
+        if (result instanceof byte[]) {
             response.body((byte[]) result);
+        } else if (APPLICATION_JSON.getMimeType().equals(response.contentType().getMimeType())) {
+            response.body(Json.writeValueAsBytes(result));
         } else {
             response.body(result.toString());
         }
