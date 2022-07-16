@@ -8,3 +8,4 @@ rootProject.name = 'spotty'
 
 include 'server'
 include 'common'
+include 'play-ground'
