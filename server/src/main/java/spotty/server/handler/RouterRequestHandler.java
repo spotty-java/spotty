@@ -11,6 +11,7 @@ import spotty.server.router.route.RouteEntry;
 
 import static org.apache.commons.lang3.Validate.notNull;
 import static org.apache.http.entity.ContentType.APPLICATION_JSON;
+import static spotty.common.http.Headers.ACCEPT;
 
 public final class RouterRequestHandler implements RequestHandler {
 
@@ -23,7 +24,12 @@ public final class RouterRequestHandler implements RequestHandler {
     @Override
     @SneakyThrows
     public void handle(SpottyInnerRequest innerRequest, SpottyResponse response) {
-        final RouteEntry routeEntry = router.getRoute(innerRequest.path(), innerRequest.method());
+        final RouteEntry routeEntry = router.getRoute(
+            innerRequest.path(),
+            innerRequest.headers().get(ACCEPT),
+            innerRequest.method()
+        );
+
         innerRequest.pathParams(routeEntry.parsePathParams(innerRequest.path()));
 
         final SpottyRequest request = new SpottyDefaultRequest(innerRequest);

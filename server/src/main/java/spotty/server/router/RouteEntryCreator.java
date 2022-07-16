@@ -27,7 +27,6 @@ final class RouteEntryCreator {
 
         final Matcher m = PATTERN.matcher(path);
 
-        String pathNormalized = path;
         String matcher = "^" + path.replace("*", ALL_REPLACEMENT) + "$";
         final ArrayList<ParamName> params = new ArrayList<>();
         while (m.find()) {
@@ -36,17 +35,20 @@ final class RouteEntryCreator {
             params.add(paramName);
 
             matcher = matcher.replace(name, PARAM_REPLACEMENT.replace("name", paramName.groupName));
-            pathNormalized = pathNormalized.replace(name, "*");
         }
 
         return RouteEntry.builder()
             .path(path)
             .httpMethod(httpMethod)
-            .pathNormalized(pathNormalized)
+            .pathNormalized(normalizePath(path))
             .matcher(Pattern.compile(matcher))
             .pathParamKeys(params)
             .route(route)
             .build();
+    }
+
+    static String normalizePath(String path) {
+        return path.replaceAll(REGEX, "*$2");
     }
 
 }

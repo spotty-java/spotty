@@ -1,3 +1,6 @@
 dependencies {
+    implementation project(":common")
     implementation project(":server")
+
+    implementation "com.sparkjava:spark-core:2.9.4"
 }

@@ -62,6 +62,27 @@ class SpottyRouterTest extends Specification {
         options == optionsFound.route
     }
 
+    def "should register routers with acceptType correctly" () {
+        given:
+        var Route get = {}
+        var Route post = {}
+        var Route put = {}
+
+        router.get("/hello", get)
+        router.post("/hello", "application/json", post)
+        router.put("/hello", "application/xml", put)
+
+        when:
+        var getFound = router.getRoute("/hello", GET)
+        var postFound = router.getRoute("/hello", "application/json", POST)
+        var putFound = router.getRoute("/hello", "application/xml", PUT)
+
+        then:
+        get == getFound.route
+        post == postFound.route
+        put == putFound.route
+    }
+
     def "should register routers with path group correctly"() {
         given:
         var Route get = {}

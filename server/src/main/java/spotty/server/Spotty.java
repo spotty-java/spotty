@@ -2,6 +2,7 @@ package spotty.server;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import spotty.common.http.HttpMethod;
 import spotty.server.connection.Connection;
 import spotty.server.handler.RequestHandler;
 import spotty.server.handler.RouterRequestHandler;
@@ -93,6 +94,10 @@ public final class Spotty implements Closeable {
         return started;
     }
 
+    public int port() {
+        return port;
+    }
+
     public void get(String path, Route route) {
         router.get(path, route);
     }
@@ -127,6 +132,58 @@ public final class Spotty implements Closeable {
 
     public void options(String path, Route route) {
         router.options(path, route);
+    }
+
+    public void get(String path, String acceptType, Route route) {
+        router.get(path, acceptType, route);
+    }
+
+    public void post(String path, String acceptType, Route route) {
+        router.post(path, acceptType, route);
+    }
+
+    public void put(String path, String acceptType, Route route) {
+        router.put(path, acceptType, route);
+    }
+
+    public void patch(String path, String acceptType, Route route) {
+        router.patch(path, acceptType, route);
+    }
+
+    public void delete(String path, String acceptType, Route route) {
+        router.delete(path, acceptType, route);
+    }
+
+    public void head(String path, String acceptType, Route route) {
+        router.head(path, acceptType, route);
+    }
+
+    public void trace(String path, String acceptType, Route route) {
+        router.trace(path, acceptType, route);
+    }
+
+    public void connect(String path, String acceptType, Route route) {
+        router.connect(path, acceptType, route);
+    }
+
+    public void options(String path, String acceptType, Route route) {
+        router.options(path, acceptType, route);
+    }
+
+    public void clearRoutes() {
+        router.clearRoutes();
+    }
+
+    public boolean removeRoute(String path) {
+        return router.removeRoute(path);
+    }
+
+    public boolean removeRoute(String path, HttpMethod method) {
+        return router.removeRoute(path, method);
+    }
+
+    public boolean removeRoute(String path, String acceptType, HttpMethod method) {
+        return router.removeRoute(path, acceptType, method);
     }
 
     @SneakyThrows

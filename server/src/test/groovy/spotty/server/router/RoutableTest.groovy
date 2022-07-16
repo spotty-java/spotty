@@ -5,6 +5,7 @@ import spotty.common.exception.SpottyException
 import spotty.common.exception.SpottyHttpException
 import spotty.server.router.route.Route
 
+import static org.apache.http.entity.ContentType.APPLICATION_JSON
 import static spotty.common.http.HttpMethod.CONNECT
 import static spotty.common.http.HttpMethod.DELETE
 import static spotty.common.http.HttpMethod.GET
@@ -65,6 +66,53 @@ class RoutableTest extends Specification {
         options == optionsFound.route
     }
 
+    def "should find routes with acceptType correctly"() {
+        given:
+        var Route getAll = {}
+        var Route getJson = {}
+        var Route getXml = {}
+        var Route postXml = {}
+
+        routable.addRoute("/hello/world", GET, getAll)
+        routable.addRoute("/hello", GET, "application/json", getJson)
+        routable.addRoute("/hello", GET, "application/xml", getXml)
+        routable.addRoute("/hello/*/:name/:last_name", POST, "application/xml", postXml)
+
+        when:
+        var getAllFound = routable.getRoute("/hello/world", GET)
+        var getJsonFound = routable.getRoute("/hello", "application/json", GET)
+        var getXmlFound = routable.getRoute("/hello", "application/xml", GET)
+
+        var postFound = routable.getRoute("/hello/you/john/doe", "application/xml", POST)
+        var postXmlFound = routable.getRoute("/hello/you/john/doe", "application/xml", POST)
+
+        then:
+        getAll == getAllFound.route
+        getJson == getJsonFound.route
+        getXml == getXmlFound.route
+        postXml == postFound.route
+        postXml == postXmlFound.route
+    }
+
+    def "should find route for any accept type"() {
+        given:
+        var Route get = {}
+        routable.addRoute("/hello/*/:name", GET, get)
+
+        when:
+        var getFound = routable.getRoute("/hello/my/world", acceptType, GET)
+
+        then:
+        get == getFound.route
+
+        where:
+        acceptType         | _
+        "application/json" | _
+        "application/xml"  | _
+        "unregistered"     | _
+        null               | _
+    }
+
     def "should find most suitable route"() {
         given:
         var Route route1 = {}
@@ -116,7 +164,7 @@ class RoutableTest extends Specification {
         "/product/:id/name/:category" | "/product/*/name/*"
     }
 
-    def "should throw an exception when route not found"() {
+    def "should throw an exception when route not found by http method"() {
         given:
         routable.addRoute("/hello", GET, {})
         routable.addRoute("/hello", POST, {})
@@ -125,6 +173,102 @@ class RoutableTest extends Specification {
         routable.getRoute("/hello", DELETE)
 
         then:
+        var e = thrown SpottyHttpException
+        e.status == NOT_FOUND
+    }
+
+    def "should throw an exception when route not found by accept type"() {
+        given:
+        var Route get = {}
+        routable.addRoute("/hello", GET, "application/json", get)
+
+        when:
+        var getFound = routable.getRoute("/hello", "application/json", GET)
+
+        // should throw an exception
+        routable.getRoute("/hello", acceptType, GET)
+
+        then:
+        get == getFound.route
+        var e = thrown SpottyHttpException
+        e.status == NOT_FOUND
+
+        where:
+        acceptType        | _
+        "application/xml" | _
+        "unregistered"    | _
+        null              | _
+    }
+
+    def "should remove route correctly"() {
+        given:
+        var Route post = {}
+        routable.addRoute("/hello/:name", GET, {})
+        routable.addRoute("/hello/:name", POST, post)
+
+        when:
+        // no exception
+        routable.getRoute("/hello/bob", GET)
+        var postFound = routable.getRoute("/hello/john", POST)
+
+        var isRemoved = routable.removeRoute("/hello/:name")
+
+        // should throw an exception
+        routable.getRoute("/hello/alex", GET)
+
+        then:
+        isRemoved
+        post == postFound.route
+        var e = thrown SpottyHttpException
+        e.status == NOT_FOUND
+    }
+
+    def "should remove route by method correctly"() {
+        given:
+        var Route post = {}
+        routable.addRoute("/hello/:name", GET, {})
+        routable.addRoute("/hello/:name", POST, post)
+
+        when:
+        // no exception
+        routable.getRoute("/hello/alex", GET)
+        routable.getRoute("/hello/alex", POST)
+
+        var isRemoved = routable.removeRoute("/hello/:name", GET)
+
+        var routeFound = routable.getRoute("/hello/alex", POST)
+
+        // should throw an exception
+        routable.getRoute("/hello/alex", GET)
+
+        then:
+        isRemoved
+        post == routeFound.route
+        var e = thrown SpottyHttpException
+        e.status == NOT_FOUND
+    }
+
+    def "should remove by acceptType correctly"() {
+        given:
+        var Route post = {}
+        routable.addRoute("/hello/:name", GET, APPLICATION_JSON.getMimeType(), {})
+        routable.addRoute("/hello/:name", POST, APPLICATION_JSON.getMimeType(), post)
+
+        when:
+        // no exception
+        routable.getRoute("/hello/alex", APPLICATION_JSON.getMimeType(), GET)
+        routable.getRoute("/hello/alex", APPLICATION_JSON.getMimeType(), POST)
+
+        var isRemoved = routable.removeRoute("/hello/:name", APPLICATION_JSON.getMimeType(), GET)
+
+        var routeFound = routable.getRoute("/hello/alex", APPLICATION_JSON.getMimeType(), POST)
+
+        // should throw an exception
+        routable.getRoute("/hello/alex", APPLICATION_JSON.getMimeType(), GET)
+
+        then:
+        isRemoved
+        post == routeFound.route
         var e = thrown SpottyHttpException
         e.status == NOT_FOUND
     }
