@@ -8,6 +8,7 @@ import static spotty.common.http.HttpMethod.GET
 import static spotty.server.router.RouteEntryCreator.ALL_REPLACEMENT
 import static spotty.server.router.RouteEntryCreator.PARAM_REPLACEMENT
 import static spotty.server.router.RouteEntryCreator.create
+import static spotty.server.router.RouteEntryCreator.normalizePath
 
 class RouteEntryCreatorTest extends Specification {
 
@@ -56,10 +57,10 @@ class RouteEntryCreatorTest extends Specification {
 
     def "should normalize path correctly"() {
         when:
-        var routeEntry = create(template, GET, {})
+        var result = normalizePath(template)
 
         then:
-        routeEntry.pathNormalized == pathNormalized
+        result == pathNormalized
 
         where:
         template                              | pathNormalized
