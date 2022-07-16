@@ -6,9 +6,7 @@ class PathParamsTest extends Specification {
 
     def "should return clone of map"() {
         given:
-        var expected = new HashMap<String, String>()
-        expected.put("name", "ivan")
-        expected.put("email", "email@email.com")
+        var expected = [name: "John", email: "email@email.com"]
 
         when:
         var params = PathParams.of(expected)
@@ -19,10 +17,7 @@ class PathParamsTest extends Specification {
 
     def "should not be infected by map changing outside"() {
         given:
-        var map = new HashMap<String, String>()
-        map.put("name", "ivan")
-        map.put("email", "email@email.com")
-
+        var map = [name: "John", email: "email@email.com"]
         var expected = new HashMap<String, String>(map)
 
         when:

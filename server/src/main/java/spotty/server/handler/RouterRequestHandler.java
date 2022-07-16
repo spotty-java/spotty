@@ -6,7 +6,7 @@ import spotty.common.request.SpottyDefaultRequest;
 import spotty.common.request.SpottyInnerRequest;
 import spotty.common.request.SpottyRequest;
 import spotty.common.response.SpottyResponse;
-import spotty.server.router.Routable;
+import spotty.server.router.SpottyRouter;
 import spotty.server.router.route.RouteEntry;
 
 import static org.apache.commons.lang3.Validate.notNull;
@@ -14,16 +14,16 @@ import static org.apache.http.entity.ContentType.APPLICATION_JSON;
 
 public final class RouterRequestHandler implements RequestHandler {
 
-    private final Routable routable;
+    private final SpottyRouter router;
 
-    public RouterRequestHandler(Routable routable) {
-        this.routable = notNull(routable, "routable");
+    public RouterRequestHandler(SpottyRouter router) {
+        this.router = notNull(router, "router");
     }
 
     @Override
     @SneakyThrows
     public void handle(SpottyInnerRequest innerRequest, SpottyResponse response) {
-        final RouteEntry routeEntry = routable.getRoute(innerRequest.path(), innerRequest.method());
+        final RouteEntry routeEntry = router.getRoute(innerRequest.path(), innerRequest.method());
         innerRequest.pathParams(routeEntry.parsePathParams(innerRequest.path()));
 
         final SpottyRequest request = new SpottyDefaultRequest(innerRequest);

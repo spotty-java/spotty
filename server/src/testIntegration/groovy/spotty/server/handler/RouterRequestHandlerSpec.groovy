@@ -1,16 +1,9 @@
 package spotty.server.handler
 
-import spock.lang.Specification
 import spotty.server.AppTestContext
 import spotty.server.http.HttpClient
 
-import static spotty.server.AppTestContext.SPOTTY
-
-class RouterRequestHandlerSpec extends Specification {
-
-    def cleanupSpec() {
-        AppTestContext.clean()
-    }
+class RouterRequestHandlerSpec extends AppTestContext {
 
     def "should respond with query params correctly"() {
         given:

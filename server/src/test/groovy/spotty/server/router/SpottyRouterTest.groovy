@@ -15,8 +15,7 @@ import static spotty.common.http.HttpMethod.TRACE
 
 class SpottyRouterTest extends Specification {
 
-    private def routable = new Routable()
-    private def router = new SpottyRouter(routable)
+    private def router = new SpottyRouter()
 
     def "should register routers correctly"() {
         given:
@@ -41,15 +40,15 @@ class SpottyRouterTest extends Specification {
         router.options("/hello", options)
 
         when:
-        var getFound = routable.getRoute("/hello", GET)
-        var postFound = routable.getRoute("/hello", POST)
-        var putFound = routable.getRoute("/hello", PUT)
-        var patchFound = routable.getRoute("/hello", PATCH)
-        var deleteFound = routable.getRoute("/hello", DELETE)
-        var headFound = routable.getRoute("/hello", HEAD)
-        var traceFound = routable.getRoute("/hello", TRACE)
-        var connectFound = routable.getRoute("/hello", CONNECT)
-        var optionsFound = routable.getRoute("/hello", OPTIONS)
+        var getFound = router.getRoute("/hello", GET)
+        var postFound = router.getRoute("/hello", POST)
+        var putFound = router.getRoute("/hello", PUT)
+        var patchFound = router.getRoute("/hello", PATCH)
+        var deleteFound = router.getRoute("/hello", DELETE)
+        var headFound = router.getRoute("/hello", HEAD)
+        var traceFound = router.getRoute("/hello", TRACE)
+        var connectFound = router.getRoute("/hello", CONNECT)
+        var optionsFound = router.getRoute("/hello", OPTIONS)
 
         then:
         get == getFound.route
@@ -74,8 +73,8 @@ class SpottyRouterTest extends Specification {
         })
 
         when:
-        var getFound = routable.getRoute("/user/hello", GET)
-        var postFound = routable.getRoute("/user/hello", POST)
+        var getFound = router.getRoute("/user/hello", GET)
+        var postFound = router.getRoute("/user/hello", POST)
 
         then:
         get == getFound.route
@@ -106,11 +105,11 @@ class SpottyRouterTest extends Specification {
         })
 
         when:
-        var getFound = routable.getRoute("/api/v1/user/hello", GET)
-        var postFound = routable.getRoute("/api/v1/user/hello", POST)
-        var putFound = routable.getRoute("/api/put", PUT)
-        var patchFound = routable.getRoute("/api/v1/patch", PATCH)
-        var deleteFound = routable.getRoute("/api/v1/user", DELETE)
+        var getFound = router.getRoute("/api/v1/user/hello", GET)
+        var postFound = router.getRoute("/api/v1/user/hello", POST)
+        var putFound = router.getRoute("/api/put", PUT)
+        var patchFound = router.getRoute("/api/v1/patch", PATCH)
+        var deleteFound = router.getRoute("/api/v1/user", DELETE)
 
         then:
         router.getPathPrefix() == ""

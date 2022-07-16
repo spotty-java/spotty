@@ -14,6 +14,8 @@ public final class QueryParams {
     public static final QueryParams EMPTY = new QueryParams();
     private final Map<String, Set<String>> params = new HashMap<>();
 
+    private Map<String, Set<String>> immutableCopy;
+
     private QueryParams() {
 
     }
@@ -44,26 +46,33 @@ public final class QueryParams {
     }
 
     public Set<String> params() {
-        return params.keySet();
+        return unmodifiableSet(params.keySet());
     }
 
     public Set<String> params(String name) {
-        return new HashSet<>(params.get(name));
+        return unmodifiableSet(params.get(name));
     }
 
     public Map<String, Set<String>> paramsMap() {
-        final Map<String, Set<String>> params = new HashMap<>(this.params.size());
+        if (immutableCopy == null) {
+            immutableCopy = deepCopy(params);
+        }
 
-        this.params.forEach((name, value) ->
-            params.put(name, unmodifiableSet(value))
-        );
-
-        return unmodifiableMap(params);
+        return immutableCopy;
     }
 
     private void add(String name, String value) {
         params.computeIfAbsent(name, __ -> new HashSet<>())
             .add(value);
+    }
+
+    private Map<String, Set<String>> deepCopy(Map<String, Set<String>> map) {
+        final Map<String, Set<String>> copy = new HashMap<>();
+        map.forEach((name, value) ->
+            copy.put(name, unmodifiableSet(value))
+        );
+
+        return unmodifiableMap(copy);
     }
 
     @Override

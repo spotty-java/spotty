@@ -1,6 +1,7 @@
 package spotty.server.router;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.http.HttpMethod;
@@ -20,11 +21,12 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.Validate.notNull;
 import static spotty.common.http.HttpStatus.NOT_FOUND;
 
-public final class Routable {
+@VisibleForTesting
+final class Routable {
     final SortedList sortedList = new SortedList();
     final Map<String, Map<HttpMethod, RouteEntry>> routes = new HashMap<>();
 
-    public void addRoute(String routePath, HttpMethod method, Route route) {
+    void addRoute(String routePath, HttpMethod method, Route route) {
         notNull(method, "method is null");
         notNull(route, "route is null");
 
@@ -49,7 +51,7 @@ public final class Routable {
     }
 
     @NotNull
-    public RouteEntry getRoute(String rawPath, HttpMethod method) throws SpottyHttpException {
+    RouteEntry getRoute(String rawPath, HttpMethod method) throws SpottyHttpException {
         Map<HttpMethod, RouteEntry> routes = this.routes.get(rawPath);
         if (routes == null) {
             routes = findMatch(rawPath);

@@ -1,16 +1,20 @@
 package spotty.server
 
-class AppTestContext {
+import spock.lang.Shared
+import spock.lang.Specification
 
-    public static Spotty SPOTTY
+abstract class AppTestContext extends Specification {
 
-    static {
+    @Shared
+    protected Spotty SPOTTY
+
+    def setupSpec() {
         SPOTTY = new Spotty(5050)
         SPOTTY.start()
         SPOTTY.awaitUntilStart()
     }
 
-    static void clean() {
+    def cleanupSpec() {
         SPOTTY.close()
         SPOTTY.awaitUntilStop()
     }

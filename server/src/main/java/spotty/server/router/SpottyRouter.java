@@ -2,7 +2,10 @@ package spotty.server.router;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
+import spotty.common.exception.SpottyHttpException;
+import spotty.common.http.HttpMethod;
 import spotty.server.router.route.Route;
+import spotty.server.router.route.RouteEntry;
 import spotty.server.router.route.RouteGroup;
 
 import java.util.Deque;
@@ -21,11 +24,7 @@ import static spotty.common.http.HttpMethod.TRACE;
 public final class SpottyRouter {
 
     private final Deque<String> pathPrefixStack = new LinkedList<>();
-    private final Routable routable;
-
-    public SpottyRouter(Routable routable) {
-        this.routable = routable;
-    }
+    private final Routable routable = new Routable();
 
     public void path(String path, RouteGroup group) {
         pathPrefixStack.addLast(path);
@@ -67,6 +66,10 @@ public final class SpottyRouter {
 
     public void options(String path, Route route) {
         routable.addRoute(pathWithPrefix(path), OPTIONS, route);
+    }
+
+    public RouteEntry getRoute(String rawPath, HttpMethod method) throws SpottyHttpException {
+        return routable.getRoute(rawPath, method);
     }
 
     @NotNull
