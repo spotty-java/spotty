@@ -24,7 +24,7 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     private final QueryParams queryParams;
     private final PathParams pathParams;
     private final int contentLength;
-    private final Optional<ContentType> contentType;
+    private final ContentType contentType;
     private final Headers headers;
     private final byte[] body;
 
@@ -87,7 +87,7 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     }
 
     @Override
-    public Optional<ContentType> contentType() {
+    public ContentType contentType() {
         return contentType;
     }
 
@@ -127,8 +127,8 @@ public final class SpottyDefaultRequest implements SpottyRequest {
         if (o == null || getClass() != o.getClass()) return false;
         SpottyDefaultRequest that = (SpottyDefaultRequest) o;
 
-        final String thisContentType = contentType.map(ContentType::toString).orElse("");
-        final String thatContentType = that.contentType.map(ContentType::toString).orElse("");
+        final String contentMimeType = contentType == null ? null : contentType.getMimeType();
+        final String thatContentMimeType = that.contentType == null ? null : that.contentType.getMimeType();
 
         return contentLength == that.contentLength
             && Objects.equals(protocol, that.protocol)
@@ -137,15 +137,15 @@ public final class SpottyDefaultRequest implements SpottyRequest {
             && Objects.equals(queryParams, that.queryParams)
             && Objects.equals(pathParams, that.pathParams)
             && Objects.equals(path, that.path)
-            && Objects.equals(thisContentType, thatContentType)
+            && Objects.equals(contentMimeType, thatContentMimeType)
             && Arrays.equals(body, that.body)
             && Objects.equals(headers, that.headers);
     }
 
     @Override
     public int hashCode() {
-        int contentTypeHash = contentType.map(ContentType::toString).map(String::hashCode).orElse(0);
-        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentTypeHash, headers);
+        final String contentMimeType = contentType == null ? null : contentType.getMimeType();
+        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentMimeType, headers);
         result = 31 * result + Arrays.hashCode(body);
         return result;
     }

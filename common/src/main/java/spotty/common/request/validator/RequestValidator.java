@@ -21,7 +21,7 @@ public final class RequestValidator {
             throw new SpottyHttpException(BAD_REQUEST, "invalid " + CONTENT_LENGTH);
         }
 
-        if (!request.contentType().isPresent()) {
+        if (request.contentType() == null) {
             log.warn("empty " + CONTENT_TYPE);
         }
 

@@ -20,7 +20,7 @@ public interface SpottyRequest {
 
     int contentLength();
 
-    Optional<ContentType> contentType();
+    ContentType contentType();
 
     Headers headers();
 

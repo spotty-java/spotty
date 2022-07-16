@@ -7,7 +7,10 @@ public final class EchoRequestHandler implements RequestHandler {
 
     @Override
     public void handle(SpottyInnerRequest innerRequest, SpottyResponse response) {
-        innerRequest.contentType().ifPresent(response::contentType);
+        if (innerRequest.contentType() != null) {
+            response.contentType(innerRequest.contentType());
+        }
+
         response.body(innerRequest.body());
     }
 }
