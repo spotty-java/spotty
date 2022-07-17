@@ -29,28 +29,31 @@ public final class SpottyResponse {
         return status;
     }
 
-    public void status(HttpStatus status) {
+    public SpottyResponse status(HttpStatus status) {
         this.status = status;
+        return this;
     }
 
     public ContentType contentType() {
         return contentType;
     }
 
-    public void contentType(ContentType contentType) {
+    public SpottyResponse contentType(ContentType contentType) {
         this.contentType = contentType;
+        return this;
     }
 
     public byte[] body() {
         return body;
     }
 
-    public void body(String body) {
-        body(body == null ? null :body.getBytes());
+    public SpottyResponse body(String body) {
+        return body(body == null ? null : body.getBytes());
     }
 
-    public void body(byte[] body) {
+    public SpottyResponse body(byte[] body) {
         this.body = body;
+        return this;
     }
 
     public int contentLength() {
@@ -61,17 +64,20 @@ public final class SpottyResponse {
         return headers;
     }
 
-    public void addHeader(String name, String value) {
+    public SpottyResponse addHeader(String name, String value) {
         this.headers.add(name, value);
+        return this;
     }
 
-    public void addHeaders(Headers headers) {
+    public SpottyResponse addHeaders(Headers headers) {
         this.headers.add(headers);
+        return this;
     }
 
-    public void replaceHeaders(Headers headers) {
+    public SpottyResponse replaceHeaders(Headers headers) {
         this.headers.clear();
         this.headers.add(headers);
+        return this;
     }
 
     public void reset() {

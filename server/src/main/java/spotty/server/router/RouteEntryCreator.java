@@ -18,7 +18,7 @@ final class RouteEntryCreator {
     private static final Pattern PATTERN = Pattern.compile(REGEX);
 
     public static final String PARAM_REPLACEMENT = "(?<name>\\w+?)";
-    public static final String ALL_REPLACEMENT = "(.+?)";
+    public static final String ALL_REPLACEMENT = "(.*?)";
 
     static RouteEntry create(String path, HttpMethod httpMethod, Route route) {
         notNull(path, "path");

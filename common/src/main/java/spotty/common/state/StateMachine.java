@@ -34,15 +34,8 @@ public abstract class StateMachine<S extends Enum<S>> {
     }
 
     public synchronized void whenStateIs(@NotNull S state, @NotNull Consumer<S> subscriber) {
-        subscribers.compute(state, (__, subs) -> {
-            List<Consumer<S>> stateSubscribers = subs;
-            if (stateSubscribers == null) {
-                stateSubscribers = new ArrayList<>();
-            }
-
-            stateSubscribers.add(subscriber);
-            return stateSubscribers;
-        });
+        subscribers.computeIfAbsent(state, __ -> new ArrayList<>())
+            .add(subscriber);
     }
 
     protected synchronized boolean changeState(@NotNull S newState) {

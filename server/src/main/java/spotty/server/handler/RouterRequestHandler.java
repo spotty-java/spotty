@@ -22,8 +22,7 @@ public final class RouterRequestHandler implements RequestHandler {
     }
 
     @Override
-    @SneakyThrows
-    public void handle(SpottyInnerRequest innerRequest, SpottyResponse response) {
+    public void handle(SpottyInnerRequest innerRequest, SpottyResponse response) throws Exception {
         final RouteEntry routeEntry = router.getRoute(
             innerRequest.path(),
             innerRequest.headers().get(ACCEPT),

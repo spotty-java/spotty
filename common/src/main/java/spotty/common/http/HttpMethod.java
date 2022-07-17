@@ -3,7 +3,9 @@ package spotty.common.http;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public enum HttpMethod {
     GET,
@@ -16,12 +18,28 @@ public enum HttpMethod {
     CONNECT,
     OPTIONS;
 
-    private static final Map<String, HttpMethod> MAPPINGS = new HashMap<>(16);
+    private static final Map<String, HttpMethod> MAPPINGS = new HashMap<>();
+    private static final Set<HttpMethod> CONTENT_LENGTH_REQUIRED = new HashSet<>();
 
     static {
         for (HttpMethod httpMethod : values()) {
             MAPPINGS.put(httpMethod.name(), httpMethod);
         }
+
+        CONTENT_LENGTH_REQUIRED.add(POST);
+        CONTENT_LENGTH_REQUIRED.add(PUT);
+        CONTENT_LENGTH_REQUIRED.add(PATCH);
+        CONTENT_LENGTH_REQUIRED.add(DELETE);
+    }
+
+    /**
+     * Check if http method required content-length header
+     *
+     * @param method http method to check
+     * @return true if http method is required content-length header
+     */
+    public static boolean isContentLengthRequired(HttpMethod method) {
+        return CONTENT_LENGTH_REQUIRED.contains(method);
     }
 
     /**

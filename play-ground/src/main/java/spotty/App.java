@@ -7,7 +7,11 @@ public class App {
         final Spotty spotty = new Spotty();
         spotty.start();
 
-        spotty.post("/", (request, response) -> {
+        spotty.get("/", (request, response) -> {
+            response.contentType(request.contentType());
+            return request.body();
+        });
+        spotty.post("/*", (request, response) -> {
             response.contentType(request.contentType());
             return request.body();
         });

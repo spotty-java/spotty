@@ -5,6 +5,7 @@ public enum ConnectionProcessorState {
     READING_REQUEST_HEAD_LINE,
     HEADERS_READY_TO_READ,
     READING_HEADERS,
+    PREPARE_HEADERS,
     BODY_READY_TO_READ,
     READING_BODY,
     BODY_READY,
