@@ -21,3 +21,31 @@ shadowJar {
 }
 
 build.dependsOn += shadowJar
+
+def spottySrc = "$buildDir/generated/sources/spotty/java/main"
+sourceSets {
+    main {
+        java {
+            srcDir spottySrc
+        }
+    }
+}
+
+task spottyVersionTask {
+    doLast {
+        def file = file("$spottySrc/spotty/SpottyVersion.java")
+        if (!file.exists()) {
+            file.parentFile.mkdirs()
+        }
+
+        file.text = """
+            package spotty;
+        
+            public final class SpottyVersion { 
+                public static final String VERSION = "$version"; 
+            }
+        """.stripIndent().trim()
+    }
+}
+
+compileJava.dependsOn spottyVersionTask
