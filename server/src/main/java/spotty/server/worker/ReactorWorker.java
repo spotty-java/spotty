@@ -20,8 +20,6 @@ public final class ReactorWorker implements Closeable {
 
     private static volatile ReactorWorker INSTANCE;
 
-    private final BlockingQueue<ReactorAction> requests = new LinkedBlockingQueue<>();
-    private final ExecutorService CONSUMER = Executors.newSingleThreadExecutor();
     private final ExecutorService WORKERS;
 
     public static void init() {
@@ -58,33 +56,18 @@ public final class ReactorWorker implements Closeable {
             SECONDS,
             new LinkedBlockingQueue<>()
         );
-
-        CONSUMER.execute(this::pollingActions);
     }
 
     public void addAction(ReactorAction action) {
-        requests.add(action);
+        WORKERS.execute(() -> callAction(action));
     }
 
     @Override
     public void close() {
         try {
             WORKERS.shutdownNow();
-            CONSUMER.shutdownNow();
-            requests.clear();
         } catch (Exception e) {
             // ignore
-        }
-    }
-
-    private void pollingActions() {
-        try {
-            while (!Thread.currentThread().isInterrupted()) {
-                final ReactorAction action = requests.take();
-                WORKERS.execute(() -> callAction(action));
-            }
-        } catch (Exception e) {
-            log.error("reactor polling error", e);
         }
     }
 
