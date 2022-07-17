@@ -37,6 +37,10 @@ class HttpClient implements Closeable {
         return IOUtils.toString(response.entity.content, UTF_8)
     }
 
+    HttpResponse getResponse(String url) {
+        return client.execute(new HttpGet(url))
+    }
+
     @Override
     void close() {
         try {

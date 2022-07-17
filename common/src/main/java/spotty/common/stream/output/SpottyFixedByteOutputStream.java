@@ -137,7 +137,7 @@ public final class SpottyFixedByteOutputStream extends OutputStream {
 
     private void ensureCapacity() {
         if (size >= limit) {
-            throw new IndexOutOfBoundsException("limit");
+            throw new IndexOutOfBoundsException("not enough capacity size: " + size + " limit: " + limit);
         }
     }
 }
