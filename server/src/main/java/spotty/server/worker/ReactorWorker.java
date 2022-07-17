@@ -1,12 +1,12 @@
 package spotty.server.worker;
 
 import lombok.extern.slf4j.Slf4j;
+import spotty.common.exception.SpottyException;
 import spotty.server.worker.action.ReactorAction;
 
 import java.io.Closeable;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -58,8 +58,8 @@ public final class ReactorWorker implements Closeable {
         );
     }
 
-    public void addAction(ReactorAction action) {
-        WORKERS.execute(() -> callAction(action));
+    public CompletableFuture<Void> addAction(ReactorAction action) {
+        return CompletableFuture.runAsync(() -> callAction(action), WORKERS);
     }
 
     @Override
@@ -75,7 +75,11 @@ public final class ReactorWorker implements Closeable {
         try {
             action.call();
         } catch (Exception e) {
-            log.error("reactor handle action error", e);
+            if (e instanceof SpottyException) {
+                throw (SpottyException) e;
+            }
+
+            throw new SpottyException(e);
         }
     }
 }
