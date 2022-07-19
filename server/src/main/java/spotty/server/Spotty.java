@@ -100,8 +100,8 @@ public final class Spotty implements Closeable {
         return port;
     }
 
-    public void path(String path, RouteGroup group) {
-        router.path(path, group);
+    public void path(String pathTemplate, RouteGroup group) {
+        router.path(pathTemplate, group);
     }
 
     public void before(Filter filter, Filter... filters) {
@@ -120,92 +120,92 @@ public final class Spotty implements Closeable {
         router.after(pathTemplate, filter, filters);
     }
 
-    public void get(String path, Route route) {
-        router.get(path, route);
+    public void get(String pathTemplate, Route route) {
+        router.get(pathTemplate, route);
     }
 
-    public void post(String path, Route route) {
-        router.post(path, route);
+    public void post(String pathTemplate, Route route) {
+        router.post(pathTemplate, route);
     }
 
-    public void put(String path, Route route) {
-        router.put(path, route);
+    public void put(String pathTemplate, Route route) {
+        router.put(pathTemplate, route);
     }
 
-    public void patch(String path, Route route) {
-        router.patch(path, route);
+    public void patch(String pathTemplate, Route route) {
+        router.patch(pathTemplate, route);
     }
 
-    public void delete(String path, Route route) {
-        router.delete(path, route);
+    public void delete(String pathTemplate, Route route) {
+        router.delete(pathTemplate, route);
     }
 
-    public void head(String path, Route route) {
-        router.head(path, route);
+    public void head(String pathTemplate, Route route) {
+        router.head(pathTemplate, route);
     }
 
-    public void trace(String path, Route route) {
-        router.trace(path, route);
+    public void trace(String pathTemplate, Route route) {
+        router.trace(pathTemplate, route);
     }
 
-    public void connect(String path, Route route) {
-        router.connect(path, route);
+    public void connect(String pathTemplate, Route route) {
+        router.connect(pathTemplate, route);
     }
 
-    public void options(String path, Route route) {
-        router.options(path, route);
+    public void options(String pathTemplate, Route route) {
+        router.options(pathTemplate, route);
     }
 
-    public void get(String path, String acceptType, Route route) {
-        router.get(path, acceptType, route);
+    public void get(String pathTemplate, String acceptType, Route route) {
+        router.get(pathTemplate, acceptType, route);
     }
 
-    public void post(String path, String acceptType, Route route) {
-        router.post(path, acceptType, route);
+    public void post(String pathTemplate, String acceptType, Route route) {
+        router.post(pathTemplate, acceptType, route);
     }
 
-    public void put(String path, String acceptType, Route route) {
-        router.put(path, acceptType, route);
+    public void put(String pathTemplate, String acceptType, Route route) {
+        router.put(pathTemplate, acceptType, route);
     }
 
-    public void patch(String path, String acceptType, Route route) {
-        router.patch(path, acceptType, route);
+    public void patch(String pathTemplate, String acceptType, Route route) {
+        router.patch(pathTemplate, acceptType, route);
     }
 
-    public void delete(String path, String acceptType, Route route) {
-        router.delete(path, acceptType, route);
+    public void delete(String pathTemplate, String acceptType, Route route) {
+        router.delete(pathTemplate, acceptType, route);
     }
 
-    public void head(String path, String acceptType, Route route) {
-        router.head(path, acceptType, route);
+    public void head(String pathTemplate, String acceptType, Route route) {
+        router.head(pathTemplate, acceptType, route);
     }
 
-    public void trace(String path, String acceptType, Route route) {
-        router.trace(path, acceptType, route);
+    public void trace(String pathTemplate, String acceptType, Route route) {
+        router.trace(pathTemplate, acceptType, route);
     }
 
-    public void connect(String path, String acceptType, Route route) {
-        router.connect(path, acceptType, route);
+    public void connect(String pathTemplate, String acceptType, Route route) {
+        router.connect(pathTemplate, acceptType, route);
     }
 
-    public void options(String path, String acceptType, Route route) {
-        router.options(path, acceptType, route);
+    public void options(String pathTemplate, String acceptType, Route route) {
+        router.options(pathTemplate, acceptType, route);
     }
 
     public void clearRoutes() {
         router.clearRoutes();
     }
 
-    public boolean removeRoute(String path) {
-        return router.removeRoute(path);
+    public boolean removeRoute(String pathTemplate) {
+        return router.removeRoute(pathTemplate);
     }
 
-    public boolean removeRoute(String path, HttpMethod method) {
-        return router.removeRoute(path, method);
+    public boolean removeRoute(String pathTemplate, HttpMethod method) {
+        return router.removeRoute(pathTemplate, method);
     }
 
-    public boolean removeRoute(String path, String acceptType, HttpMethod method) {
-        return router.removeRoute(path, acceptType, method);
+    public boolean removeRoute(String pathTemplate, String acceptType, HttpMethod method) {
+        return router.removeRoute(pathTemplate, acceptType, method);
     }
 
     @SneakyThrows

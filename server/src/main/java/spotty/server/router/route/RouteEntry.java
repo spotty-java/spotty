@@ -4,15 +4,18 @@ import spotty.common.exception.SpottyException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
 import spotty.common.request.params.PathParams;
+import spotty.common.utils.EmptyLinkedHashSet;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static spotty.common.utils.EmptyArrayList.emptyArrayList;
+import static spotty.common.utils.EmptyLinkedHashSet.emptyLinkedHashSet;
 
 public final class RouteEntry {
     private String pathTemplate;
@@ -21,8 +24,8 @@ public final class RouteEntry {
     private HttpMethod httpMethod;
     private Route route;
     private Pattern matcher;
-    private ArrayList<Filter> beforeFilters = emptyArrayList(); // ArrayList for optimization, because forEach uses fori
-    private ArrayList<Filter> afterFilters = emptyArrayList(); // ArrayList for optimization, because forEach uses fori
+    private Set<Filter> beforeFilters = emptyLinkedHashSet();
+    private Set<Filter> afterFilters = emptyLinkedHashSet();
 
     public boolean matches(String rawPath) {
         return matcher.matcher(rawPath).matches();
@@ -96,28 +99,26 @@ public final class RouteEntry {
         return this;
     }
 
-    public ArrayList<Filter> beforeFilters() {
+    public Set<Filter> beforeFilters() {
         return beforeFilters;
     }
 
-    public RouteEntry addBeforeFilters(List<Filter> beforeFilters) {
-        final ArrayList<Filter> empty = emptyArrayList();
-        if (this.beforeFilters == empty) {
-            this.beforeFilters = new ArrayList<>();
+    public RouteEntry addBeforeFilters(Collection<Filter> beforeFilters) {
+        if (this.beforeFilters.getClass() == EmptyLinkedHashSet.class) {
+            this.beforeFilters = new LinkedHashSet<>();
         }
 
         this.beforeFilters.addAll(beforeFilters);
         return this;
     }
 
-    public ArrayList<Filter> afterFilters() {
+    public Set<Filter> afterFilters() {
         return afterFilters;
     }
 
-    public RouteEntry addAfterFilters(List<Filter> afterFilters) {
-        final ArrayList<Filter> empty = emptyArrayList();
-        if (this.afterFilters == empty) {
-            this.afterFilters = new ArrayList<>();
+    public RouteEntry addAfterFilters(Collection<Filter> afterFilters) {
+        if (this.afterFilters.getClass() == EmptyLinkedHashSet.class) {
+            this.afterFilters = new LinkedHashSet<>();
         }
 
         this.afterFilters.addAll(afterFilters);

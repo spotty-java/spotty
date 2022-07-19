@@ -96,13 +96,13 @@ class SpottyRouterSpec extends AppTestContext {
 
     def "should execute beforeAll filters"() {
         given:
-        SPOTTY.get("/", { req, res -> "/" })
-        SPOTTY.get("/hello", { req, res -> "hello" })
-        SPOTTY.get("/product", { req, res -> "product" })
-
         var Filter filter1 = Mock(Filter.class)
         var Filter filter2 = Mock(Filter.class)
         SPOTTY.before(filter1, filter2)
+
+        SPOTTY.get("/", { req, res -> "/" })
+        SPOTTY.get("/hello", { req, res -> "hello" })
+        SPOTTY.get("/product", { req, res -> "product" })
 
         when:
         httpClient.get("/")
@@ -137,8 +137,8 @@ class SpottyRouterSpec extends AppTestContext {
     def "should execute afterAll filters when route thrown an exception"() {
         given:
         SPOTTY.get("/hello", { req, res -> throw new Exception() })
-        var Filter filter = Mock(Filter.class)
 
+        var Filter filter = Mock(Filter.class)
         SPOTTY.after(filter)
 
         when:
@@ -151,9 +151,6 @@ class SpottyRouterSpec extends AppTestContext {
 
     def "should execute before filter by path template"() {
         given:
-        SPOTTY.get("/hello", { req, res -> "hello" })
-        SPOTTY.get("/hello/:name", { req, res -> "hello" })
-
         var Filter helloFilter = Mock(Filter.class)
         var Filter afterHelloFilter = Mock(Filter.class)
         var Filter nonHelloFilter = Mock(Filter.class)
@@ -161,6 +158,9 @@ class SpottyRouterSpec extends AppTestContext {
         SPOTTY.before("/bye", nonHelloFilter)
         SPOTTY.before("/hello", helloFilter)
         SPOTTY.before("/hello/*", afterHelloFilter)
+
+        SPOTTY.get("/hello", { req, res -> "hello" })
+        SPOTTY.get("/hello/:name", { req, res -> "hello" })
 
         when:
         httpClient.get("/hello")
@@ -180,16 +180,17 @@ class SpottyRouterSpec extends AppTestContext {
         var Filter after2 = Mock(Filter.class)
 
         SPOTTY.path("/hello", {
-            SPOTTY.get("", {req, res -> ""})
+            SPOTTY.before(before1)
 
+            SPOTTY.get("", {req, res -> ""})
             SPOTTY.path("/*", {
+                SPOTTY.before(before2)
+
                 SPOTTY.get("/man", {req, res -> ""})
 
-                SPOTTY.before(before2)
                 SPOTTY.after(after2)
             })
 
-            SPOTTY.before(before1)
             SPOTTY.after(after1)
         })
 
@@ -202,5 +203,33 @@ class SpottyRouterSpec extends AppTestContext {
         1 * after2.handle(_, _)
         2 * before1.handle(_, _)
         2 * after1.handle(_, _)
+    }
+
+    def "should execute filters in registered order" () {
+        given:
+        var Filter before1 = Mock(Filter.class)
+        var Filter before2 = Mock(Filter.class)
+        var Filter after1 = Mock(Filter.class)
+        var Filter after2 = Mock(Filter.class)
+
+        SPOTTY.after("/hello", after1, after2)
+        SPOTTY.before("/hello", before1, before2)
+
+        SPOTTY.get("/hello", {req , res -> ""})
+
+        when:
+        httpClient.get("/hello")
+
+        then:
+        1 * before1.handle(_, _)
+
+        then:
+        1 * before2.handle(_, _)
+
+        then:
+        1 * after1.handle(_, _)
+
+        then:
+        1 * after2.handle(_, _)
     }
 }

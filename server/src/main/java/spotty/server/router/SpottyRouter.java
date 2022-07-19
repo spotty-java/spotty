@@ -1,8 +1,8 @@
 package spotty.server.router;
 
+import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
-import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
@@ -33,8 +33,11 @@ public final class SpottyRouter {
     private final Deque<String> pathPrefixStack = new LinkedList<>();
     private final Routable routable = new Routable();
 
-    public void path(String path, RouteGroup group) {
-        pathPrefixStack.addLast(path);
+    private final List<FilterHolder> beforeFilters = new ArrayList<>();
+    private final List<FilterHolder> afterFilters = new ArrayList<>();
+
+    public void path(String pathTemplate, RouteGroup group) {
+        pathPrefixStack.addLast(pathTemplate);
         group.addRoutes();
         pathPrefixStack.removeLast();
     }
@@ -48,83 +51,109 @@ public final class SpottyRouter {
     }
 
     public void before(String pathTemplate, Filter filter, Filter... filters) {
-        addFiltersToRoute(RouteEntry::addBeforeFilters, pathTemplate, filter, filters);
+        final List<Filter> filterList = toList(filter, filters);
+        final Pattern matcher = compileMatcher(pathWithPrefix(pathTemplate)).matcher;
+        addFiltersToRoute(RouteEntry::addBeforeFilters, matcher, filterList);
+
+        beforeFilters.add(new FilterHolder(filterList, matcher));
     }
 
     public void after(String pathTemplate, Filter filter, Filter... filters) {
-        addFiltersToRoute(RouteEntry::addAfterFilters, pathTemplate, filter, filters);
+        final List<Filter> filterList = toList(filter, filters);
+        final Pattern matcher = compileMatcher(pathWithPrefix(pathTemplate)).matcher;
+        addFiltersToRoute(RouteEntry::addAfterFilters, matcher, filterList);
+
+        afterFilters.add(new FilterHolder(filterList, matcher));
     }
 
-    public void get(String path, Route route) {
-        routable.addRoute(pathWithPrefix(path), GET, route);
+    public void get(String pathTemplate, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), GET, route);
+        registerAllMatchedFilters();
     }
 
-    public void post(String path, Route route) {
-        routable.addRoute(pathWithPrefix(path), POST, route);
+    public void post(String pathTemplate, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), POST, route);
+        registerAllMatchedFilters();
     }
 
-    public void put(String path, Route route) {
-        routable.addRoute(pathWithPrefix(path), PUT, route);
+    public void put(String pathTemplate, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), PUT, route);
+        registerAllMatchedFilters();
     }
 
-    public void patch(String path, Route route) {
-        routable.addRoute(pathWithPrefix(path), PATCH, route);
+    public void patch(String pathTemplate, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), PATCH, route);
+        registerAllMatchedFilters();
     }
 
-    public void delete(String path, Route route) {
-        routable.addRoute(pathWithPrefix(path), DELETE, route);
+    public void delete(String pathTemplate, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), DELETE, route);
+        registerAllMatchedFilters();
     }
 
-    public void head(String path, Route route) {
-        routable.addRoute(pathWithPrefix(path), HEAD, route);
+    public void head(String pathTemplate, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), HEAD, route);
+        registerAllMatchedFilters();
     }
 
-    public void trace(String path, Route route) {
-        routable.addRoute(pathWithPrefix(path), TRACE, route);
+    public void trace(String pathTemplate, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), TRACE, route);
+        registerAllMatchedFilters();
     }
 
-    public void connect(String path, Route route) {
-        routable.addRoute(pathWithPrefix(path), CONNECT, route);
+    public void connect(String pathTemplate, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), CONNECT, route);
+        registerAllMatchedFilters();
     }
 
-    public void options(String path, Route route) {
-        routable.addRoute(pathWithPrefix(path), OPTIONS, route);
+    public void options(String pathTemplate, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), OPTIONS, route);
+        registerAllMatchedFilters();
     }
 
-    public void get(String path, String acceptType, Route route) {
-        routable.addRoute(pathWithPrefix(path), GET, acceptType, route);
+    public void get(String pathTemplate, String acceptType, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), GET, acceptType, route);
+        registerAllMatchedFilters();
     }
 
-    public void post(String path, String acceptType, Route route) {
-        routable.addRoute(pathWithPrefix(path), POST, acceptType, route);
+    public void post(String pathTemplate, String acceptType, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), POST, acceptType, route);
+        registerAllMatchedFilters();
     }
 
-    public void put(String path, String acceptType, Route route) {
-        routable.addRoute(pathWithPrefix(path), PUT, acceptType, route);
+    public void put(String pathTemplate, String acceptType, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), PUT, acceptType, route);
+        registerAllMatchedFilters();
     }
 
-    public void patch(String path, String acceptType, Route route) {
-        routable.addRoute(pathWithPrefix(path), PATCH, acceptType, route);
+    public void patch(String pathTemplate, String acceptType, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), PATCH, acceptType, route);
+        registerAllMatchedFilters();
     }
 
-    public void delete(String path, String acceptType, Route route) {
-        routable.addRoute(pathWithPrefix(path), DELETE, acceptType, route);
+    public void delete(String pathTemplate, String acceptType, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), DELETE, acceptType, route);
+        registerAllMatchedFilters();
     }
 
-    public void head(String path, String acceptType, Route route) {
-        routable.addRoute(pathWithPrefix(path), HEAD, acceptType, route);
+    public void head(String pathTemplate, String acceptType, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), HEAD, acceptType, route);
+        registerAllMatchedFilters();
     }
 
-    public void trace(String path, String acceptType, Route route) {
-        routable.addRoute(pathWithPrefix(path), TRACE, acceptType, route);
+    public void trace(String pathTemplate, String acceptType, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), TRACE, acceptType, route);
+        registerAllMatchedFilters();
     }
 
-    public void connect(String path, String acceptType, Route route) {
-        routable.addRoute(pathWithPrefix(path), CONNECT, acceptType, route);
+    public void connect(String pathTemplate, String acceptType, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), CONNECT, acceptType, route);
+        registerAllMatchedFilters();
     }
 
-    public void options(String path, String acceptType, Route route) {
-        routable.addRoute(pathWithPrefix(path), OPTIONS, acceptType, route);
+    public void options(String pathTemplate, String acceptType, Route route) {
+        routable.addRoute(pathWithPrefix(pathTemplate), OPTIONS, acceptType, route);
+        registerAllMatchedFilters();
     }
 
     public RouteEntry getRoute(String rawPath, HttpMethod method) throws SpottyHttpException {
@@ -139,47 +168,58 @@ public final class SpottyRouter {
         routable.clearRoutes();
     }
 
-    public boolean removeRoute(String path) {
-        return routable.removeRoute(path);
+    public boolean removeRoute(String pathTemplate) {
+        return routable.removeRoute(pathTemplate);
     }
 
-    public boolean removeRoute(String path, HttpMethod method) {
-        return routable.removeRoute(path, method);
+    public boolean removeRoute(String pathTemplate, HttpMethod method) {
+        return routable.removeRoute(pathTemplate, method);
     }
 
-    public boolean removeRoute(String path, String acceptType, HttpMethod method) {
-        return routable.removeRoute(path, acceptType, method);
+    public boolean removeRoute(String pathTemplate, String acceptType, HttpMethod method) {
+        return routable.removeRoute(pathTemplate, acceptType, method);
     }
 
-    private void addFiltersToRoute(BiConsumer<RouteEntry, List<Filter>> adder, String pathTemplate, Filter filter, Filter... filters) {
-        if (routable.sortedList.isEmpty()) {
-            throw new SpottyException("routers must be registered before filters");
-        }
+    // register filters after route added,
+    private void registerAllMatchedFilters() {
+        beforeFilters.forEach(holder -> {
+            addFiltersToRoute(RouteEntry::addBeforeFilters, holder.matcher, holder.filters);
+        });
 
-        final List<Filter> filterList = new ArrayList<>();
-        filterList.add(filter);
-        filterList.addAll(Arrays.asList(filters));
+        afterFilters.forEach(holder -> {
+            addFiltersToRoute(RouteEntry::addAfterFilters, holder.matcher, holder.filters);
+        });
+    }
 
-        final Pattern matcher = compileMatcher(pathWithPrefix(pathTemplate)).matcher;
+    private void addFiltersToRoute(BiConsumer<RouteEntry, List<Filter>> adder, Pattern matcher, List<Filter> filters) {
         routable.sortedList.forEachRoute(
             route -> matcher.matcher(route.pathNormalized()).matches(),
-            route -> adder.accept(route, filterList)
+            route -> adder.accept(route, filters)
         );
     }
 
-    @NotNull
-    private String pathWithPrefix(String path) {
-        return getPathPrefix() + path;
+    private static List<Filter> toList(Filter filter, Filter... filters) {
+        final ArrayList<Filter> filterList = new ArrayList<>();
+        filterList.add(filter);
+        filterList.addAll(Arrays.asList(filters));
+
+        return filterList;
     }
 
     @NotNull
     @VisibleForTesting
-    String getPathPrefix() {
+    String pathWithPrefix(String pathTemplate) {
         if (pathPrefixStack.isEmpty()) {
-            return "";
+            return pathTemplate;
         }
 
-        return String.join("", pathPrefixStack);
+        return String.join("", pathPrefixStack) + pathTemplate;
+    }
+
+    @Value
+    private static class FilterHolder {
+        public List<Filter> filters;
+        public Pattern matcher;
     }
 
 }

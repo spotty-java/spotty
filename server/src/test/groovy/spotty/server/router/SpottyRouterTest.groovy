@@ -134,7 +134,7 @@ class SpottyRouterTest extends Specification {
         var deleteFound = router.getRoute("/api/v1/user", DELETE)
 
         then:
-        router.getPathPrefix() == ""
+        router.pathWithPrefix("") == ""
         get == getFound.route()
         post == postFound.route()
         put == putFound.route()
@@ -145,10 +145,10 @@ class SpottyRouterTest extends Specification {
     def "should register before filters correctly" () {
         given:
         var Filter before = {}
+        router.before(before)
 
         router.get("/hello/world", {req, res -> ""})
         router.get("/bye/world", {req, res -> ""})
-        router.before(before)
 
         when:
         var route1 = router.getRoute("/hello/world", GET)
@@ -182,13 +182,13 @@ class SpottyRouterTest extends Specification {
         var Filter beforeUser = {}
         var Filter beforeProduct = {}
 
-        router.get("/api/*/product/:product_id/category/:category_id", {req, res -> ""})
-        router.get("/api/user/:id", {req, res -> ""})
-        router.get("/hello", {req, res -> ""})
-
         router.before("/api/*", beforeAll)
         router.before("/api/*/product/*", beforeProduct)
         router.before("/api/user/*", beforeUser)
+
+        router.get("/api/*/product/:product_id/category/:category_id", {req, res -> ""})
+        router.get("/api/user/:id", {req, res -> ""})
+        router.get("/hello", {req, res -> ""})
 
         when:
         var route1 = router.getRoute("/api/v1/product/1/category/1", GET)

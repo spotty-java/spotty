@@ -9,7 +9,7 @@ import spotty.common.response.SpottyResponse;
 import spotty.server.router.SpottyRouter;
 import spotty.server.router.route.RouteEntry;
 
-import java.util.ArrayList;
+import java.util.Collection;
 
 import static org.apache.commons.lang3.Validate.notNull;
 import static org.apache.http.entity.ContentType.APPLICATION_JSON;
@@ -60,9 +60,9 @@ public final class DefaultRequestHandler implements RequestHandler {
         }
     }
 
-    private void executeFilters(ArrayList<Filter> filters, SpottyRequest request, SpottyResponse response) throws Exception {
-        for (int i = 0; i < filters.size(); i++) {
-            filters.get(i).handle(request, response);
+    private void executeFilters(Collection<Filter> filters, SpottyRequest request, SpottyResponse response) throws Exception {
+        for (Filter filter : filters) {
+            filter.handle(request, response);
         }
     }
 }

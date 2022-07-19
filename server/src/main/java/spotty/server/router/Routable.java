@@ -183,10 +183,6 @@ final class Routable {
             return values.size();
         }
 
-        boolean isEmpty() {
-            return values.isEmpty();
-        }
-
         void forEachRoute(Predicate<RouteEntry> predicate, Consumer<RouteEntry> consumer) {
             values.stream()
                 .map(value -> value.handlers)
