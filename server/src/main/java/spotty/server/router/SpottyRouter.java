@@ -192,8 +192,8 @@ public final class SpottyRouter {
         return routable.getRoute(rawPath, method);
     }
 
-    public RouteEntry getRoute(String rawPath, String acceptType, HttpMethod method) throws SpottyHttpException {
-        return routable.getRoute(rawPath, acceptType, method);
+    public RouteEntry getRoute(String rawPath, HttpMethod method, String acceptType) throws SpottyHttpException {
+        return routable.getRoute(rawPath, method, acceptType);
     }
 
     public void clearRoutes() {
@@ -209,27 +209,27 @@ public final class SpottyRouter {
     }
 
     public boolean removeRoute(String pathTemplate, String acceptType, HttpMethod method) {
-        return routable.removeRoute(pathTemplate, acceptType, method);
+        return routable.removeRoute(pathTemplate, method, acceptType);
     }
 
     // register filters after route added,
     private void registerAllMatchedFilters() {
-        beforeFilters.forEach(holder -> {
+        beforeFilters.forEach(container -> {
             addFiltersToRoute(
-                holder.matcher,
-                holder.method,
-                holder.acceptType,
-                holder.filters,
+                container.matcher,
+                container.method,
+                container.acceptType,
+                container.filters,
                 RouteEntry::addBeforeFilters
             );
         });
 
-        afterFilters.forEach(holder -> {
+        afterFilters.forEach(container -> {
             addFiltersToRoute(
-                holder.matcher,
-                holder.method,
-                holder.acceptType,
-                holder.filters,
+                container.matcher,
+                container.method,
+                container.acceptType,
+                container.filters,
                 RouteEntry::addAfterFilters
             );
         });

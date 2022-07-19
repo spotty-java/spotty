@@ -93,7 +93,7 @@ final class Routable {
         return route.remove(method) != null;
     }
 
-    boolean removeRoute(String routePath, String acceptType, HttpMethod method) {
+    boolean removeRoute(String routePath, HttpMethod method, String acceptType) {
         final Map<HttpMethod, Map<String, RouteEntry>> route = routes.get(normalizePath(routePath));
         if (route == null) {
             return false;
@@ -109,11 +109,11 @@ final class Routable {
 
     @NotNull
     RouteEntry getRoute(String rawPath, HttpMethod method) throws SpottyHttpException {
-        return getRoute(rawPath, null, method);
+        return getRoute(rawPath, method, null);
     }
 
     @NotNull
-    RouteEntry getRoute(String rawPath, String acceptType, HttpMethod method) throws SpottyHttpException {
+    RouteEntry getRoute(String rawPath, HttpMethod method, String acceptType) throws SpottyHttpException {
         Map<HttpMethod, Map<String, RouteEntry>> routes = this.routes.get(rawPath);
         if (routes == null) {
             routes = findMatch(rawPath);

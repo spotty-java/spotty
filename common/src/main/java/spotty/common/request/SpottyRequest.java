@@ -6,7 +6,6 @@ import spotty.common.http.Headers;
 import spotty.common.http.HttpMethod;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 public interface SpottyRequest {

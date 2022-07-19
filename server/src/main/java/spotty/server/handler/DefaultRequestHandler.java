@@ -27,8 +27,8 @@ public final class DefaultRequestHandler implements RequestHandler {
     public void handle(SpottyInnerRequest innerRequest, SpottyResponse response) throws Exception {
         final RouteEntry routeEntry = router.getRoute(
             innerRequest.path(),
-            innerRequest.headers().get(ACCEPT),
-            innerRequest.method()
+            innerRequest.method(),
+            innerRequest.headers().get(ACCEPT)
         );
 
         innerRequest.pathParams(routeEntry.parsePathParams(innerRequest.path()));

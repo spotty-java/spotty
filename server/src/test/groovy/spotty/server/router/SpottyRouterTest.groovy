@@ -75,8 +75,8 @@ class SpottyRouterTest extends Specification {
 
         when:
         var getFound = router.getRoute("/hello", GET)
-        var postFound = router.getRoute("/hello", "application/json", POST)
-        var putFound = router.getRoute("/hello", "application/xml", PUT)
+        var postFound = router.getRoute("/hello", POST, "application/json")
+        var putFound = router.getRoute("/hello", PUT, "application/xml")
 
         then:
         get == getFound.route()
@@ -155,8 +155,8 @@ class SpottyRouterTest extends Specification {
         var route2 = router.getRoute("/bye/world", GET)
 
         then:
-        route1.beforeFilters().contains(before)
-        route2.beforeFilters().contains(before)
+        route1.beforeFilters() == [before] as Set
+        route2.beforeFilters() == [before] as Set
     }
 
     def "should register after filters correctly" () {
@@ -172,8 +172,8 @@ class SpottyRouterTest extends Specification {
         var route2 = router.getRoute("/bye/world", GET)
 
         then:
-        route1.afterFilters().contains(after)
-        route2.afterFilters().contains(after)
+        route1.afterFilters() == [after] as Set
+        route2.afterFilters() == [after] as Set
     }
 
     def "should register before filters with pathTemplate correctly" () {
@@ -196,8 +196,8 @@ class SpottyRouterTest extends Specification {
         var route3 = router.getRoute("/hello", GET)
 
         then:
-        route1.beforeFilters().containsAll([beforeAll, beforeProduct])
-        route2.beforeFilters().containsAll([beforeAll, beforeUser])
+        route1.beforeFilters() == [beforeAll, beforeProduct] as Set
+        route2.beforeFilters() == [beforeAll, beforeUser] as Set
         route3.beforeFilters().isEmpty()
     }
 
@@ -221,9 +221,119 @@ class SpottyRouterTest extends Specification {
         var route3 = router.getRoute("/hello", GET)
 
         then:
-        route1.afterFilters().containsAll([afterAll, afterProduct])
-        route2.afterFilters().containsAll([afterAll, afterUser])
+        route1.afterFilters() == [afterAll, afterProduct] as Set
+        route2.afterFilters() == [afterAll, afterUser] as Set
         route3.afterFilters().isEmpty()
+    }
+
+    def "should register before filters with http method correctly" () {
+        given:
+        var Filter beforeAll = {}
+        var Filter beforeGet = {}
+        var Filter beforePost = {}
+
+        router.before("/api/*", beforeAll)
+        router.before("/api/hello", GET, beforeGet)
+        router.before("/api/hello", POST, beforePost)
+
+        router.get("/api/some-endpoint", {req, res -> ""})
+        router.get("/api/hello", {req, res -> ""})
+        router.post("/api/hello", {req, res -> ""})
+
+        when:
+        var route1 = router.getRoute("/api/some-endpoint", GET)
+        var route2 = router.getRoute("/api/hello", GET)
+        var route3 = router.getRoute("/api/hello", POST)
+
+        then:
+        route1.beforeFilters() == [beforeAll] as Set
+        route2.beforeFilters() == [beforeAll, beforeGet] as Set
+        route3.beforeFilters() == [beforeAll, beforePost] as Set
+    }
+
+    def "should register after filters with http method correctly" () {
+        given:
+        var Filter afterAll = {}
+        var Filter afterGet = {}
+        var Filter afterPost = {}
+
+        router.get("/api/some-endpoint", {req, res -> ""})
+        router.get("/api/hello", {req, res -> ""})
+        router.post("/api/hello", {req, res -> ""})
+
+        router.after("/api/*", afterAll)
+        router.after("/api/hello", GET, afterGet)
+        router.after("/api/hello", POST, afterPost)
+
+        when:
+        var route1 = router.getRoute("/api/some-endpoint", GET)
+        var route2 = router.getRoute("/api/hello", GET)
+        var route3 = router.getRoute("/api/hello", POST)
+
+        then:
+        route1.afterFilters() == [afterAll] as Set
+        route2.afterFilters() == [afterAll, afterGet] as Set
+        route3.afterFilters() == [afterAll, afterPost] as Set
+    }
+
+    def "should register before filters with http method and accept type correctly" () {
+        given:
+        var Filter beforeGetJson = {}
+        var Filter beforeGetXml = {}
+        var Filter beforePostJson = {}
+        var Filter beforePostXml = {}
+
+        router.before("/hello", GET,"application/json", beforeGetJson)
+        router.before("/hello", GET,"application/xml", beforeGetXml)
+        router.before("/hello", POST,"application/json", beforePostJson)
+        router.before("/hello", POST,"application/xml", beforePostXml)
+
+        router.get("/hello", "application/json", {req, res -> ""})
+        router.get("/hello", "application/xml", {req, res -> ""})
+        router.post("/hello", "application/json", {req, res -> ""})
+        router.post("/hello", "application/xml", {req, res -> ""})
+
+        when:
+        var getJsonFilter = router.getRoute("/hello", GET, "application/json")
+        var getXmlFilter = router.getRoute("/hello", GET, "application/xml")
+        var postJsonFilter = router.getRoute("/hello", POST, "application/json")
+        var postXmlFilter = router.getRoute("/hello", POST, "application/xml")
+
+        then:
+        getJsonFilter.beforeFilters() == [beforeGetJson] as Set
+        getXmlFilter.beforeFilters() == [beforeGetXml] as Set
+        postJsonFilter.beforeFilters() == [beforePostJson] as Set
+        postXmlFilter.beforeFilters() == [beforePostXml] as Set
+    }
+
+    def "should register after filters with http method and accept type correctly" () {
+        given:
+        var Filter afterGetJson = {}
+        var Filter afterGetXml = {}
+        var Filter afterPostJson = {}
+        var Filter afterPostXml = {}
+
+        router.get("/hello", "application/json", {req, res -> ""})
+        router.get("/hello", "application/xml", {req, res -> ""})
+        router.post("/hello", "application/json", {req, res -> ""})
+        router.post("/hello", "application/xml", {req, res -> ""})
+
+        router.after("/hello", GET,"application/json", afterGetJson)
+        router.after("/hello", GET,"application/xml", afterGetXml)
+        router.after("/hello", POST,"application/json", afterPostJson)
+        router.after("/hello", POST,"application/xml", afterPostXml)
+
+        when:
+        var getJsonFilter = router.getRoute("/hello", GET, "application/json")
+        var getXmlFilter = router.getRoute("/hello", GET, "application/xml")
+        var postJsonFilter = router.getRoute("/hello", POST, "application/json")
+        var postXmlFilter = router.getRoute("/hello", POST, "application/xml")
+
+        then:
+        getJsonFilter.afterFilters() == [afterGetJson] as Set
+        getXmlFilter.afterFilters() == [afterGetXml] as Set
+        postJsonFilter.afterFilters() == [afterPostJson] as Set
+        postXmlFilter.afterFilters() == [afterPostXml] as Set
     }
 
 }
