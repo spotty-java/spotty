@@ -23,14 +23,12 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.apache.commons.lang3.Validate.notBlank;
 import static org.apache.commons.lang3.Validate.notNull;
-import static org.apache.http.entity.ContentType.WILDCARD;
 import static spotty.common.http.HttpStatus.NOT_FOUND;
 import static spotty.server.router.RouteEntryCreator.normalizePath;
+import static spotty.server.router.SpottyRouter.DEFAULT_ACCEPT_TYPE;
 
 @VisibleForTesting
 final class Routable {
-    private static final String DEFAULT_ACCEPT_TYPE = WILDCARD.toString();
-
     // store handlers by link, so removing from it is also affected this list
     final SortedList sortedList = new SortedList();
 
@@ -56,7 +54,7 @@ final class Routable {
         notNull(route, "route is null");
 
         final String path = notBlank(routePath, "path is empty").trim();
-        final RouteEntry routeEntry = RouteEntryCreator.create(path, method, route);
+        final RouteEntry routeEntry = RouteEntryCreator.create(path, method, acceptType, route);
 
         final Map<HttpMethod, Map<String, RouteEntry>> routeHandlers = routes.computeIfAbsent(
             routeEntry.pathNormalized(),
@@ -183,7 +181,7 @@ final class Routable {
             return values.size();
         }
 
-        void forEachRoute(Predicate<RouteEntry> predicate, Consumer<RouteEntry> consumer) {
+        void forEachRouteIf(Predicate<RouteEntry> predicate, Consumer<RouteEntry> consumer) {
             values.stream()
                 .map(value -> value.handlers)
                 .flatMap(map -> map.values().stream())

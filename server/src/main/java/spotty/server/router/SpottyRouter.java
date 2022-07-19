@@ -30,11 +30,13 @@ import static spotty.common.http.HttpMethod.TRACE;
 import static spotty.server.router.RouteEntryCreator.compileMatcher;
 
 public final class SpottyRouter {
+    public static final String DEFAULT_ACCEPT_TYPE = "*/*";
+
     private final Deque<String> pathPrefixStack = new LinkedList<>();
     private final Routable routable = new Routable();
 
-    private final List<FilterHolder> beforeFilters = new ArrayList<>();
-    private final List<FilterHolder> afterFilters = new ArrayList<>();
+    private final List<FilterContainer> beforeFilters = new ArrayList<>();
+    private final List<FilterContainer> afterFilters = new ArrayList<>();
 
     public void path(String pathTemplate, RouteGroup group) {
         pathPrefixStack.addLast(pathTemplate);
@@ -51,19 +53,49 @@ public final class SpottyRouter {
     }
 
     public void before(String pathTemplate, Filter filter, Filter... filters) {
-        final List<Filter> filterList = toList(filter, filters);
-        final Pattern matcher = compileMatcher(pathWithPrefix(pathTemplate)).matcher;
-        addFiltersToRoute(RouteEntry::addBeforeFilters, matcher, filterList);
-
-        beforeFilters.add(new FilterHolder(filterList, matcher));
+        before(pathTemplate, null, filter, filters);
     }
 
     public void after(String pathTemplate, Filter filter, Filter... filters) {
+        after(pathTemplate, null, filter, filters);
+    }
+
+    public void before(String pathTemplate, HttpMethod method, Filter filter, Filter... filters) {
+        before(pathTemplate, method, null, filter, filters);
+    }
+
+    public void after(String pathTemplate, HttpMethod method, Filter filter, Filter... filters) {
+        after(pathTemplate, method, null, filter, filters);
+    }
+
+    public void before(String pathTemplate, HttpMethod method, String acceptType, Filter filter, Filter... filters) {
         final List<Filter> filterList = toList(filter, filters);
         final Pattern matcher = compileMatcher(pathWithPrefix(pathTemplate)).matcher;
-        addFiltersToRoute(RouteEntry::addAfterFilters, matcher, filterList);
 
-        afterFilters.add(new FilterHolder(filterList, matcher));
+        addFiltersToRoute(
+            matcher,
+            method,
+            acceptType,
+            filterList,
+            RouteEntry::addBeforeFilters
+        );
+
+        beforeFilters.add(new FilterContainer(matcher, method, acceptType, filterList));
+    }
+
+    public void after(String pathTemplate, HttpMethod method, String acceptType, Filter filter, Filter... filters) {
+        final List<Filter> filterList = toList(filter, filters);
+        final Pattern matcher = compileMatcher(pathWithPrefix(pathTemplate)).matcher;
+
+        addFiltersToRoute(
+            matcher,
+            method,
+            acceptType,
+            filterList,
+            RouteEntry::addAfterFilters
+        );
+
+        afterFilters.add(new FilterContainer(matcher, method, acceptType, filterList));
     }
 
     public void get(String pathTemplate, Route route) {
@@ -183,17 +215,43 @@ public final class SpottyRouter {
     // register filters after route added,
     private void registerAllMatchedFilters() {
         beforeFilters.forEach(holder -> {
-            addFiltersToRoute(RouteEntry::addBeforeFilters, holder.matcher, holder.filters);
+            addFiltersToRoute(
+                holder.matcher,
+                holder.method,
+                holder.acceptType,
+                holder.filters,
+                RouteEntry::addBeforeFilters
+            );
         });
 
         afterFilters.forEach(holder -> {
-            addFiltersToRoute(RouteEntry::addAfterFilters, holder.matcher, holder.filters);
+            addFiltersToRoute(
+                holder.matcher,
+                holder.method,
+                holder.acceptType,
+                holder.filters,
+                RouteEntry::addAfterFilters
+            );
         });
     }
 
-    private void addFiltersToRoute(BiConsumer<RouteEntry, List<Filter>> adder, Pattern matcher, List<Filter> filters) {
-        routable.sortedList.forEachRoute(
-            route -> matcher.matcher(route.pathNormalized()).matches(),
+    private void addFiltersToRoute(Pattern matcher, HttpMethod method, String acceptType, List<Filter> filters, BiConsumer<RouteEntry, List<Filter>> adder) {
+        routable.sortedList.forEachRouteIf(
+            route -> {
+                if (!matcher.matcher(route.pathNormalized()).matches()) {
+                    return false;
+                }
+
+                if (method != null && method != route.httpMethod()) {
+                    return false;
+                }
+
+                if (acceptType == null) {
+                    return true;
+                }
+
+                return acceptType.equals(route.acceptType());
+            },
             route -> adder.accept(route, filters)
         );
     }
@@ -217,9 +275,11 @@ public final class SpottyRouter {
     }
 
     @Value
-    private static class FilterHolder {
-        public List<Filter> filters;
+    private static class FilterContainer {
         public Pattern matcher;
+        public HttpMethod method;
+        public String acceptType;
+        public List<Filter> filters;
     }
 
 }

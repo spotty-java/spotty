@@ -2,6 +2,7 @@ package spotty.server.router
 
 import org.apache.commons.io.IOUtils
 import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPost
 import spotty.common.exception.SpottyException
 import spotty.common.exception.SpottyHttpException
 import spotty.common.filter.Filter
@@ -12,6 +13,8 @@ import static org.apache.http.entity.ContentType.APPLICATION_JSON
 import static org.apache.http.entity.ContentType.APPLICATION_XML
 import static org.apache.http.entity.ContentType.WILDCARD
 import static spotty.common.http.Headers.ACCEPT
+import static spotty.common.http.HttpMethod.GET
+import static spotty.common.http.HttpMethod.POST
 import static spotty.common.http.HttpStatus.BAD_REQUEST
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR
 import static spotty.common.http.HttpStatus.TOO_MANY_REQUESTS
@@ -172,7 +175,7 @@ class SpottyRouterSpec extends AppTestContext {
         1 * afterHelloFilter.handle(_, _)
     }
 
-    def "should execute filters with path group correctly" () {
+    def "should execute filters with path group correctly"() {
         given:
         var Filter before1 = Mock(Filter.class)
         var Filter after1 = Mock(Filter.class)
@@ -182,11 +185,11 @@ class SpottyRouterSpec extends AppTestContext {
         SPOTTY.path("/hello", {
             SPOTTY.before(before1)
 
-            SPOTTY.get("", {req, res -> ""})
+            SPOTTY.get("", { req, res -> "" })
             SPOTTY.path("/*", {
                 SPOTTY.before(before2)
 
-                SPOTTY.get("/man", {req, res -> ""})
+                SPOTTY.get("/man", { req, res -> "" })
 
                 SPOTTY.after(after2)
             })
@@ -205,7 +208,7 @@ class SpottyRouterSpec extends AppTestContext {
         2 * after1.handle(_, _)
     }
 
-    def "should execute filters in registered order" () {
+    def "should execute filters in registered order"() {
         given:
         var Filter before1 = Mock(Filter.class)
         var Filter before2 = Mock(Filter.class)
@@ -215,7 +218,7 @@ class SpottyRouterSpec extends AppTestContext {
         SPOTTY.after("/hello", after1, after2)
         SPOTTY.before("/hello", before1, before2)
 
-        SPOTTY.get("/hello", {req , res -> ""})
+        SPOTTY.get("/hello", { req, res -> "" })
 
         when:
         httpClient.get("/hello")
@@ -231,5 +234,79 @@ class SpottyRouterSpec extends AppTestContext {
 
         then:
         1 * after2.handle(_, _)
+    }
+
+    def "should execute filters with http method"() {
+        given:
+        var Filter beforeGet = Mock(Filter.class)
+        var Filter afterGet = Mock(Filter.class)
+        var Filter beforePost = Mock(Filter.class)
+        var Filter afterPost = Mock(Filter.class)
+
+        SPOTTY.before("/hello", GET, beforeGet)
+        SPOTTY.before("/hello", POST, beforePost)
+
+        SPOTTY.get("/hello", { req, res -> "" })
+        SPOTTY.post("/hello", { req, res -> "" })
+
+        SPOTTY.after("/hello", GET, afterGet)
+        SPOTTY.after("/hello", POST, afterPost)
+
+        when:
+        httpClient.get("/hello")
+        httpClient.post("/hello")
+
+        then:
+        1 * beforeGet.handle(_, _)
+        1 * afterGet.handle(_, _)
+        1 * beforePost.handle(_, _)
+        1 * afterPost.handle(_, _)
+    }
+
+    def "should execute filters with http method and accept type"() {
+        given:
+        var Filter beforeGet = Mock(Filter.class)
+        var Filter afterGet = Mock(Filter.class)
+        var Filter beforePost = Mock(Filter.class)
+        var Filter afterPost = Mock(Filter.class)
+
+        SPOTTY.before("/hello", GET, "application/json", beforeGet)
+        SPOTTY.before("/hello", POST, "application/json", beforePost)
+
+        SPOTTY.get("/hello", "application/json", { req, res -> "json" })
+        SPOTTY.get("/hello", "application/xml", { req, res -> "xml" })
+        SPOTTY.post("/hello", "application/json", { req, res -> "json" })
+        SPOTTY.post("/hello", "application/xml", { req, res -> "xml" })
+
+        SPOTTY.after("/hello", GET, "application/xml", afterGet)
+        SPOTTY.after("/hello", POST, "application/xml", afterPost)
+
+        when:
+        var getJson = new HttpGet("/hello")
+        getJson.addHeader(ACCEPT, "application/json")
+        var getJsonRes = httpClient.get(getJson)
+
+        var getXml = new HttpGet("/hello")
+        getXml.addHeader(ACCEPT, "application/xml")
+        var getXmlRes = httpClient.get(getXml)
+
+        var postJson = new HttpPost("/hello")
+        postJson.addHeader(ACCEPT, "application/json")
+        var postJsonRes = httpClient.post(postJson)
+
+        var postXml = new HttpPost("/hello")
+        postXml.addHeader(ACCEPT, "application/xml")
+        var postXmlRes = httpClient.post(postXml)
+
+        then:
+        getJsonRes == "json"
+        getXmlRes == "xml"
+        postJsonRes == "json"
+        postXmlRes == "xml"
+
+        1 * beforeGet.handle(_, _)
+        1 * afterGet.handle(_, _)
+        1 * beforePost.handle(_, _)
+        1 * afterPost.handle(_, _)
     }
 }

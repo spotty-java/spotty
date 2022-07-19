@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.apache.commons.lang3.Validate.notBlank;
 import static org.apache.commons.lang3.Validate.notNull;
 
 @VisibleForTesting
@@ -20,19 +21,21 @@ final class RouteEntryCreator {
     public static final String PARAM_REPLACEMENT = "(?<name>[\\w\\*]+?)";
     public static final String ALL_REPLACEMENT = "(.*?)";
 
-    static RouteEntry create(String pathTemplate, HttpMethod httpMethod, Route route) {
+    static RouteEntry create(String pathTemplate, HttpMethod httpMethod, String acceptType, Route route) {
         notNull(pathTemplate, "pathTemplate");
         notNull(httpMethod, "httpMethod");
+        notBlank(acceptType, "acceptType");
         notNull(route, "route");
 
-        final Value value = compileMatcher(pathTemplate);
+        final Result result = compileMatcher(pathTemplate);
 
         return new RouteEntry()
             .pathTemplate(pathTemplate)
+            .acceptType(acceptType)
             .httpMethod(httpMethod)
             .pathNormalized(normalizePath(pathTemplate))
-            .matcher(value.matcher)
-            .pathParamKeys(value.params)
+            .matcher(result.matcher)
+            .pathParamKeys(result.params)
             .route(route);
     }
 
@@ -40,7 +43,7 @@ final class RouteEntryCreator {
         return path.replaceAll(REGEX, "*$2");
     }
 
-    static Value compileMatcher(String pathTemplate) {
+    static Result compileMatcher(String pathTemplate) {
         final Matcher m = PATTERN.matcher(pathTemplate);
 
         String matcher = "^" + pathTemplate.replace("*", ALL_REPLACEMENT) + "$";
@@ -53,13 +56,17 @@ final class RouteEntryCreator {
             matcher = matcher.replace(name, PARAM_REPLACEMENT.replace("name", paramName.groupName));
         }
 
-        return new Value(params, Pattern.compile(matcher));
+        return new Result(params, Pattern.compile(matcher));
     }
 
-    @lombok.Value
-    static class Value {
-        public ArrayList<ParamName> params;
-        public Pattern matcher;
+    static class Result {
+        public final ArrayList<ParamName> params;
+        public final Pattern matcher;
+
+        Result(ArrayList<ParamName> params, Pattern matcher) {
+            this.params = params;
+            this.matcher = matcher;
+        }
     }
 
 }

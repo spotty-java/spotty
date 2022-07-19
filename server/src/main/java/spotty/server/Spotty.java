@@ -120,6 +120,22 @@ public final class Spotty implements Closeable {
         router.after(pathTemplate, filter, filters);
     }
 
+    public void before(String pathTemplate, HttpMethod method, Filter filter, Filter... filters) {
+        router.before(pathTemplate, method, filter, filters);
+    }
+
+    public void after(String pathTemplate, HttpMethod method, Filter filter, Filter... filters) {
+        router.after(pathTemplate, method, filter, filters);
+    }
+
+    public void before(String pathTemplate, HttpMethod method, String acceptType, Filter filter, Filter... filters) {
+        router.before(pathTemplate, method, acceptType, filter, filters);
+    }
+
+    public void after(String pathTemplate, HttpMethod method, String acceptType, Filter filter, Filter... filters) {
+        router.after(pathTemplate, method, acceptType, filter, filters);
+    }
+
     public void get(String pathTemplate, Route route) {
         router.get(pathTemplate, route);
     }

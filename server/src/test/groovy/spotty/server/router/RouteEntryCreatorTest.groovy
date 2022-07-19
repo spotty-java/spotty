@@ -9,6 +9,7 @@ import static spotty.server.router.RouteEntryCreator.ALL_REPLACEMENT
 import static spotty.server.router.RouteEntryCreator.PARAM_REPLACEMENT
 import static spotty.server.router.RouteEntryCreator.create
 import static spotty.server.router.RouteEntryCreator.normalizePath
+import static spotty.server.router.SpottyRouter.DEFAULT_ACCEPT_TYPE
 
 class RouteEntryCreatorTest extends Specification {
 
@@ -26,7 +27,7 @@ class RouteEntryCreatorTest extends Specification {
             .matcher(~matcher)
 
         when:
-        var routeEntry = create(path, GET, {})
+        var routeEntry = create(path, GET, DEFAULT_ACCEPT_TYPE, {})
 
         then:
         routeEntry.pathTemplate() == expectedEntry.pathTemplate()
@@ -37,7 +38,7 @@ class RouteEntryCreatorTest extends Specification {
 
     def "should match path template"() {
         when:
-        var routeEntry = create(template, GET, {})
+        var routeEntry = create(template, GET, DEFAULT_ACCEPT_TYPE, {})
 
         then:
         routeEntry.matches(path) == expectedMatch

@@ -4,7 +4,6 @@ import spotty.common.exception.SpottyException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
 import spotty.common.request.params.PathParams;
-import spotty.common.utils.EmptyLinkedHashSet;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,17 +14,19 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static spotty.common.utils.EmptyLinkedHashSet.emptyLinkedHashSet;
+import static java.util.Collections.EMPTY_SET;
+import static java.util.Collections.emptySet;
 
 public final class RouteEntry {
     private String pathTemplate;
     private String pathNormalized;
     private ArrayList<ParamName> pathParamKeys; // ArrayList for optimization, because forEach uses fori
+    private String acceptType;
     private HttpMethod httpMethod;
     private Route route;
     private Pattern matcher;
-    private Set<Filter> beforeFilters = emptyLinkedHashSet();
-    private Set<Filter> afterFilters = emptyLinkedHashSet();
+    private Set<Filter> beforeFilters = emptySet();
+    private Set<Filter> afterFilters = emptySet();
 
     public boolean matches(String rawPath) {
         return matcher.matcher(rawPath).matches();
@@ -72,6 +73,15 @@ public final class RouteEntry {
         return this;
     }
 
+    public String acceptType() {
+        return acceptType;
+    }
+
+    public RouteEntry acceptType(String acceptType) {
+        this.acceptType = acceptType;
+        return this;
+    }
+
     public HttpMethod httpMethod() {
         return httpMethod;
     }
@@ -104,7 +114,7 @@ public final class RouteEntry {
     }
 
     public RouteEntry addBeforeFilters(Collection<Filter> beforeFilters) {
-        if (this.beforeFilters.getClass() == EmptyLinkedHashSet.class) {
+        if (this.beforeFilters == EMPTY_SET) {
             this.beforeFilters = new LinkedHashSet<>();
         }
 
@@ -117,7 +127,7 @@ public final class RouteEntry {
     }
 
     public RouteEntry addAfterFilters(Collection<Filter> afterFilters) {
-        if (this.afterFilters.getClass() == EmptyLinkedHashSet.class) {
+        if (this.afterFilters == EMPTY_SET) {
             this.afterFilters = new LinkedHashSet<>();
         }
 
