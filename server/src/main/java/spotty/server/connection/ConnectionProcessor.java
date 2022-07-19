@@ -10,7 +10,7 @@ import spotty.common.request.params.QueryParams;
 import spotty.common.response.ResponseWriter;
 import spotty.common.response.SpottyResponse;
 import spotty.common.state.StateHandlerGraph;
-import spotty.common.state.StateHandlerGraph.Filter;
+import spotty.common.state.StateHandlerGraph.GraphFilter;
 import spotty.common.state.StateMachine;
 import spotty.common.stream.output.SpottyByteArrayOutputStream;
 import spotty.common.stream.output.SpottyFixedByteOutputStream;
@@ -27,7 +27,6 @@ import java.nio.channels.SocketChannel;
 import static org.apache.commons.lang3.Validate.notNull;
 import static spotty.common.http.Headers.CONTENT_LENGTH;
 import static spotty.common.http.Headers.CONTENT_TYPE;
-import static spotty.common.http.HttpMethod.isContentLengthRequired;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static spotty.common.request.validator.RequestValidator.validate;
@@ -97,7 +96,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
                 READING_BODY
             )
             .apply(
-                new Filter() {
+                new GraphFilter() {
                     @Override
                     public boolean before() {
                         try {
@@ -231,7 +230,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private boolean prepareHeaders() {
-        if (isContentLengthRequired(request.method()) && request.headers().notContain(CONTENT_LENGTH)) {
+        if (request.method().isContentLengthRequired() && request.headers().notContain(CONTENT_LENGTH)) {
             throw new SpottyHttpException(BAD_REQUEST, CONTENT_LENGTH + " header is required");
         }
 

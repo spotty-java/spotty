@@ -9,6 +9,7 @@ import static spotty.server.router.RouteEntryCreator.ALL_REPLACEMENT
 import static spotty.server.router.RouteEntryCreator.PARAM_REPLACEMENT
 import static spotty.server.router.RouteEntryCreator.create
 import static spotty.server.router.RouteEntryCreator.normalizePath
+import static spotty.server.router.SpottyRouter.DEFAULT_ACCEPT_TYPE
 
 class RouteEntryCreatorTest extends Specification {
 
@@ -17,28 +18,27 @@ class RouteEntryCreatorTest extends Specification {
         var path = "/api/*/product/:id/:category"
         var matcher = "^/api/$ALL_REPLACEMENT/product/${PARAM_REPLACEMENT.replace("name", "id")}/${PARAM_REPLACEMENT.replace("name", "category")}\$"
 
-        var expectedEntry = RouteEntry.builder()
-            .path(path)
+        var expectedEntry = new RouteEntry()
+            .pathTemplate(path)
             .pathNormalized("/api/*/product/*/*")
             .pathParamKeys([new ParamName(":id"), new ParamName(":category")])
             .httpMethod(GET)
             .route({})
             .matcher(~matcher)
-            .build()
 
         when:
-        var routeEntry = create(path, GET, {})
+        var routeEntry = create(path, GET, DEFAULT_ACCEPT_TYPE, {})
 
         then:
-        routeEntry.path == expectedEntry.path
-        routeEntry.pathParamKeys == expectedEntry.pathParamKeys
-        routeEntry.matcher.pattern() == expectedEntry.matcher.pattern()
+        routeEntry.pathTemplate() == expectedEntry.pathTemplate()
+        routeEntry.pathParamKeys() == expectedEntry.pathParamKeys()
+        routeEntry.matcher().pattern() == expectedEntry.matcher().pattern()
         routeEntry.matches("/api/v1/product/7/iphone")
     }
 
     def "should match path template"() {
         when:
-        var routeEntry = create(template, GET, {})
+        var routeEntry = create(template, GET, DEFAULT_ACCEPT_TYPE, {})
 
         then:
         routeEntry.matches(path) == expectedMatch

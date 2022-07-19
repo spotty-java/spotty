@@ -13,21 +13,22 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.apache.commons.lang3.Validate.notBlank;
 import static org.apache.commons.lang3.Validate.notNull;
-import static org.apache.http.entity.ContentType.WILDCARD;
 import static spotty.common.http.HttpStatus.NOT_FOUND;
 import static spotty.server.router.RouteEntryCreator.normalizePath;
+import static spotty.server.router.SpottyRouter.DEFAULT_ACCEPT_TYPE;
 
 @VisibleForTesting
 final class Routable {
-    private static final String DEFAULT_ACCEPT_TYPE = WILDCARD.toString();
-
     // store handlers by link, so removing from it is also affected this list
     final SortedList sortedList = new SortedList();
 
@@ -53,13 +54,13 @@ final class Routable {
         notNull(route, "route is null");
 
         final String path = notBlank(routePath, "path is empty").trim();
-        final RouteEntry routeEntry = RouteEntryCreator.create(path, method, route);
+        final RouteEntry routeEntry = RouteEntryCreator.create(path, method, acceptType, route);
 
         final Map<HttpMethod, Map<String, RouteEntry>> routeHandlers = routes.computeIfAbsent(
-            routeEntry.pathNormalized,
+            routeEntry.pathNormalized(),
             pathNormalized -> {
                 final Map<HttpMethod, Map<String, RouteEntry>> handlers = new HashMap<>();
-                sortedList.add(new Value(pathNormalized, handlers, routeEntry.matcher));
+                sortedList.add(new Value(pathNormalized, handlers, routeEntry.matcher()));
 
                 return handlers;
             }
@@ -92,7 +93,7 @@ final class Routable {
         return route.remove(method) != null;
     }
 
-    boolean removeRoute(String routePath, String acceptType, HttpMethod method) {
+    boolean removeRoute(String routePath, HttpMethod method, String acceptType) {
         final Map<HttpMethod, Map<String, RouteEntry>> route = routes.get(normalizePath(routePath));
         if (route == null) {
             return false;
@@ -108,12 +109,11 @@ final class Routable {
 
     @NotNull
     RouteEntry getRoute(String rawPath, HttpMethod method) throws SpottyHttpException {
-        return getRoute(rawPath, null, method);
+        return getRoute(rawPath, method, null);
     }
 
     @NotNull
-    RouteEntry getRoute(String rawPath, String acceptType, HttpMethod method) throws SpottyHttpException {
-        final String accept = acceptType == null ? DEFAULT_ACCEPT_TYPE : acceptType;
+    RouteEntry getRoute(String rawPath, HttpMethod method, String acceptType) throws SpottyHttpException {
         Map<HttpMethod, Map<String, RouteEntry>> routes = this.routes.get(rawPath);
         if (routes == null) {
             routes = findMatch(rawPath);
@@ -124,6 +124,7 @@ final class Routable {
             throw new SpottyHttpException(NOT_FOUND, format("route not found for %s %s", method, rawPath));
         }
 
+        final String accept = defaultIfNull(acceptType, DEFAULT_ACCEPT_TYPE);
         RouteEntry routeEntry = entry.get(accept);
         if (routeEntry == null) {
             routeEntry = entry.get(DEFAULT_ACCEPT_TYPE);
@@ -147,7 +148,7 @@ final class Routable {
         return emptyMap();
     }
 
-    private static class SortedList {
+    static class SortedList {
         private static final Comparator<Value> FROM_LONGEST_TO_SHORTEST_COMPARATOR =
             (a, b) -> b.pathNormalized.length() - a.pathNormalized.length();
 
@@ -180,13 +181,22 @@ final class Routable {
             return values.size();
         }
 
+        void forEachRouteIf(Predicate<RouteEntry> predicate, Consumer<RouteEntry> consumer) {
+            values.stream()
+                .map(value -> value.handlers)
+                .flatMap(map -> map.values().stream())
+                .flatMap(map -> map.values().stream())
+                .filter(predicate)
+                .forEach(consumer);
+        }
+
         @VisibleForTesting
         List<String> toNormalizedPaths() {
             return values.stream().map(v -> v.pathNormalized).collect(toList());
         }
     }
 
-    private static class Value {
+    static class Value {
         final String pathNormalized;
         final Map<HttpMethod, Map<String, RouteEntry>> handlers;
         final Pattern matcher;

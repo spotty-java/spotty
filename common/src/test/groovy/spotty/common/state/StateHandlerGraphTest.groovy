@@ -3,7 +3,7 @@ package spotty.common.state
 import spock.lang.Specification
 import spotty.common.exception.SpottyException
 import spotty.common.state.StateHandlerGraph.Action
-import spotty.common.state.StateHandlerGraph.Filter
+import spotty.common.state.StateHandlerGraph.GraphFilter
 import spotty.common.test.TestState
 
 import static spotty.common.test.TestState.CLOSED
@@ -185,7 +185,7 @@ class StateHandlerGraphTest extends Specification {
     }
 
     private def filter(boolean beforeResult) {
-        return new Filter() {
+        return new GraphFilter() {
             @Override
             boolean before() {
                 return beforeResult

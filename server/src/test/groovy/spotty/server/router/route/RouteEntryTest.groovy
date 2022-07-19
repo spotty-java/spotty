@@ -14,14 +14,13 @@ class RouteEntryTest extends Specification {
         var path = "/api/*/product/:id/:category_name2"
         var matcher = "^/api/$ALL_REPLACEMENT/product/${PARAM_REPLACEMENT.replace("name", "id")}/${PARAM_REPLACEMENT.replace("name", "categoryname2")}\$"
 
-        var routeEntry = RouteEntry.builder()
-            .path(path)
+        var routeEntry = new RouteEntry()
+            .pathTemplate(path)
             .pathNormalized("/api/*/product/*/*")
             .pathParamKeys([new ParamName(":id"), new ParamName(":category_name2")])
             .httpMethod(GET)
             .route({})
             .matcher(~matcher)
-            .build()
 
         when:
         var pathParams = routeEntry.parsePathParams("/api/v1/product/7/iphone")

@@ -6,6 +6,7 @@ import org.apache.http.HttpHost
 import org.apache.http.HttpRequest
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPost
 import org.apache.http.conn.routing.HttpRoute
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
@@ -33,6 +34,16 @@ class HttpClient implements Closeable {
 
     String get(HttpGet get) {
         final HttpResponse response = client.execute(get)
+
+        return IOUtils.toString(response.entity.content, UTF_8)
+    }
+
+    String post(String url) {
+        return post(new HttpPost(url))
+    }
+
+    String post(HttpPost post) {
+        final HttpResponse response = client.execute(post)
 
         return IOUtils.toString(response.entity.content, UTF_8)
     }

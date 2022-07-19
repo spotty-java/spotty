@@ -35,11 +35,10 @@ public enum HttpMethod {
     /**
      * Check if http method required content-length header
      *
-     * @param method http method to check
      * @return true if http method is required content-length header
      */
-    public static boolean isContentLengthRequired(HttpMethod method) {
-        return CONTENT_LENGTH_REQUIRED.contains(method);
+    public boolean isContentLengthRequired() {
+        return CONTENT_LENGTH_REQUIRED.contains(this);
     }
 
     /**
