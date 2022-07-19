@@ -67,8 +67,8 @@ public final class Spotty implements Closeable {
             return;
         }
 
-        SERVER_RUN.execute(this::serverInit);
         registerSpottyDefaultAfterFilter();
+        SERVER_RUN.execute(this::serverInit);
     }
 
     @Override
@@ -335,11 +335,12 @@ public final class Spotty implements Closeable {
         notifyAll();
     }
 
+    private static final String SPOTTY_VERSION = "Spotty v" + VERSION;
     private void registerSpottyDefaultAfterFilter() {
         after((request, response) -> {
             response.headers()
                 .add(DATE, RFC_1123_DATE_TIME.format(now(UTC)))
-                .add(SERVER, "Spotty v" + VERSION)
+                .add(SERVER, SPOTTY_VERSION)
             ;
         });
     }
