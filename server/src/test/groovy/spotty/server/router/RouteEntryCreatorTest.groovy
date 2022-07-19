@@ -17,22 +17,21 @@ class RouteEntryCreatorTest extends Specification {
         var path = "/api/*/product/:id/:category"
         var matcher = "^/api/$ALL_REPLACEMENT/product/${PARAM_REPLACEMENT.replace("name", "id")}/${PARAM_REPLACEMENT.replace("name", "category")}\$"
 
-        var expectedEntry = RouteEntry.builder()
-            .path(path)
+        var expectedEntry = new RouteEntry()
+            .pathTemplate(path)
             .pathNormalized("/api/*/product/*/*")
             .pathParamKeys([new ParamName(":id"), new ParamName(":category")])
             .httpMethod(GET)
             .route({})
             .matcher(~matcher)
-            .build()
 
         when:
         var routeEntry = create(path, GET, {})
 
         then:
-        routeEntry.path == expectedEntry.path
-        routeEntry.pathParamKeys == expectedEntry.pathParamKeys
-        routeEntry.matcher.pattern() == expectedEntry.matcher.pattern()
+        routeEntry.pathTemplate() == expectedEntry.pathTemplate()
+        routeEntry.pathParamKeys() == expectedEntry.pathParamKeys()
+        routeEntry.matcher().pattern() == expectedEntry.matcher().pattern()
         routeEntry.matches("/api/v1/product/7/iphone")
     }
 

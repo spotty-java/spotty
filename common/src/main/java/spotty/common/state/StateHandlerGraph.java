@@ -12,7 +12,7 @@ import static org.apache.commons.lang3.Validate.notNull;
 public final class StateHandlerGraph<S extends Enum<S>> {
 
     private final Map<S, Node> nodes = new HashMap<>();
-    private final Map<S, Filter> filters = new HashMap<>();
+    private final Map<S, GraphFilter> filters = new HashMap<>();
 
     public void handleState(S state) {
         final Node node = nodes.get(state);
@@ -20,7 +20,7 @@ public final class StateHandlerGraph<S extends Enum<S>> {
             throw new SpottyException(format("node not found for state %s", state));
         }
 
-        final Filter filter = filters.getOrDefault(state, Filter.EMPTY);
+        final GraphFilter filter = filters.getOrDefault(state, GraphFilter.EMPTY);
         if (filter.before()) {
             node.action();
             filter.after();
@@ -32,7 +32,7 @@ public final class StateHandlerGraph<S extends Enum<S>> {
     }
 
     @SafeVarargs
-    public final Function<Filter, StateHandlerGraph<S>> filter(S... states) {
+    public final Function<GraphFilter, StateHandlerGraph<S>> filter(S... states) {
         return filter -> {
             for (S state : states) {
                 filters.put(state, filter);
@@ -79,13 +79,13 @@ public final class StateHandlerGraph<S extends Enum<S>> {
         boolean run() throws SpottyException;
     }
 
-    public interface Filter {
+    public interface GraphFilter {
         // if false then stop execution
         boolean before();
 
         void after();
 
-        Filter EMPTY = new Filter() {
+        GraphFilter EMPTY = new GraphFilter() {
             @Override
             public boolean before() {
                 return true;

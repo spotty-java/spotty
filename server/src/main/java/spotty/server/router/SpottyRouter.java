@@ -2,14 +2,21 @@ package spotty.server.router;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
+import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
+import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
 import spotty.server.router.route.Route;
 import spotty.server.router.route.RouteEntry;
 import spotty.server.router.route.RouteGroup;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 
 import static spotty.common.http.HttpMethod.CONNECT;
 import static spotty.common.http.HttpMethod.DELETE;
@@ -20,9 +27,9 @@ import static spotty.common.http.HttpMethod.PATCH;
 import static spotty.common.http.HttpMethod.POST;
 import static spotty.common.http.HttpMethod.PUT;
 import static spotty.common.http.HttpMethod.TRACE;
+import static spotty.server.router.RouteEntryCreator.compileMatcher;
 
 public final class SpottyRouter {
-
     private final Deque<String> pathPrefixStack = new LinkedList<>();
     private final Routable routable = new Routable();
 
@@ -30,6 +37,22 @@ public final class SpottyRouter {
         pathPrefixStack.addLast(path);
         group.addRoutes();
         pathPrefixStack.removeLast();
+    }
+
+    public void before(Filter filter, Filter... filters) {
+        before("*", filter, filters);
+    }
+
+    public void after(Filter filter, Filter... filters) {
+        after("*", filter, filters);
+    }
+
+    public void before(String pathTemplate, Filter filter, Filter... filters) {
+        addFiltersToRoute(RouteEntry::addBeforeFilters, pathTemplate, filter, filters);
+    }
+
+    public void after(String pathTemplate, Filter filter, Filter... filters) {
+        addFiltersToRoute(RouteEntry::addAfterFilters, pathTemplate, filter, filters);
     }
 
     public void get(String path, Route route) {
@@ -126,6 +149,22 @@ public final class SpottyRouter {
 
     public boolean removeRoute(String path, String acceptType, HttpMethod method) {
         return routable.removeRoute(path, acceptType, method);
+    }
+
+    private void addFiltersToRoute(BiConsumer<RouteEntry, List<Filter>> adder, String pathTemplate, Filter filter, Filter... filters) {
+        if (routable.sortedList.isEmpty()) {
+            throw new SpottyException("routers must be registered before filters");
+        }
+
+        final List<Filter> filterList = new ArrayList<>();
+        filterList.add(filter);
+        filterList.addAll(Arrays.asList(filters));
+
+        final Pattern matcher = compileMatcher(pathWithPrefix(pathTemplate)).matcher;
+        routable.sortedList.forEachRoute(
+            route -> matcher.matcher(route.pathNormalized()).matches(),
+            route -> adder.accept(route, filterList)
+        );
     }
 
     @NotNull

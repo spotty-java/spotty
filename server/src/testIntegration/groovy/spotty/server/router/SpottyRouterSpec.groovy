@@ -1,9 +1,10 @@
-package spotty.server.handler
+package spotty.server.router
 
 import org.apache.commons.io.IOUtils
 import org.apache.http.client.methods.HttpGet
 import spotty.common.exception.SpottyException
 import spotty.common.exception.SpottyHttpException
+import spotty.common.filter.Filter
 import spotty.server.AppTestContext
 
 import static java.nio.charset.StandardCharsets.UTF_8
@@ -15,7 +16,7 @@ import static spotty.common.http.HttpStatus.BAD_REQUEST
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR
 import static spotty.common.http.HttpStatus.TOO_MANY_REQUESTS
 
-class RouterRequestHandlerSpec extends AppTestContext {
+class SpottyRouterSpec extends AppTestContext {
 
     def cleanup() {
         SPOTTY.clearRoutes()
@@ -91,5 +92,115 @@ class RouterRequestHandlerSpec extends AppTestContext {
         new RuntimeException("my RuntimeException message")                 | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.reasonPhrase
         new IllegalArgumentException("my IllegalArgumentException message") | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.reasonPhrase
         new Exception("my Exception message")                               | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.reasonPhrase
+    }
+
+    def "should execute beforeAll filters"() {
+        given:
+        SPOTTY.get("/", { req, res -> "/" })
+        SPOTTY.get("/hello", { req, res -> "hello" })
+        SPOTTY.get("/product", { req, res -> "product" })
+
+        var Filter filter1 = Mock(Filter.class)
+        var Filter filter2 = Mock(Filter.class)
+        SPOTTY.before(filter1, filter2)
+
+        when:
+        httpClient.get("/")
+        httpClient.get("/hello")
+        httpClient.get("/product")
+
+        then:
+        3 * filter1.handle(_, _)
+        3 * filter2.handle(_, _)
+    }
+
+    def "should execute afterAll filters"() {
+        given:
+        SPOTTY.get("/", { req, res -> "/" })
+        SPOTTY.get("/hello", { req, res -> "hello" })
+        SPOTTY.get("/product", { req, res -> "product" })
+
+        var Filter filter1 = Mock(Filter.class)
+        var Filter filter2 = Mock(Filter.class)
+        SPOTTY.after(filter1, filter2)
+
+        when:
+        httpClient.get("/")
+        httpClient.get("/hello")
+        httpClient.get("/product")
+
+        then:
+        3 * filter1.handle(_, _)
+        3 * filter2.handle(_, _)
+    }
+
+    def "should execute afterAll filters when route thrown an exception"() {
+        given:
+        SPOTTY.get("/hello", { req, res -> throw new Exception() })
+        var Filter filter = Mock(Filter.class)
+
+        SPOTTY.after(filter)
+
+        when:
+        var response = httpClient.getResponse("/hello")
+
+        then:
+        response.statusLine.statusCode == INTERNAL_SERVER_ERROR.code
+        1 * filter.handle(_, _)
+    }
+
+    def "should execute before filter by path template"() {
+        given:
+        SPOTTY.get("/hello", { req, res -> "hello" })
+        SPOTTY.get("/hello/:name", { req, res -> "hello" })
+
+        var Filter helloFilter = Mock(Filter.class)
+        var Filter afterHelloFilter = Mock(Filter.class)
+        var Filter nonHelloFilter = Mock(Filter.class)
+
+        SPOTTY.before("/bye", nonHelloFilter)
+        SPOTTY.before("/hello", helloFilter)
+        SPOTTY.before("/hello/*", afterHelloFilter)
+
+        when:
+        httpClient.get("/hello")
+        httpClient.get("/hello/alex")
+
+        then:
+        0 * nonHelloFilter.handle(_, _)
+        1 * helloFilter.handle(_, _)
+        1 * afterHelloFilter.handle(_, _)
+    }
+
+    def "should execute filters with path group correctly" () {
+        given:
+        var Filter before1 = Mock(Filter.class)
+        var Filter after1 = Mock(Filter.class)
+        var Filter before2 = Mock(Filter.class)
+        var Filter after2 = Mock(Filter.class)
+
+        SPOTTY.path("/hello", {
+            SPOTTY.get("", {req, res -> ""})
+
+            SPOTTY.path("/*", {
+                SPOTTY.get("/man", {req, res -> ""})
+
+                SPOTTY.before(before2)
+                SPOTTY.after(after2)
+            })
+
+            SPOTTY.before(before1)
+            SPOTTY.after(after1)
+        })
+
+        when:
+        httpClient.get("/hello")
+        httpClient.get("/hello/alex/man")
+
+        then:
+        1 * before2.handle(_, _)
+        1 * after2.handle(_, _)
+        2 * before1.handle(_, _)
+        2 * after1.handle(_, _)
     }
 }

@@ -2,12 +2,14 @@ package spotty.server;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
 import spotty.server.connection.Connection;
 import spotty.server.handler.RequestHandler;
-import spotty.server.handler.RouterRequestHandler;
+import spotty.server.handler.DefaultRequestHandler;
 import spotty.server.router.SpottyRouter;
 import spotty.server.router.route.Route;
+import spotty.server.router.route.RouteGroup;
 import spotty.server.worker.ReactorWorker;
 
 import java.io.Closeable;
@@ -43,7 +45,7 @@ public final class Spotty implements Closeable {
     private final AtomicLong connections = new AtomicLong();
 
     private final SpottyRouter router = new SpottyRouter();
-    private final RequestHandler requestHandler = new RouterRequestHandler(router);
+    private final RequestHandler requestHandler = new DefaultRequestHandler(router);
 
     public Spotty() {
         this(DEFAULT_PORT);
@@ -96,6 +98,26 @@ public final class Spotty implements Closeable {
 
     public int port() {
         return port;
+    }
+
+    public void path(String path, RouteGroup group) {
+        router.path(path, group);
+    }
+
+    public void before(Filter filter, Filter... filters) {
+        router.before(filter, filters);
+    }
+
+    public void after(Filter filter, Filter... filters) {
+        router.after(filter, filters);
+    }
+
+    public void before(String pathTemplate, Filter filter, Filter... filters) {
+        router.before(pathTemplate, filter, filters);
+    }
+
+    public void after(String pathTemplate, Filter filter, Filter... filters) {
+        router.after(pathTemplate, filter, filters);
     }
 
     public void get(String path, Route route) {

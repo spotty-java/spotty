@@ -17,17 +17,33 @@ final class RouteEntryCreator {
     private static final String REGEX = "(:\\w+?)(/|$)";
     private static final Pattern PATTERN = Pattern.compile(REGEX);
 
-    public static final String PARAM_REPLACEMENT = "(?<name>\\w+?)";
+    public static final String PARAM_REPLACEMENT = "(?<name>[\\w\\*]+?)";
     public static final String ALL_REPLACEMENT = "(.*?)";
 
-    static RouteEntry create(String path, HttpMethod httpMethod, Route route) {
-        notNull(path, "path");
+    static RouteEntry create(String pathTemplate, HttpMethod httpMethod, Route route) {
+        notNull(pathTemplate, "pathTemplate");
         notNull(httpMethod, "httpMethod");
         notNull(route, "route");
 
-        final Matcher m = PATTERN.matcher(path);
+        final Value value = compileMatcher(pathTemplate);
 
-        String matcher = "^" + path.replace("*", ALL_REPLACEMENT) + "$";
+        return new RouteEntry()
+            .pathTemplate(pathTemplate)
+            .httpMethod(httpMethod)
+            .pathNormalized(normalizePath(pathTemplate))
+            .matcher(value.matcher)
+            .pathParamKeys(value.params)
+            .route(route);
+    }
+
+    static String normalizePath(String path) {
+        return path.replaceAll(REGEX, "*$2");
+    }
+
+    static Value compileMatcher(String pathTemplate) {
+        final Matcher m = PATTERN.matcher(pathTemplate);
+
+        String matcher = "^" + pathTemplate.replace("*", ALL_REPLACEMENT) + "$";
         final ArrayList<ParamName> params = new ArrayList<>();
         while (m.find()) {
             final String name = m.group(1);
@@ -37,18 +53,13 @@ final class RouteEntryCreator {
             matcher = matcher.replace(name, PARAM_REPLACEMENT.replace("name", paramName.groupName));
         }
 
-        return RouteEntry.builder()
-            .path(path)
-            .httpMethod(httpMethod)
-            .pathNormalized(normalizePath(path))
-            .matcher(Pattern.compile(matcher))
-            .pathParamKeys(params)
-            .route(route)
-            .build();
+        return new Value(params, Pattern.compile(matcher));
     }
 
-    static String normalizePath(String path) {
-        return path.replaceAll(REGEX, "*$2");
+    @lombok.Value
+    static class Value {
+        public ArrayList<ParamName> params;
+        public Pattern matcher;
     }
 
 }

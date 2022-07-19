@@ -1,6 +1,7 @@
 package spotty.server.router
 
 import spock.lang.Specification
+import spotty.common.filter.Filter
 import spotty.server.router.route.Route
 
 import static spotty.common.http.HttpMethod.CONNECT
@@ -51,15 +52,15 @@ class SpottyRouterTest extends Specification {
         var optionsFound = router.getRoute("/hello", OPTIONS)
 
         then:
-        get == getFound.route
-        post == postFound.route
-        put == putFound.route
-        patch == patchFound.route
-        delete == deleteFound.route
-        head == headFound.route
-        trace == traceFound.route
-        connect == connectFound.route
-        options == optionsFound.route
+        get == getFound.route()
+        post == postFound.route()
+        put == putFound.route()
+        patch == patchFound.route()
+        delete == deleteFound.route()
+        head == headFound.route()
+        trace == traceFound.route()
+        connect == connectFound.route()
+        options == optionsFound.route()
     }
 
     def "should register routers with acceptType correctly" () {
@@ -78,9 +79,9 @@ class SpottyRouterTest extends Specification {
         var putFound = router.getRoute("/hello", "application/xml", PUT)
 
         then:
-        get == getFound.route
-        post == postFound.route
-        put == putFound.route
+        get == getFound.route()
+        post == postFound.route()
+        put == putFound.route()
     }
 
     def "should register routers with path group correctly"() {
@@ -98,8 +99,8 @@ class SpottyRouterTest extends Specification {
         var postFound = router.getRoute("/user/hello", POST)
 
         then:
-        get == getFound.route
-        post == postFound.route
+        get == getFound.route()
+        post == postFound.route()
     }
 
     def "should register routers with chain of path groups correctly"() {
@@ -134,11 +135,95 @@ class SpottyRouterTest extends Specification {
 
         then:
         router.getPathPrefix() == ""
-        get == getFound.route
-        post == postFound.route
-        put == putFound.route
-        patch == patchFound.route
-        delete == deleteFound.route
+        get == getFound.route()
+        post == postFound.route()
+        put == putFound.route()
+        patch == patchFound.route()
+        delete == deleteFound.route()
+    }
+
+    def "should register before filters correctly" () {
+        given:
+        var Filter before = {}
+
+        router.get("/hello/world", {req, res -> ""})
+        router.get("/bye/world", {req, res -> ""})
+        router.before(before)
+
+        when:
+        var route1 = router.getRoute("/hello/world", GET)
+        var route2 = router.getRoute("/bye/world", GET)
+
+        then:
+        route1.beforeFilters().contains(before)
+        route2.beforeFilters().contains(before)
+    }
+
+    def "should register after filters correctly" () {
+        given:
+        var Filter after = {}
+
+        router.get("/hello/world", {req, res -> ""})
+        router.get("/bye/world", {req, res -> ""})
+        router.after(after)
+
+        when:
+        var route1 = router.getRoute("/hello/world", GET)
+        var route2 = router.getRoute("/bye/world", GET)
+
+        then:
+        route1.afterFilters().contains(after)
+        route2.afterFilters().contains(after)
+    }
+
+    def "should register before filters with pathTemplate correctly" () {
+        given:
+        var Filter beforeAll = {}
+        var Filter beforeUser = {}
+        var Filter beforeProduct = {}
+
+        router.get("/api/*/product/:product_id/category/:category_id", {req, res -> ""})
+        router.get("/api/user/:id", {req, res -> ""})
+        router.get("/hello", {req, res -> ""})
+
+        router.before("/api/*", beforeAll)
+        router.before("/api/*/product/*", beforeProduct)
+        router.before("/api/user/*", beforeUser)
+
+        when:
+        var route1 = router.getRoute("/api/v1/product/1/category/1", GET)
+        var route2 = router.getRoute("/api/user/1", GET)
+        var route3 = router.getRoute("/hello", GET)
+
+        then:
+        route1.beforeFilters().containsAll([beforeAll, beforeProduct])
+        route2.beforeFilters().containsAll([beforeAll, beforeUser])
+        route3.beforeFilters().isEmpty()
+    }
+
+    def "should register after filters with pathTemplate correctly" () {
+        given:
+        var Filter afterAll = {}
+        var Filter afterUser = {}
+        var Filter afterProduct = {}
+
+        router.get("/api/*/product/:product_id/category/:category_id", {req, res -> ""})
+        router.get("/api/user/:id", {req, res -> ""})
+        router.get("/hello", {req, res -> ""})
+
+        router.after("/api/*", afterAll)
+        router.after("/api/*/product/*", afterProduct)
+        router.after("/api/user/*", afterUser)
+
+        when:
+        var route1 = router.getRoute("/api/v1/product/1/category/1", GET)
+        var route2 = router.getRoute("/api/user/1", GET)
+        var route3 = router.getRoute("/hello", GET)
+
+        then:
+        route1.afterFilters().containsAll([afterAll, afterProduct])
+        route2.afterFilters().containsAll([afterAll, afterUser])
+        route3.afterFilters().isEmpty()
     }
 
 }
