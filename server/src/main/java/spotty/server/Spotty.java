@@ -24,6 +24,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.time.ZoneOffset.UTC;
+import static java.time.ZonedDateTime.now;
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
+import static spotty.SpottyVersion.VERSION;
+import static spotty.common.http.Headers.DATE;
+import static spotty.common.http.Headers.SERVER;
 import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_READ;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_WRITE;
@@ -62,6 +68,7 @@ public final class Spotty implements Closeable {
         }
 
         SERVER_RUN.execute(this::serverInit);
+        registerSpottyDefaultAfterFilter();
     }
 
     @Override
@@ -326,6 +333,15 @@ public final class Spotty implements Closeable {
     private synchronized void stopped() {
         this.started = false;
         notifyAll();
+    }
+
+    private void registerSpottyDefaultAfterFilter() {
+        after((request, response) -> {
+            response.headers()
+                .add(DATE, RFC_1123_DATE_TIME.format(now(UTC)))
+                .add(SERVER, "Spotty v" + VERSION)
+            ;
+        });
     }
 
 }
