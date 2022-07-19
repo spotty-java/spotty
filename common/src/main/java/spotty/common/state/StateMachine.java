@@ -13,6 +13,7 @@ import static com.google.common.collect.Lists.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.join;
+import static org.apache.commons.lang3.Validate.notNull;
 import static org.apache.commons.lang3.Validate.validState;
 
 public abstract class StateMachine<S extends Enum<S>> {
@@ -22,7 +23,7 @@ public abstract class StateMachine<S extends Enum<S>> {
     private volatile S state;
 
     public StateMachine(@NotNull S state) {
-        this.state = state;
+        this.state = notNull(state, "state");
     }
 
     public S state() {
@@ -74,6 +75,5 @@ public abstract class StateMachine<S extends Enum<S>> {
     public synchronized void checkStateIsOneOf(Collection<S> states) {
         validState(states.contains(state), "%s state must be one of %s, but is %s", getClass().getSimpleName(), states, state);
     }
-
 
 }

@@ -11,13 +11,13 @@ import spotty.server.router.route.RouteEntry;
 import spotty.server.router.route.RouteGroup;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
+import static com.google.common.collect.Lists.asList;
 import static spotty.common.http.HttpMethod.CONNECT;
 import static spotty.common.http.HttpMethod.DELETE;
 import static spotty.common.http.HttpMethod.GET;
@@ -69,7 +69,7 @@ public final class SpottyRouter {
     }
 
     public void before(String pathTemplate, HttpMethod method, String acceptType, Filter filter, Filter... filters) {
-        final List<Filter> filterList = toList(filter, filters);
+        final List<Filter> filterList = asList(filter, filters);
         final Pattern matcher = compileMatcher(pathWithPrefix(pathTemplate)).matcher;
 
         addFiltersToRoute(
@@ -84,7 +84,7 @@ public final class SpottyRouter {
     }
 
     public void after(String pathTemplate, HttpMethod method, String acceptType, Filter filter, Filter... filters) {
-        final List<Filter> filterList = toList(filter, filters);
+        final List<Filter> filterList = asList(filter, filters);
         final Pattern matcher = compileMatcher(pathWithPrefix(pathTemplate)).matcher;
 
         addFiltersToRoute(
@@ -254,14 +254,6 @@ public final class SpottyRouter {
             },
             route -> adder.accept(route, filters)
         );
-    }
-
-    private static List<Filter> toList(Filter filter, Filter... filters) {
-        final ArrayList<Filter> filterList = new ArrayList<>();
-        filterList.add(filter);
-        filterList.addAll(Arrays.asList(filters));
-
-        return filterList;
     }
 
     @NotNull

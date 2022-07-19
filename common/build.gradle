@@ -3,5 +3,6 @@ plugins {
 }
 
 dependencies {
-    testFixturesImplementation configurations.implementation
+    testFixturesImplementation "commons-io:commons-io:$apacheCommonsIOVersion"
+    testFixturesImplementation "org.apache.httpcomponents:httpcore:$apacheHttpCoreVersion"
 }
