@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
-import static spotty.SpottyVersion.VERSION;
+import static spotty.version.SpottyVersion.VERSION;
 import static spotty.common.http.Headers.DATE;
 import static spotty.common.http.Headers.SERVER;
 import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;

@@ -33,13 +33,13 @@ sourceSets {
 
 task spottyVersionTask {
     doLast {
-        def file = file("$spottySrc/spotty/SpottyVersion.java")
+        def file = file("$spottySrc/spotty/version/SpottyVersion.java")
         if (!file.exists()) {
             file.parentFile.mkdirs()
         }
 
         file.text = """
-            package spotty;
+            package spotty.version;
         
             public final class SpottyVersion { 
                 public static final String VERSION = "$version"; 
