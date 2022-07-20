@@ -1,6 +1,5 @@
 package spotty.server.router;
 
-import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import spotty.common.exception.SpottyHttpException;
@@ -266,12 +265,18 @@ public final class SpottyRouter {
         return String.join("", pathPrefixStack) + pathTemplate;
     }
 
-    @Value
     private static class FilterContainer {
-        public Pattern matcher;
-        public HttpMethod method;
-        public String acceptType;
-        public List<Filter> filters;
+        final Pattern matcher;
+        final HttpMethod method;
+        final String acceptType;
+        final List<Filter> filters;
+
+        private FilterContainer(Pattern matcher, HttpMethod method, String acceptType, List<Filter> filters) {
+            this.matcher = matcher;
+            this.method = method;
+            this.acceptType = acceptType;
+            this.filters = filters;
+        }
     }
 
 }
