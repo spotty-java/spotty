@@ -15,7 +15,9 @@ import spotty.common.state.StateMachine;
 import spotty.common.stream.output.SpottyByteArrayOutputStream;
 import spotty.common.stream.output.SpottyFixedByteOutputStream;
 import spotty.server.connection.state.ConnectionProcessorState;
-import spotty.server.handler.RequestHandler;
+import spotty.server.handler.exception.ExceptionHandler;
+import spotty.server.handler.exception.ExceptionHandlerService;
+import spotty.server.handler.request.RequestHandler;
 import spotty.server.worker.ReactorWorker;
 
 import java.io.Closeable;
@@ -66,20 +68,29 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     private final SpottyFixedByteOutputStream body = new SpottyFixedByteOutputStream(DEFAULT_BUFFER_SIZE);
 
     private final StateHandlerGraph<ConnectionProcessorState> stateHandlerGraph = new StateHandlerGraph<>();
+
+    private final ExceptionHandlerService exceptionHandlerService;
     private final SocketChannel socketChannel;
     private final ByteBuffer readBuffer;
     private RequestHandler requestHandler;
     private ByteBuffer writeBuffer;
 
-    public ConnectionProcessor(SocketChannel socketChannel, RequestHandler requestHandler) {
-        this(socketChannel, requestHandler, DEFAULT_BUFFER_SIZE);
+    public ConnectionProcessor(SocketChannel socketChannel,
+                               RequestHandler requestHandler,
+                               ExceptionHandlerService exceptionHandlerService) throws SpottyStreamException {
+        this(socketChannel, requestHandler, exceptionHandlerService, DEFAULT_BUFFER_SIZE);
     }
 
-    public ConnectionProcessor(SocketChannel socketChannel, RequestHandler requestHandler, int bufferSize) throws SpottyStreamException {
+    public ConnectionProcessor(SocketChannel socketChannel,
+                               RequestHandler requestHandler,
+                               ExceptionHandlerService exceptionHandlerService,
+                               int bufferSize) throws SpottyStreamException {
         super(READY_TO_READ);
 
         this.socketChannel = notNull(socketChannel, "socketChannel");
         this.requestHandler = notNull(requestHandler, "requestHandler");
+        this.exceptionHandlerService = notNull(exceptionHandlerService, "exceptionHandlerService");
+
         if (socketChannel.isBlocking()) {
             throw new SpottyStreamException("SocketChannel must be non blocking");
         }
@@ -146,7 +157,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     public void handle() {
         exceptionHandler(
             handleState,
-            changeStateToReadyToWrite // if exception
+            changeStateToReadyToWrite // if exception respond error to the client
         );
     }
 
@@ -371,20 +382,29 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         try {
             runnable.run();
         } catch (Exception e) {
-            log.error("", e);
-
-            if (e instanceof SpottyHttpException) {
-                final SpottyHttpException ex = (SpottyHttpException) e;
-                response.status(ex.status);
-                response.body(ex.getMessage());
+            final ExceptionHandler handler = exceptionHandlerService.getHandler(e.getClass());
+            if (handler == null) {
+                spottyMainExceptionHandler(e);
             } else {
-                response.status(INTERNAL_SERVER_ERROR);
-                response.body(INTERNAL_SERVER_ERROR.reasonPhrase);
+                handler.handle(e, request, response);
             }
 
             if (afterExceptionHandler != null) {
                 afterExceptionHandler.run();
             }
+        }
+    }
+
+    private void spottyMainExceptionHandler(Exception e) {
+        log.error("", e);
+
+        if (e instanceof SpottyHttpException) {
+            final SpottyHttpException ex = (SpottyHttpException) e;
+            response.status(ex.status);
+            response.body(ex.getMessage());
+        } else {
+            response.status(INTERNAL_SERVER_ERROR);
+            response.body(INTERNAL_SERVER_ERROR.reasonPhrase);
         }
     }
 

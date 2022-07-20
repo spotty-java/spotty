@@ -1,4 +1,4 @@
-package spotty.server.handler;
+package spotty.server.handler.request;
 
 import spotty.common.request.SpottyInnerRequest;
 import spotty.common.response.SpottyResponse;

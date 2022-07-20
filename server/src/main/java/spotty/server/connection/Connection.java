@@ -1,12 +1,12 @@
 package spotty.server.connection;
 
 import spotty.server.connection.state.ConnectionProcessorState;
-import spotty.server.handler.RequestHandler;
 
 import java.io.Closeable;
-import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+
+import static org.apache.commons.lang3.Validate.notNull;
 
 public final class Connection implements Closeable {
     private static final AtomicLong ID_GENERATOR = new AtomicLong();
@@ -15,8 +15,8 @@ public final class Connection implements Closeable {
 
     private final ConnectionProcessor connectionProcessor;
 
-    public Connection(SocketChannel socketChannel, RequestHandler requestHandler) {
-        this.connectionProcessor = new ConnectionProcessor(socketChannel, requestHandler);
+    public Connection(ConnectionProcessor connectionProcessor) {
+        this.connectionProcessor = notNull(connectionProcessor, "connectionProcessor");
     }
 
     @Override

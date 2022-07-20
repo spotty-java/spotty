@@ -8,6 +8,7 @@ import spotty.common.request.WebRequestTestData
 import spotty.common.response.ResponseWriter
 import spotty.common.response.SpottyResponse
 import spotty.server.handler.EchoRequestHandler
+import spotty.server.handler.exception.ExceptionHandlerService
 import stub.SocketChannelStub
 
 import static org.apache.http.entity.ContentType.TEXT_PLAIN
@@ -27,7 +28,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler())
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), new ExceptionHandlerService())
 
         when:
         while (socket.hasRemaining()) {
@@ -47,7 +48,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var request = aSpottyRequest()
         var expectedResponse = new String(ResponseWriter.write(aSpottyResponse(request)))
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), fullRequest.length())
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), new ExceptionHandlerService(), fullRequest.length())
 
         when:
         var conds = new AsyncConditions()
@@ -76,7 +77,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var socket = new SocketChannelStub()
 
         when:
-        new ConnectionProcessor(socket, new EchoRequestHandler())
+        new ConnectionProcessor(socket, new EchoRequestHandler(), new ExceptionHandlerService())
 
         then:
         thrown SpottyStreamException
@@ -96,7 +97,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write("wrong request head line")
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler())
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), new ExceptionHandlerService())
 
         when:
         var conds = new AsyncConditions()
@@ -136,7 +137,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write("$HOST: localhost:4000")
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler())
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), new ExceptionHandlerService())
 
         when:
         var conds = new AsyncConditions()
@@ -174,9 +175,14 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, { req, res ->
-            throw new SpottyHttpException(TOO_MANY_REQUESTS, "some message")
-        }, fullRequest.length())
+        var connection = new ConnectionProcessor(
+            socket,
+            { req, res ->
+                throw new SpottyHttpException(TOO_MANY_REQUESTS, "some message")
+            },
+            new ExceptionHandlerService(),
+            fullRequest.length()
+        )
 
         when:
         var conds = new AsyncConditions()
