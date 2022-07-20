@@ -309,4 +309,33 @@ class SpottyRouterSpec extends AppTestContext {
         1 * beforePost.handle(_, _)
         1 * afterPost.handle(_, _)
     }
+
+    def "should execute registered exception handler"() {
+        given:
+        SPOTTY.get("/hello", { req, res -> throw new IllegalArgumentException() })
+        SPOTTY.exception(
+            IllegalArgumentException.class,
+            { e, req, res ->
+                res.body("exception handler")
+            }
+        )
+
+        when:
+        var response = httpClient.get("/hello")
+
+        then:
+        response == "exception handler"
+    }
+
+    def "should execute spotty main exception handler"() {
+        given:
+        SPOTTY.get("/hello", { req, res -> throw new SpottyHttpException(BAD_REQUEST, "exception handler") })
+
+        when:
+        var response = httpClient.getResponse("/hello")
+
+        then:
+        response.statusLine.statusCode == BAD_REQUEST.code
+        response.entity.content.text == "exception handler"
+    }
 }

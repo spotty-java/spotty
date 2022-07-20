@@ -2,6 +2,7 @@ package spotty.server.handler;
 
 import spotty.common.request.SpottyInnerRequest;
 import spotty.common.response.SpottyResponse;
+import spotty.server.handler.request.RequestHandler;
 
 public final class EchoRequestHandler implements RequestHandler {
 

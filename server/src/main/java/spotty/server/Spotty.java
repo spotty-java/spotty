@@ -5,8 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
 import spotty.server.connection.Connection;
-import spotty.server.handler.DefaultRequestHandler;
-import spotty.server.handler.RequestHandler;
+import spotty.server.connection.ConnectionProcessor;
+import spotty.server.handler.exception.ExceptionHandler;
+import spotty.server.handler.exception.ExceptionHandlerService;
+import spotty.server.handler.request.DefaultRequestHandler;
+import spotty.server.handler.request.RequestHandler;
 import spotty.server.router.SpottyRouter;
 import spotty.server.router.route.Route;
 import spotty.server.router.route.RouteGroup;
@@ -52,6 +55,7 @@ public final class Spotty implements Closeable {
 
     private final SpottyRouter router = new SpottyRouter();
     private final RequestHandler requestHandler = new DefaultRequestHandler(router);
+    private final ExceptionHandlerService exceptionHandlerService = new ExceptionHandlerService();
 
     public Spotty() {
         this(DEFAULT_PORT);
@@ -231,6 +235,10 @@ public final class Spotty implements Closeable {
         return router.removeRoute(pathTemplate, acceptType, method);
     }
 
+    public <T extends Exception> void exception(Class<T> exceptionClass, ExceptionHandler exceptionHandler) {
+        exceptionHandlerService.register(exceptionClass, exceptionHandler);
+    }
+
     @SneakyThrows
     private void serverInit() {
         try (final ServerSocketChannel serverSocket = ServerSocketChannel.open();
@@ -283,7 +291,9 @@ public final class Spotty implements Closeable {
 
         final SelectionKey key = socket.register(acceptKey.selector(), SelectionKey.OP_READ);
 
-        final Connection connection = new Connection(socket, requestHandler);
+        final ConnectionProcessor connectionProcessor = new ConnectionProcessor(socket, requestHandler, exceptionHandlerService);
+        final Connection connection = new Connection(connectionProcessor);
+
         log.info("{} accepted: {}", connection, connections.incrementAndGet());
 
         key.attach(connection);
