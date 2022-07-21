@@ -21,10 +21,6 @@ import static spotty.common.http.HttpStatus.TOO_MANY_REQUESTS
 
 class SpottyRouterSpec extends AppTestContext {
 
-    def cleanup() {
-        SPOTTY.clearRoutes()
-    }
-
     def "should respond with query params correctly"() {
         given:
         SPOTTY.get("/hello", { req, res ->
