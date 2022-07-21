@@ -30,12 +30,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
-import static spotty.version.SpottyVersion.VERSION;
 import static spotty.common.http.Headers.DATE;
 import static spotty.common.http.Headers.SERVER;
 import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_READ;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_WRITE;
+import static spotty.server.connection.state.ConnectionProcessorState.REQUEST_HANDLING;
+import static spotty.version.SpottyVersion.VERSION;
 
 @Slf4j
 public final class Spotty implements Closeable {
@@ -303,17 +304,18 @@ public final class Spotty implements Closeable {
             key.selector().wakeup();
         });
 
-        connection.whenStateIs(READY_TO_READ, __ ->
-            key.interestOps(SelectionKey.OP_READ)
-        );
+        connection.whenStateIs(READY_TO_READ, __ -> {
+            key.interestOps(SelectionKey.OP_READ);
+            key.selector().wakeup();
+        });
+
+        connection.whenStateIs(REQUEST_HANDLING, __ -> {
+            key.interestOps(SelectionKey.OP_CONNECT); // make key is waiting ready to write
+        });
 
         connection.whenStateIs(CLOSED, __ -> {
-            if (connection.isClosed()) {
-                log.info("{} closed: {}", connection, connections.decrementAndGet());
-                key.cancel();
-            } else {
-                log.error("got CLOSED change state event, but connection didn't closed");
-            }
+            log.info("{} closed: {}", connection, connections.decrementAndGet());
+            key.cancel();
         });
     }
 
@@ -346,6 +348,7 @@ public final class Spotty implements Closeable {
     }
 
     private static final String SPOTTY_VERSION = "Spotty v" + VERSION;
+
     private void registerSpottyDefaultAfterFilter() {
         after((request, response) -> {
             response.headers()

@@ -123,7 +123,9 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
                             return true;
                         } catch (IOException e) {
-                            throw new SpottyException(e);
+                            log.error("socket read error", e);
+                            close();
+                            return false;
                         }
                     }
 
@@ -168,7 +170,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     private final Runnable changeStateToReadyToWrite = () -> changeState(READY_TO_WRITE);
 
     public boolean isClosed() {
-        return !socketChannel.isOpen();
+        return !socketChannel.isOpen() || is(CLOSED);
     }
 
     @Override
@@ -190,19 +192,19 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
             }
 
             if (b == '\n') {
-                break;
+                try {
+                    parseHeadLine(line.toString());
+                } finally {
+                    line.reset();
+                }
+
+                return changeState(HEADERS_READY_TO_READ);
             }
 
             line.write(b);
         }
 
-        try {
-            parseHeadLine(line.toString());
-        } finally {
-            line.reset();
-        }
-
-        return changeState(HEADERS_READY_TO_READ);
+        return false;
     }
 
     private boolean readHeaders() {
@@ -213,31 +215,22 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
             }
 
             if (b == '\n') {
-                try {
-                    final String line = this.line.toString();
-                    if (line.equals("")) {
-                        return changeState(PREPARE_HEADERS);
-                    }
+                final String line = this.line.toString();
+                this.line.reset();
 
-                    parseHeader(line);
-
-                    continue;
-                } finally {
-                    this.line.reset();
+                if (line.equals("")) {
+                    return changeState(PREPARE_HEADERS);
                 }
+
+                parseHeader(line);
+
+                continue;
             }
 
             line.write(b);
         }
 
-        // if was no \n symbol
-        try {
-            parseHeader(line.toString());
-
-            return changeState(PREPARE_HEADERS);
-        } finally {
-            line.reset();
-        }
+        return false;
     }
 
     private boolean prepareHeaders() {
@@ -259,6 +252,10 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private boolean readBody() {
+        if (request.contentLength() == 0 && readBuffer.hasRemaining()) {
+            throw new SpottyHttpException(BAD_REQUEST, "invalid request, content-length is 0, but body not empty");
+        }
+
         if (request.contentLength() > body.capacity()) {
             body.capacity(request.contentLength());
         }
@@ -268,7 +265,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         }
 
         if (readBuffer.hasRemaining()) {
-            body.write(readBuffer);
+            body.write(readBuffer, 0, request.contentLength());
         }
 
         if (body.isFull()) {
@@ -319,7 +316,10 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
             return false;
         } catch (IOException e) {
-            throw new SpottyHttpException(INTERNAL_SERVER_ERROR, "socket write error", e);
+            log.error("response write error", e);
+            close();
+
+            return false;
         }
     }
 
@@ -396,7 +396,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private void spottyMainExceptionHandler(Exception e) {
-        log.error("", e);
+        log.error("spotty main exception handler", e);
 
         if (e instanceof SpottyHttpException) {
             final SpottyHttpException ex = (SpottyHttpException) e;

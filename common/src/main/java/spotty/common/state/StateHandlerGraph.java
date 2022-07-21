@@ -22,8 +22,11 @@ public final class StateHandlerGraph<S extends Enum<S>> {
 
         final GraphFilter filter = filters.getOrDefault(state, GraphFilter.EMPTY);
         if (filter.before()) {
-            node.action();
-            filter.after();
+            try {
+                node.action();
+            } finally {
+                filter.after();
+            }
         }
     }
 

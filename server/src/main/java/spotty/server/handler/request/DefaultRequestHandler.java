@@ -1,5 +1,6 @@
 package spotty.server.handler.request;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import spotty.common.filter.Filter;
 import spotty.common.json.Json;
 import spotty.common.request.SpottyDefaultRequest;
@@ -35,15 +36,15 @@ public final class DefaultRequestHandler implements RequestHandler {
 
         final SpottyRequest request = new SpottyDefaultRequest(innerRequest);
 
+        final Object result;
         try {
             executeFilters(routeEntry.beforeFilters(), request, response);
-
-            final Object res = routeEntry.route().handle(request, response);
-
-            renderResult(response, res);
+            result = routeEntry.route().handle(request, response);
         } finally {
             executeFilters(routeEntry.afterFilters(), request, response);
         }
+
+        renderResult(response, result);
     }
 
     private void renderResult(SpottyResponse response, Object result) {
@@ -53,7 +54,7 @@ public final class DefaultRequestHandler implements RequestHandler {
 
         if (result instanceof byte[]) {
             response.body((byte[]) result);
-        } else if (APPLICATION_JSON.getMimeType().equals(response.contentType().getMimeType())) {
+        } else if (result instanceof JsonNode || APPLICATION_JSON.getMimeType().equals(response.contentType().getMimeType())) {
             response.body(Json.writeValueAsBytes(result));
         } else {
             response.body(result.toString());
