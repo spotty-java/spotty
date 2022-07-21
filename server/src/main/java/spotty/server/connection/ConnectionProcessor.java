@@ -266,7 +266,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         }
 
         if (readBuffer.hasRemaining()) {
-            body.write(readBuffer, 0, request.contentLength());
+            body.writeRemaining(readBuffer);
         }
 
         if (body.isFull()) {

@@ -128,4 +128,24 @@ class SpottyFixedByteOutputStreamTest extends Specification {
         "he"          | 2
     }
 
+    def "should writeRemaining remaining correctly"() {
+        given:
+        var stream = new SpottyFixedByteOutputStream(streamCapacity)
+        var buffer = ByteBuffer.wrap("hello world!".getBytes())
+
+        when:
+        stream.writeRemaining(buffer)
+
+        then:
+        expected == stream.toString()
+
+        where:
+        expected       | streamCapacity
+        "hello worl"   | 10
+        "hello world!" | 12
+        "hello world!" | 20
+        "hello"        | 5
+        "he"           | 2
+    }
+
 }

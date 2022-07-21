@@ -56,6 +56,10 @@ public final class SpottyFixedByteOutputStream extends OutputStream {
         write(buffer, 0, buffer.remaining());
     }
 
+    public synchronized  void writeRemaining(ByteBuffer buffer) {
+        write(buffer, 0, min(remaining(), buffer.remaining()));
+    }
+
     public synchronized void write(ByteBuffer buffer, int off, int len) {
         ensureCapacity();
         if (len > remaining()) {
