@@ -17,7 +17,7 @@ public final class ReactorWorker implements Closeable {
 
     private static volatile ReactorWorker INSTANCE;
 
-    private final ExecutorService WORKERS;
+    private final ExecutorService REACTOR_POOL;
 
     public static void init() {
         init(DEFAULT_MIN_WORKERS, DEFAULT_MAX_WORKERS, DEFAULT_WORKER_KEEP_ALIVE);
@@ -46,7 +46,7 @@ public final class ReactorWorker implements Closeable {
     }
 
     private ReactorWorker(int minWorkers, int maxWorkers, int keepAlive) {
-        WORKERS = new ThreadPoolExecutor(
+        REACTOR_POOL = new ThreadPoolExecutor(
             minWorkers,
             maxWorkers,
             keepAlive,
@@ -56,13 +56,13 @@ public final class ReactorWorker implements Closeable {
     }
 
     public void addAction(Runnable action) {
-        WORKERS.execute(action);
+        REACTOR_POOL.execute(action);
     }
 
     @Override
     public void close() {
         try {
-            WORKERS.shutdownNow();
+            REACTOR_POOL.shutdownNow();
         } catch (Exception e) {
             // ignore
         }

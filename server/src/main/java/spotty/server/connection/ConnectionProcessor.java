@@ -2,7 +2,6 @@ package spotty.server.connection;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.VisibleForTesting;
-import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyStreamException;
 import spotty.common.request.SpottyInnerRequest;
@@ -30,7 +29,6 @@ import static org.apache.commons.lang3.Validate.notNull;
 import static spotty.common.http.Headers.CONTENT_LENGTH;
 import static spotty.common.http.Headers.CONTENT_TYPE;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
-import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static spotty.common.request.validator.RequestValidator.validate;
 import static spotty.common.utils.HeaderUtils.parseContentLength;
 import static spotty.common.utils.HeaderUtils.parseContentType;
@@ -71,7 +69,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
     private final ExceptionHandlerService exceptionHandlerService;
     private final SocketChannel socketChannel;
-    private final ByteBuffer readBuffer;
+    private ByteBuffer readBuffer;
     private RequestHandler requestHandler;
     private ByteBuffer writeBuffer;
 
@@ -123,7 +121,9 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
                             return true;
                         } catch (IOException e) {
-                            throw new SpottyException(e);
+                            log.error("socket read error", e);
+                            close();
+                            return false;
                         }
                     }
 
@@ -157,7 +157,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     public void handle() {
         exceptionHandler(
             handleState,
-            changeStateToReadyToWrite // if exception respond error to the client
+            afterExceptionHandler // if exception respond error to the client
         );
     }
 
@@ -165,10 +165,13 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     private final ExceptionalRunnable handleState = () -> stateHandlerGraph.handleState(state());
 
     // optimization to not spawn callback objects each time
-    private final Runnable changeStateToReadyToWrite = () -> changeState(READY_TO_WRITE);
+    private final Runnable afterExceptionHandler = () -> {
+        readBuffer.clear(); // reset buffer
+        changeState(READY_TO_WRITE);
+    };
 
     public boolean isClosed() {
-        return !socketChannel.isOpen();
+        return !socketChannel.isOpen() || is(CLOSED);
     }
 
     @Override
@@ -190,19 +193,19 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
             }
 
             if (b == '\n') {
-                break;
+                try {
+                    parseHeadLine(line.toString());
+                } finally {
+                    line.reset();
+                }
+
+                return changeState(HEADERS_READY_TO_READ);
             }
 
             line.write(b);
         }
 
-        try {
-            parseHeadLine(line.toString());
-        } finally {
-            line.reset();
-        }
-
-        return changeState(HEADERS_READY_TO_READ);
+        return false;
     }
 
     private boolean readHeaders() {
@@ -213,31 +216,22 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
             }
 
             if (b == '\n') {
-                try {
-                    final String line = this.line.toString();
-                    if (line.equals("")) {
-                        return changeState(PREPARE_HEADERS);
-                    }
+                final String line = this.line.toString();
+                this.line.reset();
 
-                    parseHeader(line);
-
-                    continue;
-                } finally {
-                    this.line.reset();
+                if (line.equals("")) {
+                    return changeState(PREPARE_HEADERS);
                 }
+
+                parseHeader(line);
+
+                continue;
             }
 
             line.write(b);
         }
 
-        // if was no \n symbol
-        try {
-            parseHeader(line.toString());
-
-            return changeState(PREPARE_HEADERS);
-        } finally {
-            line.reset();
-        }
+        return false;
     }
 
     private boolean prepareHeaders() {
@@ -259,6 +253,10 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private boolean readBody() {
+        if (request.contentLength() == 0 && readBuffer.hasRemaining()) {
+            throw new SpottyHttpException(BAD_REQUEST, "invalid request, content-length is 0, but body not empty");
+        }
+
         if (request.contentLength() > body.capacity()) {
             body.capacity(request.contentLength());
         }
@@ -268,7 +266,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         }
 
         if (readBuffer.hasRemaining()) {
-            body.write(readBuffer);
+            body.writeRemaining(readBuffer);
         }
 
         if (body.isFull()) {
@@ -319,7 +317,10 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
             return false;
         } catch (IOException e) {
-            throw new SpottyHttpException(INTERNAL_SERVER_ERROR, "socket write error", e);
+            log.error("response write error", e);
+            close();
+
+            return false;
         }
     }
 
@@ -328,6 +329,11 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         request.reset();
 
         changeState(READY_TO_READ);
+
+        // has something did not process
+        if (readBuffer.position() > 0) {
+            handle();
+        }
 
         return false;
     }
@@ -378,33 +384,17 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         exceptionHandler(runnable, null);
     }
 
+    @SuppressWarnings("all")
     private void exceptionHandler(ExceptionalRunnable runnable, Runnable afterExceptionHandler) {
         try {
             runnable.run();
         } catch (Exception e) {
             final ExceptionHandler handler = exceptionHandlerService.getHandler(e.getClass());
-            if (handler == null) {
-                spottyMainExceptionHandler(e);
-            } else {
-                handler.handle(e, request, response);
-            }
+            handler.handle(e, request, response);
 
             if (afterExceptionHandler != null) {
                 afterExceptionHandler.run();
             }
-        }
-    }
-
-    private void spottyMainExceptionHandler(Exception e) {
-        log.error("", e);
-
-        if (e instanceof SpottyHttpException) {
-            final SpottyHttpException ex = (SpottyHttpException) e;
-            response.status(ex.status);
-            response.body(ex.getMessage());
-        } else {
-            response.status(INTERNAL_SERVER_ERROR);
-            response.body(INTERNAL_SERVER_ERROR.reasonPhrase);
         }
     }
 

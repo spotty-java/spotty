@@ -2,6 +2,7 @@ package spotty.server;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import spotty.common.exception.SpottyHttpException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
 import spotty.server.connection.Connection;
@@ -30,15 +31,18 @@ import java.util.concurrent.atomic.AtomicLong;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
-import static spotty.version.SpottyVersion.VERSION;
 import static spotty.common.http.Headers.DATE;
 import static spotty.common.http.Headers.SERVER;
+import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_READ;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_WRITE;
+import static spotty.server.connection.state.ConnectionProcessorState.REQUEST_HANDLING;
+import static spotty.version.SpottyVersion.VERSION;
 
 @Slf4j
 public final class Spotty implements Closeable {
+    private static final String SPOTTY_VERSION = "Spotty v" + VERSION;
     private static final int DEFAULT_PORT = 4000;
 
     static {
@@ -71,7 +75,9 @@ public final class Spotty implements Closeable {
             return;
         }
 
-        registerSpottyDefaultAfterFilter();
+        registerSpottyDefaultFilters();
+        registerSpottyDefaultExceptionHandlers();
+
         SERVER_RUN.execute(this::serverInit);
     }
 
@@ -235,7 +241,7 @@ public final class Spotty implements Closeable {
         return router.removeRoute(pathTemplate, acceptType, method);
     }
 
-    public <T extends Exception> void exception(Class<T> exceptionClass, ExceptionHandler exceptionHandler) {
+    public <T extends Exception> void exception(Class<T> exceptionClass, ExceptionHandler<T> exceptionHandler) {
         exceptionHandlerService.register(exceptionClass, exceptionHandler);
     }
 
@@ -294,7 +300,7 @@ public final class Spotty implements Closeable {
         final ConnectionProcessor connectionProcessor = new ConnectionProcessor(socket, requestHandler, exceptionHandlerService);
         final Connection connection = new Connection(connectionProcessor);
 
-        log.info("{} accepted: {}", connection, connections.incrementAndGet());
+        log.info("{} accepted, count={}", connection, connections.incrementAndGet());
 
         key.attach(connection);
 
@@ -303,17 +309,18 @@ public final class Spotty implements Closeable {
             key.selector().wakeup();
         });
 
-        connection.whenStateIs(READY_TO_READ, __ ->
-            key.interestOps(SelectionKey.OP_READ)
-        );
+        connection.whenStateIs(READY_TO_READ, __ -> {
+            key.interestOps(SelectionKey.OP_READ);
+            key.selector().wakeup();
+        });
+
+        connection.whenStateIs(REQUEST_HANDLING, __ -> {
+            key.interestOps(SelectionKey.OP_CONNECT); // make key is waiting ready to write
+        });
 
         connection.whenStateIs(CLOSED, __ -> {
-            if (connection.isClosed()) {
-                log.info("{} closed: {}", connection, connections.decrementAndGet());
-                key.cancel();
-            } else {
-                log.error("got CLOSED change state event, but connection didn't closed");
-            }
+            log.info("{} closed, count={}", connection, connections.decrementAndGet());
+            key.cancel();
         });
     }
 
@@ -345,12 +352,27 @@ public final class Spotty implements Closeable {
         notifyAll();
     }
 
-    private static final String SPOTTY_VERSION = "Spotty v" + VERSION;
-    private void registerSpottyDefaultAfterFilter() {
+    private void registerSpottyDefaultFilters() {
         after((request, response) -> {
             response.headers()
                 .add(DATE, RFC_1123_DATE_TIME.format(now(UTC)))
                 .add(SERVER, SPOTTY_VERSION)
+            ;
+        });
+    }
+
+    private void registerSpottyDefaultExceptionHandlers() {
+        exception(SpottyHttpException.class, (exception, request, response) -> {
+            response
+                .status(exception.status)
+                .body(exception.getMessage())
+            ;
+        });
+
+        exception(Exception.class, (exception, request, response) -> {
+            response
+                .status(INTERNAL_SERVER_ERROR)
+                .body(INTERNAL_SERVER_ERROR.reasonPhrase)
             ;
         });
     }

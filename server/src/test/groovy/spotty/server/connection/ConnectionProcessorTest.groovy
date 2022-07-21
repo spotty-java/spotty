@@ -15,10 +15,27 @@ import static org.apache.http.entity.ContentType.TEXT_PLAIN
 import static spotty.common.http.Headers.CONTENT_TYPE
 import static spotty.common.http.Headers.HOST
 import static spotty.common.http.HttpStatus.BAD_REQUEST
+import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR
 import static spotty.common.http.HttpStatus.TOO_MANY_REQUESTS
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_WRITE
 
 class ConnectionProcessorTest extends Specification implements WebRequestTestData {
+
+    private def exceptionService = new ExceptionHandlerService()
+
+    def setup() {
+        exceptionService.register(SpottyHttpException.class, (exception, request, response) -> {
+            response
+                .status(exception.status)
+                .body(exception.getMessage())
+        })
+
+        exceptionService.register(Exception.class, (exception, request, response) -> {
+            response
+                .status(INTERNAL_SERVER_ERROR)
+                .body(INTERNAL_SERVER_ERROR.reasonPhrase)
+        })
+    }
 
     def "should read request correctly"() {
         given:
@@ -28,7 +45,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), new ExceptionHandlerService())
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService)
 
         when:
         while (socket.hasRemaining()) {
@@ -48,7 +65,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var request = aSpottyRequest()
         var expectedResponse = new String(ResponseWriter.write(aSpottyResponse(request)))
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), new ExceptionHandlerService(), fullRequest.length())
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService, fullRequest.length())
 
         when:
         var conds = new AsyncConditions()
@@ -77,7 +94,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var socket = new SocketChannelStub()
 
         when:
-        new ConnectionProcessor(socket, new EchoRequestHandler(), new ExceptionHandlerService())
+        new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService)
 
         then:
         thrown SpottyStreamException
@@ -94,10 +111,10 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
 
         var socket = new SocketChannelStub()
         socket.configureBlocking(false)
-        socket.write("wrong request head line")
+        socket.write("wrong request head line\n")
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), new ExceptionHandlerService())
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService)
 
         when:
         var conds = new AsyncConditions()
@@ -134,10 +151,10 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.configureBlocking(false)
         socket.write("POST / HTTP/1.1\n")
         socket.write("$CONTENT_TYPE: text/plain\n")
-        socket.write("$HOST: localhost:4000")
+        socket.write("$HOST: localhost:4000\n\n")
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), new ExceptionHandlerService())
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService)
 
         when:
         var conds = new AsyncConditions()
@@ -180,7 +197,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
             { req, res ->
                 throw new SpottyHttpException(TOO_MANY_REQUESTS, "some message")
             },
-            new ExceptionHandlerService(),
+            exceptionService,
             fullRequest.length()
         )
 

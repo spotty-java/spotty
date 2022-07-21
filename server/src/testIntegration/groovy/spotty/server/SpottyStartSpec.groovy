@@ -2,7 +2,7 @@ package spotty.server
 
 import spock.lang.Specification
 
-class SpottySpec extends Specification {
+class SpottyStartSpec extends Specification {
 
     private Spotty server
 

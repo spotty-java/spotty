@@ -1,6 +1,7 @@
 package spotty.server.handler.exception
 
 import spock.lang.Specification
+import spotty.common.exception.SpottyException
 
 import java.nio.file.AccessDeniedException
 
@@ -43,7 +44,7 @@ class ExceptionHandlerServiceTest extends Specification {
         service.handlers.containsKey(IllegalFormatFlagsException.class)
     }
 
-    def "should return null when exception or parent didn't registered"() {
+    def "should return error when exception or parent didn't registered"() {
         given:
         var ExceptionHandler illegalArgumentException = Mock(ExceptionHandler.class)
         var ExceptionHandler runtimeExceptionHandler = Mock(ExceptionHandler.class)
@@ -52,12 +53,12 @@ class ExceptionHandlerServiceTest extends Specification {
         service.register(RuntimeException.class, runtimeExceptionHandler)
 
         when:
-        var found = service.getHandler(AccessDeniedException.class)
+        service.getHandler(AccessDeniedException.class)
 
         then:
-        found == null
-        service.handlers.size() == 3
-        service.handlers.containsKey(AccessDeniedException.class)
+        thrown SpottyException.class
+        service.handlers.size() == 2
+        !service.handlers.containsKey(AccessDeniedException.class)
     }
 
 }
