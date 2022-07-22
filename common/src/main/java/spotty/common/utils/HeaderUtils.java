@@ -9,7 +9,7 @@ import spotty.common.http.HttpMethod;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static spotty.common.http.Headers.CONTENT_LENGTH;
+import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 
 @Slf4j

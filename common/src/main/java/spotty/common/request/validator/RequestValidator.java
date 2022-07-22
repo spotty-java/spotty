@@ -5,8 +5,8 @@ import spotty.common.exception.SpottyHttpException;
 import spotty.common.request.SpottyRequest;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static spotty.common.http.Headers.CONTENT_LENGTH;
-import static spotty.common.http.Headers.CONTENT_TYPE;
+import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
+import static spotty.common.http.HttpHeaders.CONTENT_TYPE;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 
 @Slf4j

@@ -26,8 +26,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 import static org.apache.commons.lang3.Validate.notNull;
-import static spotty.common.http.Headers.CONTENT_LENGTH;
-import static spotty.common.http.Headers.CONTENT_TYPE;
+import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
+import static spotty.common.http.HttpHeaders.CONTENT_TYPE;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 import static spotty.common.request.validator.RequestValidator.validate;
 import static spotty.common.utils.HeaderUtils.parseContentLength;
@@ -235,15 +235,15 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private boolean prepareHeaders() {
-        if (request.method().isContentLengthRequired() && request.headers().notContain(CONTENT_LENGTH)) {
+        if (request.method().isContentLengthRequired() && request.headers().hasNot(CONTENT_LENGTH)) {
             throw new SpottyHttpException(BAD_REQUEST, CONTENT_LENGTH + " header is required");
         }
 
-        if (request.headers().contain(CONTENT_LENGTH)) {
+        if (request.headers().has(CONTENT_LENGTH)) {
             request.contentLength(parseContentLength(request.headers().remove(CONTENT_LENGTH)));
         }
 
-        if (request.headers().contain(CONTENT_TYPE)) {
+        if (request.headers().has(CONTENT_TYPE)) {
             request.contentType(parseContentType(request.headers().remove(CONTENT_TYPE)));
         }
 
@@ -389,6 +389,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         try {
             runnable.run();
         } catch (Exception e) {
+            log.error("", e);
             final ExceptionHandler handler = exceptionHandlerService.getHandler(e.getClass());
             handler.handle(e, request, response);
 

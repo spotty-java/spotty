@@ -2,7 +2,7 @@ package spotty.common.request;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.entity.ContentType;
-import spotty.common.http.Headers;
+import spotty.common.http.HttpHeaders;
 import spotty.common.response.SpottyResponse;
 
 import java.io.IOException;
@@ -10,19 +10,19 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 
 import static java.lang.Integer.parseInt;
-import static spotty.common.http.Headers.ACCEPT;
-import static spotty.common.http.Headers.ACCEPT_ENCODING;
-import static spotty.common.http.Headers.CONNECTION;
-import static spotty.common.http.Headers.CONTENT_LENGTH;
-import static spotty.common.http.Headers.CONTENT_TYPE;
-import static spotty.common.http.Headers.HOST;
-import static spotty.common.http.Headers.USER_AGENT;
+import static spotty.common.http.HttpHeaders.ACCEPT;
+import static spotty.common.http.HttpHeaders.ACCEPT_ENCODING;
+import static spotty.common.http.HttpHeaders.CONNECTION;
+import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
+import static spotty.common.http.HttpHeaders.CONTENT_TYPE;
+import static spotty.common.http.HttpHeaders.HOST;
+import static spotty.common.http.HttpHeaders.USER_AGENT;
 import static spotty.common.http.HttpMethod.POST;
 
 public interface WebRequestTestData {
 
     String requestBody = readFile("/request_body.txt");
-    Headers headers = new Headers()
+    HttpHeaders headers = new HttpHeaders()
         .add(CONTENT_TYPE, "text/plain")
         .add(USER_AGENT, "Spotty Agent")
         .add(ACCEPT, "*/*")
@@ -37,7 +37,7 @@ public interface WebRequestTestData {
 
     default SpottyInnerRequest aSpottyRequest() {
         final byte[] content = requestBody.getBytes();
-        final Headers headers = this.headers.copy();
+        final HttpHeaders headers = this.headers.copy();
 
         final SpottyInnerRequest request = new SpottyInnerRequest();
         return request

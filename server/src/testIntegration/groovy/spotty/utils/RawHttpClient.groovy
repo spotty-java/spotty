@@ -1,6 +1,6 @@
 package spotty.utils
 
-import static spotty.common.http.Headers.CONTENT_LENGTH
+import static spotty.common.http.HttpHeaders.CONTENT_LENGTH
 
 class RawHttpClient implements Closeable {
     private byte[] buffer = new byte[8192]
