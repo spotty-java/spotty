@@ -12,8 +12,8 @@ import spotty.server.handler.exception.ExceptionHandlerService
 import stub.SocketChannelStub
 
 import static org.apache.http.entity.ContentType.TEXT_PLAIN
-import static spotty.common.http.Headers.CONTENT_TYPE
-import static spotty.common.http.Headers.HOST
+import static spotty.common.http.HttpHeaders.CONTENT_TYPE
+import static spotty.common.http.HttpHeaders.HOST
 import static spotty.common.http.HttpStatus.BAD_REQUEST
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR
 import static spotty.common.http.HttpStatus.TOO_MANY_REQUESTS

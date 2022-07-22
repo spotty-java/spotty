@@ -2,7 +2,7 @@ package spotty.common.request;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.http.entity.ContentType;
-import spotty.common.http.Headers;
+import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
 
 import java.util.Map;
@@ -21,7 +21,7 @@ public interface SpottyRequest {
 
     ContentType contentType();
 
-    Headers headers();
+    HttpHeaders headers();
 
     Map<String, String> params();
 

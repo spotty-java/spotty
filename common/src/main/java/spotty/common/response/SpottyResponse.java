@@ -2,7 +2,7 @@ package spotty.common.response;
 
 import lombok.ToString;
 import org.apache.http.entity.ContentType;
-import spotty.common.http.Headers;
+import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpStatus;
 
 import java.util.Arrays;
@@ -19,7 +19,7 @@ public final class SpottyResponse {
     private ContentType contentType = TEXT_PLAIN;
     private byte[] body;
 
-    private final Headers headers = new Headers();
+    private final HttpHeaders headers = new HttpHeaders();
 
     public String protocol() {
         return protocol;
@@ -60,7 +60,7 @@ public final class SpottyResponse {
         return body == null ? 0 : body.length;
     }
 
-    public Headers headers() {
+    public HttpHeaders headers() {
         return headers;
     }
 
@@ -69,12 +69,12 @@ public final class SpottyResponse {
         return this;
     }
 
-    public SpottyResponse addHeaders(Headers headers) {
+    public SpottyResponse addHeaders(HttpHeaders headers) {
         this.headers.add(headers);
         return this;
     }
 
-    public SpottyResponse replaceHeaders(Headers headers) {
+    public SpottyResponse replaceHeaders(HttpHeaders headers) {
         this.headers.clear();
         this.headers.add(headers);
         return this;

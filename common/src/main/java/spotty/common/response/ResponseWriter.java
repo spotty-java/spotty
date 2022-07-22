@@ -6,8 +6,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import static spotty.common.http.Headers.CONTENT_LENGTH;
-import static spotty.common.http.Headers.CONTENT_TYPE;
+import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
+import static spotty.common.http.HttpHeaders.CONTENT_TYPE;
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 public final class ResponseWriter {

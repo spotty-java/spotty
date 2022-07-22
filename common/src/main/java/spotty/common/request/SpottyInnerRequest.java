@@ -3,7 +3,7 @@ package spotty.common.request;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.ToString;
 import org.apache.http.entity.ContentType;
-import spotty.common.http.Headers;
+import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
 import spotty.common.json.Json;
 import spotty.common.request.params.PathParams;
@@ -26,7 +26,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     private ContentType contentType;
     private byte[] body;
 
-    private final Headers headers = new Headers();
+    private final HttpHeaders headers = new HttpHeaders();
 
     @Override
     public String protocol() {
@@ -89,7 +89,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     }
 
     @Override
-    public Headers headers() {
+    public HttpHeaders headers() {
         return headers;
     }
 
@@ -98,7 +98,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
         return this;
     }
 
-    public SpottyInnerRequest addHeaders(Headers headers) {
+    public SpottyInnerRequest addHeaders(HttpHeaders headers) {
         this.headers.add(headers);
         return this;
     }

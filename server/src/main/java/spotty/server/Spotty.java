@@ -5,12 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
+import spotty.server.compress.Compressor;
 import spotty.server.connection.Connection;
 import spotty.server.connection.ConnectionProcessor;
 import spotty.server.handler.exception.ExceptionHandler;
 import spotty.server.handler.exception.ExceptionHandlerService;
 import spotty.server.handler.request.DefaultRequestHandler;
 import spotty.server.handler.request.RequestHandler;
+import spotty.server.render.DefaultResponseRender;
 import spotty.server.router.SpottyRouter;
 import spotty.server.router.route.Route;
 import spotty.server.router.route.RouteGroup;
@@ -31,8 +33,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
-import static spotty.common.http.Headers.DATE;
-import static spotty.common.http.Headers.SERVER;
+import static spotty.common.http.HttpHeaders.DATE;
+import static spotty.common.http.HttpHeaders.SERVER;
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_READ;
@@ -58,7 +60,7 @@ public final class Spotty implements Closeable {
     private final AtomicLong connections = new AtomicLong();
 
     private final SpottyRouter router = new SpottyRouter();
-    private final RequestHandler requestHandler = new DefaultRequestHandler(router);
+    private final RequestHandler requestHandler = new DefaultRequestHandler(router, new DefaultResponseRender(), new Compressor());
     private final ExceptionHandlerService exceptionHandlerService = new ExceptionHandlerService();
 
     public Spotty() {

@@ -1,27 +1,34 @@
 package spotty.server.handler.request;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import spotty.common.exception.SpottyException;
 import spotty.common.filter.Filter;
-import spotty.common.json.Json;
+import spotty.common.http.ContentEncoding;
 import spotty.common.request.SpottyDefaultRequest;
 import spotty.common.request.SpottyInnerRequest;
 import spotty.common.request.SpottyRequest;
 import spotty.common.response.SpottyResponse;
+import spotty.server.compress.Compressor;
+import spotty.server.render.ResponseRender;
 import spotty.server.router.SpottyRouter;
 import spotty.server.router.route.RouteEntry;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 import static org.apache.commons.lang3.Validate.notNull;
-import static org.apache.http.entity.ContentType.APPLICATION_JSON;
-import static spotty.common.http.Headers.ACCEPT;
+import static spotty.common.http.HttpHeaders.ACCEPT;
+import static spotty.common.http.HttpHeaders.CONTENT_ENCODING;
 
 public final class DefaultRequestHandler implements RequestHandler {
 
     private final SpottyRouter router;
+    private final ResponseRender render;
+    private final Compressor compressor;
 
-    public DefaultRequestHandler(SpottyRouter router) {
+    public DefaultRequestHandler(SpottyRouter router, ResponseRender render, Compressor compressor) {
         this.router = notNull(router, "router");
+        this.render = notNull(render, "render");
+        this.compressor = notNull(compressor, "compress");
     }
 
     @Override
@@ -44,21 +51,21 @@ public final class DefaultRequestHandler implements RequestHandler {
             executeFilters(routeEntry.afterFilters(), request, response);
         }
 
-        renderResult(response, result);
-    }
-
-    private void renderResult(SpottyResponse response, Object result) {
         if (result == null) {
             return;
         }
 
-        if (result instanceof byte[]) {
-            response.body((byte[]) result);
-        } else if (result instanceof JsonNode || APPLICATION_JSON.getMimeType().equals(response.contentType().getMimeType())) {
-            response.body(Json.writeValueAsBytes(result));
-        } else {
-            response.body(result.toString());
+        byte[] body = render.render(response, result);
+        if (response.headers().has(CONTENT_ENCODING)) {
+            final ContentEncoding contentEncoding = ContentEncoding.of(response.headers().get(CONTENT_ENCODING));
+            if (contentEncoding == null) {
+                throw new SpottyException("Spotty supports " + Arrays.asList(ContentEncoding.values()) + " compression");
+            }
+
+            body = compressor.compress(contentEncoding, body);
         }
+
+        response.body(body);
     }
 
     private void executeFilters(Collection<Filter> filters, SpottyRequest request, SpottyResponse response) throws Exception {
@@ -66,4 +73,5 @@ public final class DefaultRequestHandler implements RequestHandler {
             filter.handle(request, response);
         }
     }
+
 }

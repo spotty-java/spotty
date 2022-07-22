@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-public final class Headers {
+public final class HttpHeaders {
     /**
      * RFC 2616 (HTTP/1.1) Section 14.1
      */
@@ -285,19 +285,19 @@ public final class Headers {
 
     private final Map<String, String> headers = new HashMap<>();
 
-    public Headers() {
+    public HttpHeaders() {
     }
 
-    public Headers(Headers headers) {
+    public HttpHeaders(HttpHeaders headers) {
         this.headers.putAll(headers.headers);
     }
 
-    public Headers add(String name, String value) {
+    public HttpHeaders add(String name, String value) {
         headers.put(name, value);
         return this;
     }
 
-    public Headers add(Headers headers) {
+    public HttpHeaders add(HttpHeaders headers) {
         this.headers.putAll(headers.headers);
         return this;
     }
@@ -310,11 +310,11 @@ public final class Headers {
         return headers.remove(name);
     }
 
-    public boolean contain(String name) {
+    public boolean has(String name) {
         return headers.containsKey(name);
     }
 
-    public boolean notContain(String name) {
+    public boolean hasNot(String name) {
         return !headers.containsKey(name);
     }
 
@@ -339,8 +339,8 @@ public final class Headers {
     }
 
     @NotNull
-    public Headers copy() {
-        return new Headers(this);
+    public HttpHeaders copy() {
+        return new HttpHeaders(this);
     }
 
     @Override
@@ -365,7 +365,7 @@ public final class Headers {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Headers that = (Headers) o;
+        HttpHeaders that = (HttpHeaders) o;
 
         return Objects.equals(headers, that.headers);
     }

@@ -2,15 +2,15 @@ package spotty.common.http
 
 import spock.lang.Specification
 
-import static spotty.common.http.Headers.CONTENT_LENGTH
-import static spotty.common.http.Headers.SERVER
-import static spotty.common.http.Headers.USER_AGENT
+import static HttpHeaders.CONTENT_LENGTH
+import static HttpHeaders.SERVER
+import static HttpHeaders.USER_AGENT
 
-class HeadersTest extends Specification {
+class HttpHeadersTest extends Specification {
 
     def "should add headers successfully"() {
         given:
-        var headers = new Headers()
+        var headers = new HttpHeaders()
 
         when:
         headers.add(CONTENT_LENGTH, "123")
@@ -18,14 +18,14 @@ class HeadersTest extends Specification {
 
         then:
         headers.size() == 2
-        headers.contain(CONTENT_LENGTH)
-        headers.contain(SERVER)
+        headers.has(CONTENT_LENGTH)
+        headers.has(SERVER)
     }
 
     def "should add batch headers successfully"() {
         given:
-        var headers = new Headers()
-        var headers2 = new Headers()
+        var headers = new HttpHeaders()
+        var headers2 = new HttpHeaders()
 
         when:
         headers.add(USER_AGENT, "Spotty")
@@ -38,15 +38,15 @@ class HeadersTest extends Specification {
 
         then:
         headers.size() == 3
-        headers.contain(USER_AGENT)
-        headers.contain(CONTENT_LENGTH)
-        headers.contain(SERVER)
+        headers.has(USER_AGENT)
+        headers.has(CONTENT_LENGTH)
+        headers.has(SERVER)
         headers.get(USER_AGENT) == "Spotty Agent"
     }
 
     def "should compare headers clone successfully"() {
         given:
-        var headers = new Headers()
+        var headers = new HttpHeaders()
 
         when:
         headers.add(CONTENT_LENGTH, "123")
@@ -62,7 +62,7 @@ class HeadersTest extends Specification {
 
     def "should clear headers successfully"(){
         given:
-        var headers = new Headers()
+        var headers = new HttpHeaders()
 
         when:
         headers.add(CONTENT_LENGTH, "123")

@@ -6,20 +6,22 @@ import org.apache.http.client.methods.HttpPost
 import spotty.common.exception.SpottyException
 import spotty.common.exception.SpottyHttpException
 import spotty.common.filter.Filter
+import spotty.common.request.WebRequestTestData
 import spotty.server.AppTestContext
 
 import static java.nio.charset.StandardCharsets.UTF_8
 import static org.apache.http.entity.ContentType.APPLICATION_JSON
 import static org.apache.http.entity.ContentType.APPLICATION_XML
 import static org.apache.http.entity.ContentType.WILDCARD
-import static spotty.common.http.Headers.ACCEPT
+import static spotty.common.http.HttpHeaders.ACCEPT
+import static spotty.common.http.HttpHeaders.CONTENT_ENCODING
 import static spotty.common.http.HttpMethod.GET
 import static spotty.common.http.HttpMethod.POST
 import static spotty.common.http.HttpStatus.BAD_REQUEST
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR
 import static spotty.common.http.HttpStatus.TOO_MANY_REQUESTS
 
-class SpottyRouterSpec extends AppTestContext {
+class SpottyRouterSpec extends AppTestContext implements WebRequestTestData {
 
     def "should respond with query params correctly"() {
         given:
@@ -333,5 +335,35 @@ class SpottyRouterSpec extends AppTestContext {
         then:
         response.statusLine.statusCode == BAD_REQUEST.code
         response.entity.content.text == "exception handler"
+    }
+
+    def "should respond with gzip encoding"() {
+        given:
+        SPOTTY.get("/hello", { req, res ->
+            res.headers().add(CONTENT_ENCODING, "gzip")
+            return requestBody
+        })
+
+        when:
+        var response = httpClient.getResponse("/hello")
+
+        then:
+        response.entity.contentLength < requestBody.length()
+        response.entity.content.text == requestBody
+    }
+
+    def "should respond with deflate encoding"() {
+        given:
+        SPOTTY.get("/hello", { req, res ->
+            res.headers().add(CONTENT_ENCODING, "deflate")
+            return requestBody
+        })
+
+        when:
+        var response = httpClient.getResponse("/hello")
+
+        then:
+        response.entity.contentLength < requestBody.length()
+        response.entity.content.text == requestBody
     }
 }
