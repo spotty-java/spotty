@@ -6,7 +6,7 @@ import java.util.Objects;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.unmodifiableMap;
-import static org.apache.commons.lang3.Validate.notNull;
+import static spotty.common.validation.Validation.notNull;
 
 public final class PathParams {
     public static final PathParams EMPTY = new PathParams(emptyMap());
@@ -14,7 +14,7 @@ public final class PathParams {
     private final Map<String, String> params;
 
     private PathParams(Map<String, String> params) {
-        notNull(params, "params");
+        notNull("params", params);
 
         this.params = unmodifiableMap(new HashMap<>(params));
     }

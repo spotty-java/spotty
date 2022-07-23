@@ -1,7 +1,5 @@
 package spotty.common.stream.output;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.OutputStream;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
@@ -32,12 +30,12 @@ public final class SpottyFixedByteOutputStream extends OutputStream {
     }
 
     @Override
-    public synchronized void write(byte @NotNull [] b) throws IndexOutOfBoundsException {
+    public synchronized void write(byte[] b) throws IndexOutOfBoundsException {
         write(b, 0, b.length);
     }
 
     @Override
-    public synchronized void write(byte @NotNull [] b, int off, int len) throws IndexOutOfBoundsException {
+    public synchronized void write(byte[] b, int off, int len) throws IndexOutOfBoundsException {
         ensureCapacity();
 
         if (len > remaining()) {

@@ -1,8 +1,7 @@
 package spotty.common.stream.input;
 
-import org.apache.commons.io.IOUtils;
-import org.jetbrains.annotations.NotNull;
 import spotty.common.stream.output.SpottyByteArrayOutputStream;
+import spotty.common.utils.IOUtils;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -41,7 +40,7 @@ public final class SpottyInputStream extends BufferedInputStream {
     }
 
     @Override
-    public synchronized int read(byte @NotNull [] b, int off, int len) throws IOException {
+    public synchronized int read(byte[] b, int off, int len) throws IOException {
         int toRead = (int) min(len, limitBytes - read);
         if (toRead <= 0) {
             return -1;
@@ -92,7 +91,7 @@ public final class SpottyInputStream extends BufferedInputStream {
         }
     }
 
-    public byte[] readAllBytes() throws IOException {
+    public byte[] readAllBytes() {
         return IOUtils.toByteArray(this);
     }
 

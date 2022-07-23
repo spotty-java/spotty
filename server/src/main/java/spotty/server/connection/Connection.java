@@ -6,7 +6,7 @@ import java.io.Closeable;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-import static org.apache.commons.lang3.Validate.notNull;
+import static spotty.common.validation.Validation.notNull;
 
 public final class Connection implements Closeable {
     private static final AtomicLong ID_GENERATOR = new AtomicLong();
@@ -16,7 +16,7 @@ public final class Connection implements Closeable {
     private final ConnectionProcessor connectionProcessor;
 
     public Connection(ConnectionProcessor connectionProcessor) {
-        this.connectionProcessor = notNull(connectionProcessor, "connectionProcessor");
+        this.connectionProcessor = notNull("connectionProcessor", connectionProcessor);
     }
 
     @Override

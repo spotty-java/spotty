@@ -1,22 +1,20 @@
 package spotty.common.response;
 
-import lombok.ToString;
-import org.apache.http.entity.ContentType;
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpStatus;
 
 import java.util.Arrays;
 import java.util.Objects;
 
-import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static spotty.common.http.HttpStatus.OK;
 
-@ToString
 public final class SpottyResponse {
+    private static final String DEFAULT_CONTENT_TYPE = "text/plain";
+
     private final String protocol = "HTTP/1.1";
 
     private HttpStatus status = OK;
-    private ContentType contentType = TEXT_PLAIN;
+    private String contentType = DEFAULT_CONTENT_TYPE;
     private byte[] body;
 
     private final HttpHeaders headers = new HttpHeaders();
@@ -34,11 +32,11 @@ public final class SpottyResponse {
         return this;
     }
 
-    public ContentType contentType() {
+    public String contentType() {
         return contentType;
     }
 
-    public SpottyResponse contentType(ContentType contentType) {
+    public SpottyResponse contentType(String contentType) {
         this.contentType = contentType;
         return this;
     }
@@ -90,7 +88,7 @@ public final class SpottyResponse {
 
     public void reset() {
         status = OK;
-        contentType = TEXT_PLAIN;
+        contentType = DEFAULT_CONTENT_TYPE;
         body = null;
         headers.clear();
     }

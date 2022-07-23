@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static java.lang.String.format;
-import static org.apache.commons.lang3.Validate.notNull;
+import static spotty.common.validation.Validation.notNull;
 
 public final class StateHandlerGraph<S extends Enum<S>> {
 
@@ -50,7 +50,7 @@ public final class StateHandlerGraph<S extends Enum<S>> {
         private Node next;
 
         private Node(Action action, S state) {
-            this.action = notNull(action, "action");
+            this.action = notNull("action", action);
             nodes.put(state, this);
         }
 

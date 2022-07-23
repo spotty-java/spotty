@@ -1,7 +1,6 @@
 package spotty.server.router;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
+import spotty.common.annotation.VisibleForTesting;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
@@ -10,13 +9,13 @@ import spotty.server.router.route.RouteEntry;
 import spotty.server.router.route.RouteGroup;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
-import static com.google.common.collect.Lists.asList;
 import static spotty.common.http.HttpMethod.CONNECT;
 import static spotty.common.http.HttpMethod.DELETE;
 import static spotty.common.http.HttpMethod.GET;
@@ -255,7 +254,15 @@ public final class SpottyRouter {
         );
     }
 
-    @NotNull
+    private static List<Filter> asList(Filter filter, Filter... filters) {
+        final List<Filter> list = new ArrayList<>();
+        list.add(filter);
+
+        Collections.addAll(list, filters);
+
+        return list;
+    }
+
     @VisibleForTesting
     String pathWithPrefix(String pathTemplate) {
         if (pathPrefixStack.isEmpty()) {

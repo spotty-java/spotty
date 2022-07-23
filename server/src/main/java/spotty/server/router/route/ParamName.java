@@ -1,16 +1,15 @@
 package spotty.server.router.route;
 
-import lombok.EqualsAndHashCode;
+import java.util.Objects;
 
-import static org.apache.commons.lang3.Validate.notBlank;
+import static spotty.common.validation.Validation.notBlank;
 
-@EqualsAndHashCode
 public final class ParamName {
     public final String name;
     public final String groupName; // regex group name for parser
 
     public ParamName(String name) {
-        this.name = notBlank(name, "name").replace(":", "");
+        this.name = notBlank("name", name).replace(":", "");
         this.groupName = normalizeGroupName(name);
     }
 
@@ -23,4 +22,17 @@ public final class ParamName {
         return getClass().getSimpleName() + "[" + name + "]";
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ParamName paramName = (ParamName) o;
+        return Objects.equals(name, paramName.name)
+            && Objects.equals(groupName, paramName.groupName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, groupName);
+    }
 }

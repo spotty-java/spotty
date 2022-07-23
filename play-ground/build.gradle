@@ -3,4 +3,7 @@ dependencies {
     implementation project(":server")
 
     implementation "com.sparkjava:spark-core:2.9.4"
+
+    compileOnly "org.projectlombok:lombok:1.18.24"
+    annotationProcessor "org.projectlombok:lombok:1.18.24"
 }

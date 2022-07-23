@@ -1,6 +1,5 @@
 package spotty.server.http
 
-import org.apache.commons.io.IOUtils
 import org.apache.http.HttpException
 import org.apache.http.HttpHost
 import org.apache.http.HttpRequest
@@ -12,8 +11,8 @@ import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.conn.DefaultRoutePlanner
 import org.apache.http.protocol.HttpContext
+import spotty.common.utils.IOUtils
 
-import static java.nio.charset.StandardCharsets.UTF_8
 import static org.apache.http.impl.conn.DefaultSchemePortResolver.INSTANCE
 
 class HttpClient implements Closeable {
@@ -35,7 +34,7 @@ class HttpClient implements Closeable {
     String get(HttpGet get) {
         final HttpResponse response = client.execute(get)
 
-        return IOUtils.toString(response.entity.content, UTF_8)
+        return IOUtils.toString(response.entity.content)
     }
 
     String post(String url) {
@@ -45,7 +44,7 @@ class HttpClient implements Closeable {
     String post(HttpPost post) {
         final HttpResponse response = client.execute(post)
 
-        return IOUtils.toString(response.entity.content, UTF_8)
+        return IOUtils.toString(response.entity.content)
     }
 
     HttpResponse getResponse(String url) {

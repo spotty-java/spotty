@@ -1,7 +1,5 @@
 package spotty.common.http;
 
-import org.jetbrains.annotations.Nullable;
-
 public enum HttpStatus {
 
     // 1xx Informational
@@ -500,7 +498,6 @@ public enum HttpStatus {
      * @return the corresponding {@code HttpStatus}, or {@code null} if not found
      * @since 5.0
      */
-    @Nullable
     public static HttpStatus resolve(int statusCode) {
         // Use cached VALUES instead of values() to prevent array allocation.
         for (HttpStatus status : VALUES) {
@@ -568,7 +565,6 @@ public enum HttpStatus {
          * @return the corresponding {@code Series}, or {@code null} if not found
          * @since 5.1.3
          */
-        @Nullable
         public static Series resolve(int statusCode) {
             int seriesCode = statusCode / 100;
             for (Series series : values()) {

@@ -14,9 +14,9 @@ import spotty.server.router.route.RouteEntry;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.apache.commons.lang3.Validate.notNull;
 import static spotty.common.http.HttpHeaders.ACCEPT;
 import static spotty.common.http.HttpHeaders.CONTENT_ENCODING;
+import static spotty.common.validation.Validation.notNull;
 
 public final class DefaultRequestHandler implements RequestHandler {
 
@@ -24,8 +24,8 @@ public final class DefaultRequestHandler implements RequestHandler {
     private final Compressor compressor;
 
     public DefaultRequestHandler(SpottyRouter router, Compressor compressor) {
-        this.router = notNull(router, "router");
-        this.compressor = notNull(compressor, "compress");
+        this.router = notNull("router", router);
+        this.compressor = notNull("compress", compressor);
     }
 
     @Override
