@@ -1,7 +1,8 @@
 package spotty.server.connection;
 
-import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import spotty.common.annotation.VisibleForTesting;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyStreamException;
 import spotty.common.request.SpottyInnerRequest;
@@ -15,8 +16,8 @@ import spotty.common.stream.output.SpottyByteArrayOutputStream;
 import spotty.common.stream.output.SpottyFixedByteOutputStream;
 import spotty.server.connection.state.ConnectionProcessorState;
 import spotty.server.handler.exception.ExceptionHandler;
-import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.handler.request.RequestHandler;
+import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.worker.ReactorWorker;
 
 import java.io.Closeable;
@@ -25,15 +26,14 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
-import static org.apache.commons.lang3.Validate.notNull;
 import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
 import static spotty.common.http.HttpHeaders.CONTENT_TYPE;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 import static spotty.common.request.validator.RequestValidator.validate;
 import static spotty.common.utils.HeaderUtils.parseContentLength;
-import static spotty.common.utils.HeaderUtils.parseContentType;
 import static spotty.common.utils.HeaderUtils.parseHttpMethod;
 import static spotty.common.utils.HeaderUtils.parseUri;
+import static spotty.common.validation.Validation.notNull;
 import static spotty.server.connection.state.ConnectionProcessorState.BODY_READY;
 import static spotty.server.connection.state.ConnectionProcessorState.BODY_READY_TO_READ;
 import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
@@ -49,8 +49,9 @@ import static spotty.server.connection.state.ConnectionProcessorState.REQUEST_RE
 import static spotty.server.connection.state.ConnectionProcessorState.RESPONSE_WRITE_COMPLETED;
 import static spotty.server.connection.state.ConnectionProcessorState.RESPONSE_WRITING;
 
-@Slf4j
 public final class ConnectionProcessor extends StateMachine<ConnectionProcessorState> implements Closeable {
+    private static final Logger LOG = LoggerFactory.getLogger(ConnectionProcessor.class);
+
     private static final int DEFAULT_BUFFER_SIZE = 2048;
     private static final int DEFAULT_LINE_SIZE = 256;
 
@@ -85,9 +86,9 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
                                int bufferSize) throws SpottyStreamException {
         super(READY_TO_READ);
 
-        this.socketChannel = notNull(socketChannel, "socketChannel");
-        this.requestHandler = notNull(requestHandler, "requestHandler");
-        this.exceptionHandlerRegistry = notNull(exceptionHandlerRegistry, "exceptionHandlerService");
+        this.socketChannel = notNull("socketChannel", socketChannel);
+        this.requestHandler = notNull("requestHandler", requestHandler);
+        this.exceptionHandlerRegistry = notNull("exceptionHandlerService", exceptionHandlerRegistry);
 
         if (socketChannel.isBlocking()) {
             throw new SpottyStreamException("SocketChannel must be non blocking");
@@ -121,7 +122,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
                             return true;
                         } catch (IOException e) {
-                            log.error("socket read error", e);
+                            LOG.error("socket read error", e);
                             close();
                             return false;
                         }
@@ -244,7 +245,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         }
 
         if (request.headers().has(CONTENT_TYPE)) {
-            request.contentType(parseContentType(request.headers().remove(CONTENT_TYPE)));
+            request.contentType(request.headers().remove(CONTENT_TYPE));
         }
 
         validate(request);
@@ -317,7 +318,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
             return false;
         } catch (IOException e) {
-            log.error("response write error", e);
+            LOG.error("response write error", e);
             close();
 
             return false;
@@ -389,7 +390,8 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         try {
             runnable.run();
         } catch (Exception e) {
-            log.error("", e);
+            LOG.debug("", e);
+
             final ExceptionHandler handler = exceptionHandlerRegistry.getHandler(e.getClass());
             handler.handle(e, request, response);
 

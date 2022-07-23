@@ -1,6 +1,6 @@
 package spotty.server.router;
 
-import org.jetbrains.annotations.VisibleForTesting;
+import spotty.common.annotation.VisibleForTesting;
 import spotty.common.http.HttpMethod;
 import spotty.server.router.route.ParamName;
 import spotty.server.router.route.Route;
@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.apache.commons.lang3.Validate.notBlank;
-import static org.apache.commons.lang3.Validate.notNull;
+import static spotty.common.validation.Validation.notBlank;
+import static spotty.common.validation.Validation.notNull;
 
 @VisibleForTesting
 final class RouteEntryCreator {
@@ -22,10 +22,10 @@ final class RouteEntryCreator {
     public static final String ALL_REPLACEMENT = "(.*?)";
 
     static RouteEntry create(String pathTemplate, HttpMethod httpMethod, String acceptType, Route route) {
-        notNull(pathTemplate, "pathTemplate");
-        notNull(httpMethod, "httpMethod");
-        notBlank(acceptType, "acceptType");
-        notNull(route, "route");
+        notNull("pathTemplate", pathTemplate);
+        notNull("httpMethod", httpMethod);
+        notBlank("acceptType", acceptType);
+        notNull("route", route);
 
         final Result result = compileMatcher(pathTemplate);
 

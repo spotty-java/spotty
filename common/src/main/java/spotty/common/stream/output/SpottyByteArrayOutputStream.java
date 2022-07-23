@@ -1,7 +1,5 @@
 package spotty.common.stream.output;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -21,7 +19,7 @@ public final class SpottyByteArrayOutputStream extends ByteArrayOutputStream {
     }
 
     @Override
-    public void write(byte @NotNull[] b) throws IOException {
+    public void write(byte[] b) throws IOException {
         write(b, 0, b.length);
     }
 

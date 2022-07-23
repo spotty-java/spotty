@@ -1,7 +1,5 @@
 package spotty.common.request;
 
-import lombok.ToString;
-import org.apache.http.entity.ContentType;
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
 import spotty.common.request.params.PathParams;
@@ -12,7 +10,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-@ToString
 public final class SpottyInnerRequest implements SpottyRequest {
     private String protocol;
     private String scheme;
@@ -21,7 +18,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     private QueryParams queryParams = QueryParams.EMPTY;
     private PathParams pathParams = PathParams.EMPTY;
     private int contentLength;
-    private ContentType contentType;
+    private String contentType;
     private byte[] body;
 
     private final HttpHeaders headers = new HttpHeaders();
@@ -77,11 +74,11 @@ public final class SpottyInnerRequest implements SpottyRequest {
     }
 
     @Override
-    public ContentType contentType() {
+    public String contentType() {
         return contentType;
     }
 
-    public SpottyInnerRequest contentType(ContentType contentType) {
+    public SpottyInnerRequest contentType(String contentType) {
         this.contentType = contentType;
         return this;
     }
@@ -189,9 +186,6 @@ public final class SpottyInnerRequest implements SpottyRequest {
         if (o == null || getClass() != o.getClass()) return false;
         SpottyInnerRequest that = (SpottyInnerRequest) o;
 
-        final String contentMimeType = contentType == null ? null : contentType.getMimeType();
-        final String thatContentMimeType = that.contentType == null ? null : that.contentType.getMimeType();
-
         return contentLength == that.contentLength
             && Objects.equals(protocol, that.protocol)
             && Objects.equals(scheme, that.scheme)
@@ -199,15 +193,14 @@ public final class SpottyInnerRequest implements SpottyRequest {
             && Objects.equals(queryParams, that.queryParams)
             && Objects.equals(pathParams, that.pathParams)
             && Objects.equals(path, that.path)
-            && Objects.equals(contentMimeType, thatContentMimeType)
+            && Objects.equals(contentType, that.contentType)
             && Arrays.equals(body, that.body)
             && Objects.equals(headers, that.headers);
     }
 
     @Override
     public int hashCode() {
-        final String contentMimeType = contentType == null ? null : contentType.getMimeType();
-        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentMimeType, headers);
+        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers);
         result = 31 * result + Arrays.hashCode(body);
         return result;
     }

@@ -1,8 +1,9 @@
 package spotty.server;
 
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import spotty.common.exception.SpottyHttpException;
+import spotty.common.exception.SpottyValidationException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
 import spotty.server.compress.Compressor;
@@ -33,6 +34,7 @@ import static java.time.ZonedDateTime.now;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static spotty.common.http.HttpHeaders.DATE;
 import static spotty.common.http.HttpHeaders.SERVER;
+import static spotty.common.http.HttpStatus.BAD_REQUEST;
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_READ;
@@ -40,8 +42,8 @@ import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_W
 import static spotty.server.connection.state.ConnectionProcessorState.REQUEST_HANDLING;
 import static spotty.version.SpottyVersion.VERSION;
 
-@Slf4j
 public final class Spotty implements Closeable {
+    private static final Logger LOG = LoggerFactory.getLogger(Spotty.class);
     private static final String SPOTTY_VERSION = "Spotty v" + VERSION;
     private static final int DEFAULT_PORT = 4000;
 
@@ -71,7 +73,7 @@ public final class Spotty implements Closeable {
 
     public synchronized void start() {
         if (started) {
-            log.warn("server has been started already");
+            LOG.warn("server has been started already");
             return;
         }
 
@@ -92,7 +94,7 @@ public final class Spotty implements Closeable {
             while (!started)
                 wait(1000);
         } catch (Exception e) {
-            log.error("", e);
+            LOG.error("", e);
         }
     }
 
@@ -101,7 +103,7 @@ public final class Spotty implements Closeable {
             while (started)
                 wait(1000);
         } catch (Exception e) {
-            log.error("", e);
+            LOG.error("", e);
         }
     }
 
@@ -245,7 +247,6 @@ public final class Spotty implements Closeable {
         exceptionHandlerRegistry.register(exceptionClass, exceptionHandler);
     }
 
-    @SneakyThrows
     private void serverInit() {
         try (final ServerSocketChannel serverSocket = ServerSocketChannel.open();
              final Selector selector = Selector.open()) {
@@ -254,7 +255,7 @@ public final class Spotty implements Closeable {
             serverSocket.configureBlocking(false); // Make Server nonBlocking
             serverSocket.register(selector, SelectionKey.OP_ACCEPT);
 
-            log.info("server has been started on port " + port);
+            LOG.info("server has been started on port " + port);
 
             run();
             started();
@@ -276,17 +277,17 @@ public final class Spotty implements Closeable {
                     } else if (key.isWritable()) {
                         write(key);
                     } else {
-                        log.info("unsupported key ops {}", key.readyOps());
+                        LOG.warn("unsupported key ops {}", key.readyOps());
                     }
                 }
             }
         } catch (IOException e) {
-            log.error("start server error", e);
+            LOG.error("start server error", e);
         } finally {
             close();
 
             stopped();
-            log.info("server has been stopped");
+            LOG.info("server has been stopped");
         }
     }
 
@@ -300,7 +301,7 @@ public final class Spotty implements Closeable {
         final ConnectionProcessor connectionProcessor = new ConnectionProcessor(socket, requestHandler, exceptionHandlerRegistry);
         final Connection connection = new Connection(connectionProcessor);
 
-        log.info("{} accepted, count={}", connection, connections.incrementAndGet());
+        LOG.debug("{} accepted, count={}", connection, connections.incrementAndGet());
 
         key.attach(connection);
 
@@ -319,7 +320,7 @@ public final class Spotty implements Closeable {
         });
 
         connection.whenStateIs(CLOSED, __ -> {
-            log.info("{} closed, count={}", connection, connections.decrementAndGet());
+            LOG.debug("{} closed, count={}", connection, connections.decrementAndGet());
             key.cancel();
         });
     }
@@ -365,6 +366,13 @@ public final class Spotty implements Closeable {
         exception(SpottyHttpException.class, (exception, request, response) -> {
             response
                 .status(exception.status)
+                .body(exception.getMessage())
+            ;
+        });
+
+        exception(SpottyValidationException.class, (exception, request, response) -> {
+            response
+                .status(BAD_REQUEST)
                 .body(exception.getMessage())
             ;
         });

@@ -1,7 +1,5 @@
 package spotty.common.http;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -48,11 +46,9 @@ public enum HttpMethod {
      * @return the corresponding {@code HttpMethod}, or {@code null} if not found
      * @since 4.2.4
      */
-    @Nullable
-    public static HttpMethod resolve(@Nullable String method) {
+    public static HttpMethod resolve(String method) {
         return (method != null ? MAPPINGS.get(method) : null);
     }
-
 
     /**
      * Determine whether this {@code HttpMethod} matches the given method value.

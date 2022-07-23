@@ -8,12 +8,12 @@ import java.io.OutputStream;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPOutputStream;
 
-import static org.apache.commons.lang3.Validate.notNull;
+import static spotty.common.validation.Validation.notNull;
 
 public final class Compressor {
 
     public byte[] compress(ContentEncoding encoding, byte[] body) throws Exception {
-        notNull(encoding, "encoding");
+        notNull("encoding", encoding);
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream(body.length);
         final OutputStream compressor;

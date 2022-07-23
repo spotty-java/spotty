@@ -4,6 +4,7 @@ import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
 import spotty.common.exception.SpottyHttpException
 import spotty.common.exception.SpottyStreamException
+import spotty.common.exception.SpottyValidationException
 import spotty.common.request.WebRequestTestData
 import spotty.common.response.ResponseWriter
 import spotty.common.response.SpottyResponse
@@ -11,7 +12,6 @@ import spotty.server.handler.EchoRequestHandler
 import spotty.server.registry.exception.ExceptionHandlerRegistry
 import stub.SocketChannelStub
 
-import static org.apache.http.entity.ContentType.TEXT_PLAIN
 import static spotty.common.http.HttpHeaders.CONTENT_TYPE
 import static spotty.common.http.HttpHeaders.HOST
 import static spotty.common.http.HttpStatus.BAD_REQUEST
@@ -27,6 +27,12 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         exceptionService.register(SpottyHttpException.class, (exception, request, response) -> {
             response
                 .status(exception.status)
+                .body(exception.getMessage())
+        })
+
+        exceptionService.register(SpottyValidationException.class, (exception, request, response) -> {
+            response
+                .status(BAD_REQUEST)
                 .body(exception.getMessage())
         })
 
@@ -104,7 +110,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         given:
         var response = new SpottyResponse()
             .status(BAD_REQUEST)
-            .contentType(TEXT_PLAIN)
+            .contentType("text/plain")
             .body("invalid request head line")
 
         var expectedResult = new String(ResponseWriter.write(response))
@@ -142,7 +148,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         given:
         var response = new SpottyResponse()
             .status(BAD_REQUEST)
-            .contentType(TEXT_PLAIN)
+            .contentType("text/plain")
             .body("content-length header is required")
 
         var expectedResult = new String(ResponseWriter.write(response))
@@ -182,7 +188,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         given:
         var response = new SpottyResponse()
             .status(TOO_MANY_REQUESTS)
-            .contentType(TEXT_PLAIN)
+            .contentType("text/plain")
             .body("some message")
 
         var expectedResult = new String(ResponseWriter.write(response))

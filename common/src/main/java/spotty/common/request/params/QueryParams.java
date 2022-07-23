@@ -8,7 +8,7 @@ import java.util.Set;
 
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Collections.unmodifiableSet;
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import static spotty.common.validation.Validation.isBlank;
 
 public final class QueryParams {
     public static final QueryParams EMPTY = new QueryParams();

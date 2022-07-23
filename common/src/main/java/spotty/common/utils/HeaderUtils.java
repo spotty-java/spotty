@@ -1,7 +1,5 @@
 package spotty.common.utils;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.http.entity.ContentType;
 import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.http.HttpMethod;
@@ -12,7 +10,6 @@ import java.net.URISyntaxException;
 import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 
-@Slf4j
 public final class HeaderUtils {
     private HeaderUtils() {
     }
@@ -22,15 +19,6 @@ public final class HeaderUtils {
             return Integer.parseInt(contentLength);
         } catch (NumberFormatException e) {
             throw new SpottyHttpException(BAD_REQUEST, "invalid " + CONTENT_LENGTH);
-        }
-    }
-
-    public static ContentType parseContentType(String contentType) {
-        try {
-            return ContentType.parse(contentType);
-        } catch (Exception e) {
-            log.warn("invalid content type {}", contentType, e);
-            return null;
         }
     }
 

@@ -1,6 +1,5 @@
 package spotty.common.request;
 
-import org.apache.http.entity.ContentType;
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
 
@@ -18,7 +17,7 @@ public interface SpottyRequest {
 
     int contentLength();
 
-    ContentType contentType();
+    String contentType();
 
     HttpHeaders headers();
 

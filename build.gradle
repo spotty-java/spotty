@@ -29,29 +29,14 @@ subprojects {
     }
 
     dependencies {
-        implementation "org.apache.commons:commons-lang3:$apacheCommonsVersion"
-        implementation "commons-io:commons-io:$apacheCommonsIOVersion"
-        implementation "com.google.guava:guava:$guavaVersion"
-        implementation "org.jetbrains:annotations:$jetbrainsAnnotationVersion"
-        implementation "org.apache.httpcomponents:httpcore:$apacheHttpCoreVersion"
-        implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-
-
         compileOnly "org.slf4j:slf4j-api:$slf4jApiVersion"
         runtimeOnly "ch.qos.logback:logback-classic:$logbackClassicVersion"
-        compileOnly "org.projectlombok:lombok:$lombokVersion"
-        annotationProcessor "org.projectlombok:lombok:$lombokVersion"
-
 
         testImplementation "org.codehaus.groovy:groovy-all:$groovyVersion"
         testImplementation "org.spockframework:spock-core:$spockVersion"
-        testCompileOnly "org.projectlombok:lombok:$lombokVersion"
-        testAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
 
         testIntegrationImplementation "org.codehaus.groovy:groovy-all:$groovyVersion"
         testIntegrationImplementation "org.spockframework:spock-core:$spockVersion"
-        testIntegrationCompileOnly "org.projectlombok:lombok:$lombokVersion"
-        testIntegrationAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
     }
 
     test {

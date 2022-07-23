@@ -1,7 +1,6 @@
 package spotty.server.registry.exception;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
+import spotty.common.annotation.VisibleForTesting;
 import spotty.common.exception.SpottyException;
 import spotty.server.handler.exception.ExceptionHandler;
 
@@ -16,7 +15,6 @@ public final class ExceptionHandlerRegistry {
         handlers.put(exceptionClass, handler);
     }
 
-    @NotNull
     @SuppressWarnings("unchecked")
     public <T extends Exception> ExceptionHandler<? super T> getHandler(Class<T> exceptionClass) {
         ExceptionHandler<?> handler;

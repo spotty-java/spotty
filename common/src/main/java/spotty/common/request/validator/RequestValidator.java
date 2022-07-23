@@ -1,16 +1,17 @@
 package spotty.common.request.validator;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.request.SpottyRequest;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
 import static spotty.common.http.HttpHeaders.CONTENT_TYPE;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
+import static spotty.common.validation.Validation.isBlank;
 
-@Slf4j
 public final class RequestValidator {
+    private static final Logger LOG = LoggerFactory.getLogger(RequestValidator.class);
 
     public static void validate(SpottyRequest request) throws SpottyHttpException {
         if (request == null) {
@@ -22,7 +23,7 @@ public final class RequestValidator {
         }
 
         if (request.contentType() == null) {
-            log.warn("empty " + CONTENT_TYPE);
+            LOG.debug("empty " + CONTENT_TYPE);
         }
 
         if (isBlank(request.protocol())) {

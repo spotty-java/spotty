@@ -2,7 +2,7 @@ package spotty.common.exception;
 
 import spotty.common.http.HttpStatus;
 
-import static org.apache.commons.lang3.Validate.notBlank;
+import static spotty.common.validation.Validation.notBlank;
 
 public class SpottyHttpException extends SpottyException {
     public final HttpStatus status;
@@ -16,7 +16,7 @@ public class SpottyHttpException extends SpottyException {
     }
 
     public SpottyHttpException(HttpStatus status, String message, Throwable cause) {
-        super(notBlank(message, "message"), cause);
+        super(notBlank("message", message), cause);
 
         this.status = status;
     }

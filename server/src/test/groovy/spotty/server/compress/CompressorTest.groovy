@@ -1,6 +1,7 @@
 package spotty.server.compress
 
 import spock.lang.Specification
+import spotty.common.exception.SpottyValidationException
 import spotty.common.request.WebRequestTestData
 
 import static spotty.common.http.ContentEncoding.DEFLATE
@@ -39,7 +40,7 @@ class CompressorTest extends Specification implements WebRequestTestData {
         compressor.compress(null, "".getBytes())
 
         then:
-        var e = thrown NullPointerException.class
-        e.message == "encoding"
+        var e = thrown SpottyValidationException.class
+        e.message == "encoding is null"
     }
 }

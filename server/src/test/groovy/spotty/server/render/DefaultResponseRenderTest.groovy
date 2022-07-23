@@ -1,7 +1,6 @@
 package spotty.server.render
 
 import spock.lang.Specification
-import spotty.common.json.Json
 
 class DefaultResponseRenderTest extends Specification {
 
@@ -16,18 +15,6 @@ class DefaultResponseRenderTest extends Specification {
 
         then:
         "hello" == new String(res)
-    }
-
-    def "should render json correctly"() {
-        given:
-        var json = '{"title":"name"}'
-        var jsonNode = Json.parse(json)
-
-        when:
-        var res = render.render(jsonNode)
-
-        then:
-        json == new String(res)
     }
 
     def "should render string correctly"() {

@@ -1,15 +1,14 @@
 package spotty.server.router
 
-import org.apache.commons.io.IOUtils
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
 import spotty.common.exception.SpottyException
 import spotty.common.exception.SpottyHttpException
 import spotty.common.filter.Filter
 import spotty.common.request.WebRequestTestData
+import spotty.common.utils.IOUtils
 import spotty.server.AppTestContext
 
-import static java.nio.charset.StandardCharsets.UTF_8
 import static org.apache.http.entity.ContentType.APPLICATION_JSON
 import static org.apache.http.entity.ContentType.APPLICATION_XML
 import static org.apache.http.entity.ContentType.WILDCARD
@@ -79,7 +78,7 @@ class SpottyRouterSpec extends AppTestContext implements WebRequestTestData {
 
         when:
         def response = httpClient.getResponse("/")
-        def message = IOUtils.toString(response.entity.content, UTF_8)
+        def message = IOUtils.toString(response.entity.content)
 
         then:
         response.statusLine.statusCode == expectedCode.code

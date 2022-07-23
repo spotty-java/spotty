@@ -1,13 +1,8 @@
 package spotty.common.request;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.http.entity.ContentType;
 import spotty.common.http.HttpHeaders;
 import spotty.common.response.SpottyResponse;
-
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
+import spotty.common.utils.IOUtils;
 
 import static java.lang.Integer.parseInt;
 import static spotty.common.http.HttpHeaders.ACCEPT;
@@ -46,7 +41,7 @@ public interface WebRequestTestData {
             .method(POST)
             .path("/")
             .contentLength(parseInt(headers.remove(CONTENT_LENGTH)))
-            .contentType(ContentType.parse(headers.remove(CONTENT_TYPE)))
+            .contentType(headers.remove(CONTENT_TYPE))
             .addHeaders(headers)
             .body(content);
     }
@@ -61,10 +56,6 @@ public interface WebRequestTestData {
 
     @SuppressWarnings("all")
     static String readFile(String file) {
-        try {
-            return IOUtils.toString(WebRequestTestData.class.getResourceAsStream(file), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return IOUtils.toString(WebRequestTestData.class.getResourceAsStream(file));
     }
 }
