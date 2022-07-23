@@ -64,6 +64,10 @@ public final class RouteEntry {
         return this;
     }
 
+    public boolean hasPathParamKeys() {
+        return pathParamKeys != null && !pathParamKeys.isEmpty();
+    }
+
     public ArrayList<ParamName> pathParamKeys() {
         return pathParamKeys;
     }

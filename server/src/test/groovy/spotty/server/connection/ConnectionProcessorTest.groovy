@@ -8,7 +8,7 @@ import spotty.common.request.WebRequestTestData
 import spotty.common.response.ResponseWriter
 import spotty.common.response.SpottyResponse
 import spotty.server.handler.EchoRequestHandler
-import spotty.server.handler.exception.ExceptionHandlerService
+import spotty.server.registry.exception.ExceptionHandlerRegistry
 import stub.SocketChannelStub
 
 import static org.apache.http.entity.ContentType.TEXT_PLAIN
@@ -21,7 +21,7 @@ import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_W
 
 class ConnectionProcessorTest extends Specification implements WebRequestTestData {
 
-    private def exceptionService = new ExceptionHandlerService()
+    private def exceptionService = new ExceptionHandlerRegistry()
 
     def setup() {
         exceptionService.register(SpottyHttpException.class, (exception, request, response) -> {

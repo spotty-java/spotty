@@ -9,10 +9,8 @@ import spotty.server.compress.Compressor;
 import spotty.server.connection.Connection;
 import spotty.server.connection.ConnectionProcessor;
 import spotty.server.handler.exception.ExceptionHandler;
-import spotty.server.handler.exception.ExceptionHandlerService;
 import spotty.server.handler.request.DefaultRequestHandler;
-import spotty.server.handler.request.RequestHandler;
-import spotty.server.render.DefaultResponseRender;
+import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.router.SpottyRouter;
 import spotty.server.router.route.Route;
 import spotty.server.router.route.RouteGroup;
@@ -60,8 +58,8 @@ public final class Spotty implements Closeable {
     private final AtomicLong connections = new AtomicLong();
 
     private final SpottyRouter router = new SpottyRouter();
-    private final RequestHandler requestHandler = new DefaultRequestHandler(router, new DefaultResponseRender(), new Compressor());
-    private final ExceptionHandlerService exceptionHandlerService = new ExceptionHandlerService();
+    private final DefaultRequestHandler requestHandler = new DefaultRequestHandler(router, new Compressor());
+    private final ExceptionHandlerRegistry exceptionHandlerRegistry = new ExceptionHandlerRegistry();
 
     public Spotty() {
         this(DEFAULT_PORT);
@@ -244,7 +242,7 @@ public final class Spotty implements Closeable {
     }
 
     public <T extends Exception> void exception(Class<T> exceptionClass, ExceptionHandler<T> exceptionHandler) {
-        exceptionHandlerService.register(exceptionClass, exceptionHandler);
+        exceptionHandlerRegistry.register(exceptionClass, exceptionHandler);
     }
 
     @SneakyThrows
@@ -299,7 +297,7 @@ public final class Spotty implements Closeable {
 
         final SelectionKey key = socket.register(acceptKey.selector(), SelectionKey.OP_READ);
 
-        final ConnectionProcessor connectionProcessor = new ConnectionProcessor(socket, requestHandler, exceptionHandlerService);
+        final ConnectionProcessor connectionProcessor = new ConnectionProcessor(socket, requestHandler, exceptionHandlerRegistry);
         final Connection connection = new Connection(connectionProcessor);
 
         log.info("{} accepted, count={}", connection, connections.incrementAndGet());

@@ -1,6 +1,5 @@
 package spotty.common.request;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.http.entity.ContentType;
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
@@ -35,10 +34,10 @@ public interface SpottyRequest {
 
     String queryParam(String name);
 
+    void attach(Object attachment);
+
+    Object attachment();
+
     byte[] body();
-
-    <T> T parseBody(Class<T> clazz);
-
-    JsonNode parseBody();
 
 }

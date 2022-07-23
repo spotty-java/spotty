@@ -1,7 +1,6 @@
 package spotty.server.render;
 
-import spotty.common.response.SpottyResponse;
-
+@FunctionalInterface
 public interface ResponseRender {
-    byte[] render(SpottyResponse response, Object body);
+    byte[] render(Object body);
 }
