@@ -1,11 +1,9 @@
 package spotty.common.request;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.ToString;
 import org.apache.http.entity.ContentType;
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
-import spotty.common.json.Json;
 import spotty.common.request.params.PathParams;
 import spotty.common.request.params.QueryParams;
 
@@ -26,6 +24,8 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     private final ContentType contentType;
     private final HttpHeaders headers;
     private final byte[] body;
+
+    private volatile Object attachment;
 
     public SpottyDefaultRequest(SpottyInnerRequest request) {
         this.protocol = request.protocol();
@@ -91,6 +91,16 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     }
 
     @Override
+    public void attach(Object attachment) {
+        this.attachment = attachment;
+    }
+
+    @Override
+    public Object attachment() {
+        return attachment;
+    }
+
+    @Override
     public byte[] body() {
         return body;
     }
@@ -108,16 +118,6 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     @Override
     public String param(String name) {
         return pathParams.param(name);
-    }
-
-    @Override
-    public <T> T parseBody(Class<T> clazz) {
-        return Json.parse(body, clazz);
-    }
-
-    @Override
-    public JsonNode parseBody() {
-        return Json.parse(body);
     }
 
     @Override

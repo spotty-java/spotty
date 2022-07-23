@@ -1,13 +1,14 @@
-package spotty.server.handler.exception;
+package spotty.server.registry.exception;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import spotty.common.exception.SpottyException;
+import spotty.server.handler.exception.ExceptionHandler;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public final class ExceptionHandlerService {
+public final class ExceptionHandlerRegistry {
     @VisibleForTesting
     final Map<Class<? extends Exception>, ExceptionHandler<? extends Exception>> handlers = new HashMap<>();
 

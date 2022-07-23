@@ -15,7 +15,7 @@ import spotty.common.stream.output.SpottyByteArrayOutputStream;
 import spotty.common.stream.output.SpottyFixedByteOutputStream;
 import spotty.server.connection.state.ConnectionProcessorState;
 import spotty.server.handler.exception.ExceptionHandler;
-import spotty.server.handler.exception.ExceptionHandlerService;
+import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.handler.request.RequestHandler;
 import spotty.server.worker.ReactorWorker;
 
@@ -67,7 +67,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
     private final StateHandlerGraph<ConnectionProcessorState> stateHandlerGraph = new StateHandlerGraph<>();
 
-    private final ExceptionHandlerService exceptionHandlerService;
+    private final ExceptionHandlerRegistry exceptionHandlerRegistry;
     private final SocketChannel socketChannel;
     private ByteBuffer readBuffer;
     private RequestHandler requestHandler;
@@ -75,19 +75,19 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
     public ConnectionProcessor(SocketChannel socketChannel,
                                RequestHandler requestHandler,
-                               ExceptionHandlerService exceptionHandlerService) throws SpottyStreamException {
-        this(socketChannel, requestHandler, exceptionHandlerService, DEFAULT_BUFFER_SIZE);
+                               ExceptionHandlerRegistry exceptionHandlerRegistry) throws SpottyStreamException {
+        this(socketChannel, requestHandler, exceptionHandlerRegistry, DEFAULT_BUFFER_SIZE);
     }
 
     public ConnectionProcessor(SocketChannel socketChannel,
                                RequestHandler requestHandler,
-                               ExceptionHandlerService exceptionHandlerService,
+                               ExceptionHandlerRegistry exceptionHandlerRegistry,
                                int bufferSize) throws SpottyStreamException {
         super(READY_TO_READ);
 
         this.socketChannel = notNull(socketChannel, "socketChannel");
         this.requestHandler = notNull(requestHandler, "requestHandler");
-        this.exceptionHandlerService = notNull(exceptionHandlerService, "exceptionHandlerService");
+        this.exceptionHandlerRegistry = notNull(exceptionHandlerRegistry, "exceptionHandlerService");
 
         if (socketChannel.isBlocking()) {
             throw new SpottyStreamException("SocketChannel must be non blocking");
@@ -390,7 +390,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
             runnable.run();
         } catch (Exception e) {
             log.error("", e);
-            final ExceptionHandler handler = exceptionHandlerService.getHandler(e.getClass());
+            final ExceptionHandler handler = exceptionHandlerRegistry.getHandler(e.getClass());
             handler.handle(e, request, response);
 
             if (afterExceptionHandler != null) {

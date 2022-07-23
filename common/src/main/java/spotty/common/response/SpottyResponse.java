@@ -47,6 +47,14 @@ public final class SpottyResponse {
         return body;
     }
 
+    public String bodyAsString() {
+        if (body == null) {
+            return "";
+        }
+
+        return new String(body);
+    }
+
     public SpottyResponse body(String body) {
         return body(body == null ? null : body.getBytes());
     }

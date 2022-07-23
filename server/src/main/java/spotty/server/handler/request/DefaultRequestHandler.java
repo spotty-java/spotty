@@ -8,7 +8,6 @@ import spotty.common.request.SpottyInnerRequest;
 import spotty.common.request.SpottyRequest;
 import spotty.common.response.SpottyResponse;
 import spotty.server.compress.Compressor;
-import spotty.server.render.ResponseRender;
 import spotty.server.router.SpottyRouter;
 import spotty.server.router.route.RouteEntry;
 
@@ -22,12 +21,10 @@ import static spotty.common.http.HttpHeaders.CONTENT_ENCODING;
 public final class DefaultRequestHandler implements RequestHandler {
 
     private final SpottyRouter router;
-    private final ResponseRender render;
     private final Compressor compressor;
 
-    public DefaultRequestHandler(SpottyRouter router, ResponseRender render, Compressor compressor) {
+    public DefaultRequestHandler(SpottyRouter router, Compressor compressor) {
         this.router = notNull(router, "router");
-        this.render = notNull(render, "render");
         this.compressor = notNull(compressor, "compress");
     }
 
@@ -39,7 +36,9 @@ public final class DefaultRequestHandler implements RequestHandler {
             innerRequest.headers().get(ACCEPT)
         );
 
-        innerRequest.pathParams(routeEntry.parsePathParams(innerRequest.path()));
+        if (routeEntry.hasPathParamKeys()) {
+            innerRequest.pathParams(routeEntry.parsePathParams(innerRequest.path()));
+        }
 
         final SpottyRequest request = new SpottyDefaultRequest(innerRequest);
 
@@ -55,7 +54,7 @@ public final class DefaultRequestHandler implements RequestHandler {
             return;
         }
 
-        byte[] body = render.render(response, result);
+        byte[] body = render().render(result);
         if (response.headers().has(CONTENT_ENCODING)) {
             final ContentEncoding contentEncoding = ContentEncoding.of(response.headers().get(CONTENT_ENCODING));
             if (contentEncoding == null) {
