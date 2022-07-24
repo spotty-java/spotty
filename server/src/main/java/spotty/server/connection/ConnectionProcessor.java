@@ -63,6 +63,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     @VisibleForTesting
     final SpottyResponse response = new SpottyResponse();
 
+    private final ResponseWriter responseWriter = new ResponseWriter();
     private final SpottyByteArrayOutputStream line = new SpottyByteArrayOutputStream(DEFAULT_LINE_SIZE);
     private final SpottyFixedByteOutputStream body = new SpottyFixedByteOutputStream(DEFAULT_BUFFER_SIZE);
 
@@ -302,7 +303,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     };
 
     private boolean readyToWrite() {
-        final byte[] data = ResponseWriter.write(response);
+        final byte[] data = responseWriter.write(response);
         this.writeBuffer = ByteBuffer.wrap(data);
 
         return changeState(RESPONSE_WRITING);
@@ -311,18 +312,15 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     private boolean writeResponse() throws SpottyHttpException {
         try {
             socketChannel.write(writeBuffer);
-
             if (!writeBuffer.hasRemaining()) {
                 return changeState(RESPONSE_WRITE_COMPLETED);
             }
-
-            return false;
         } catch (IOException e) {
             LOG.error("response write error", e);
             close();
-
-            return false;
         }
+
+        return false;
     }
 
     private boolean responseWriteCompleted() {

@@ -9,7 +9,7 @@ class SpottyByteArrayOutputStreamTest extends Specification {
         var stream = new SpottyByteArrayOutputStream(15)
 
         when:
-        stream.write("hello world")
+        stream.print("hello world")
         stream.capacity(capacity)
 
         then:
@@ -24,12 +24,12 @@ class SpottyByteArrayOutputStreamTest extends Specification {
         "he"          | 2
     }
 
-    def "should reset correctly" () {
+    def "should reset correctly"() {
         given:
         var stream = new SpottyByteArrayOutputStream(15)
 
         when:
-        stream.write("hello world")
+        stream.print("hello world")
         stream.capacity(2)
 
         then:
@@ -39,6 +39,24 @@ class SpottyByteArrayOutputStreamTest extends Specification {
         stream.reset()
         stream.capacity() == 15
         stream.toString() == ""
+    }
+
+    def "should increase capacity when data to write bigger than initial buffer"() {
+        given:
+        var stream = new SpottyByteArrayOutputStream(5)
+
+        when:
+        stream.print(text)
+
+        then:
+        stream.capacity() == expectedCapacity
+        stream.toString() == text
+
+        where:
+        text          | expectedCapacity
+        "hello"       | 5
+        "hello!"      | 10
+        "hello world" | 11
     }
 
 }
