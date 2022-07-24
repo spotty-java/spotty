@@ -1,1 +1,1 @@
-# web-server
+# Spotty Web Server
