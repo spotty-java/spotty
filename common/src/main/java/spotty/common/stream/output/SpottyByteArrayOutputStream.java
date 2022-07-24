@@ -1,9 +1,11 @@
 package spotty.common.stream.output;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import static java.lang.Math.max;
 
-public final class SpottyByteArrayOutputStream extends ByteArrayOutputStream {
+/**
+ * Single thread use only
+ */
+public final class SpottyByteArrayOutputStream extends SpottyFixedByteOutputStream {
     private static final int DEFAULT_SIZE = 1024;
 
     private final int initialBufferSize;
@@ -19,48 +21,53 @@ public final class SpottyByteArrayOutputStream extends ByteArrayOutputStream {
     }
 
     @Override
-    public void write(byte[] b) throws IOException {
-        write(b, 0, b.length);
-    }
-
-    public synchronized void write(String text) throws IOException {
-        write(text.getBytes());
-    }
-
-    public synchronized void capacity(int capacity) {
-        if (capacity < 0) {
-            throw new IndexOutOfBoundsException("capacity must be >= 0");
+    protected void ensureCapacity(int len) {
+        if (len > remaining()) {
+            grow(size() + len);
         }
-
-        if (buf.length != capacity) {
-            final byte[] buffer = new byte[capacity];
-            count = Math.min(count, capacity);
-
-            if (count > 0) {
-                System.arraycopy(buf, 0, buffer, 0, count);
-            }
-
-            buf = buffer;
-        }
-    }
-
-    public int capacity() {
-        return buf.length;
     }
 
     @Override
-    public synchronized void reset() {
+    public void limit(int limit) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void reset() {
         capacity(initialBufferSize);
 
         super.reset();
     }
 
-    @Override
-    public synchronized String toString() {
-        if (count > 0) {
-            return super.toString();
-        }
+    /**
+     * The maximum size of array to allocate.
+     * Some VMs reserve some header words in an array.
+     * Attempts to allocate larger arrays may result in
+     * OutOfMemoryError: Requested array size exceeds VM limit
+     */
+    private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
-        return "";
+    /**
+     * Increases the capacity to ensure that it can hold at least the
+     * number of elements specified by the minimum capacity argument.
+     *
+     * @param minCapacity the desired minimum capacity
+     */
+    private void grow(int minCapacity) {
+        int newCapacity = max(capacity() << 1, minCapacity);
+        if (newCapacity - MAX_ARRAY_SIZE > 0)
+            newCapacity = hugeCapacity(minCapacity);
+
+        capacity(newCapacity);
     }
+
+    private static int hugeCapacity(int minCapacity) {
+        if (minCapacity < 0) // overflow
+            throw new OutOfMemoryError();
+
+        return (minCapacity > MAX_ARRAY_SIZE) ?
+            Integer.MAX_VALUE :
+            MAX_ARRAY_SIZE;
+    }
+
 }

@@ -12,7 +12,7 @@ public final class Validation {
     }
 
     public static String notBlank(String paramName, String value) {
-        validate(value != null && !value.trim().isEmpty(), "%s is blank", paramName);
+        validate(!isBlank(value), "%s is blank", paramName);
         return value;
     }
 
@@ -28,7 +28,17 @@ public final class Validation {
     }
 
     public static boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
+        if (value == null) {
+            return true;
+        }
+
+        for (int i = 0; i < value.length(); i++) {
+            if (value.charAt(i) > ' ') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public static boolean isEmpty(String value) {

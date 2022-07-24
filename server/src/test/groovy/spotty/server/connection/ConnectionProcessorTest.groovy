@@ -21,6 +21,7 @@ import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_W
 
 class ConnectionProcessorTest extends Specification implements WebRequestTestData {
 
+    private def responseWriter = new ResponseWriter()
     private def exceptionService = new ExceptionHandlerRegistry()
 
     def setup() {
@@ -69,7 +70,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.flip()
 
         var request = aSpottyRequest()
-        var expectedResponse = new String(ResponseWriter.write(aSpottyResponse(request)))
+        var expectedResponse = new String(responseWriter.write(aSpottyResponse(request)))
 
         var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService, fullRequest.length())
 
@@ -113,7 +114,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
             .contentType("text/plain")
             .body("invalid request head line")
 
-        var expectedResult = new String(ResponseWriter.write(response))
+        var expectedResult = new String(responseWriter.write(response))
 
         var socket = new SocketChannelStub()
         socket.configureBlocking(false)
@@ -151,7 +152,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
             .contentType("text/plain")
             .body("content-length header is required")
 
-        var expectedResult = new String(ResponseWriter.write(response))
+        var expectedResult = new String(responseWriter.write(response))
 
         var socket = new SocketChannelStub()
         socket.configureBlocking(false)
@@ -191,7 +192,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
             .contentType("text/plain")
             .body("some message")
 
-        var expectedResult = new String(ResponseWriter.write(response))
+        var expectedResult = new String(responseWriter.write(response))
 
         var socket = new SocketChannelStub()
         socket.configureBlocking(false)

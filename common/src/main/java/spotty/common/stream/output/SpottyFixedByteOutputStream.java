@@ -1,68 +1,73 @@
 package spotty.common.stream.output;
 
 import java.io.OutputStream;
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import static java.lang.Math.min;
 
-public final class SpottyFixedByteOutputStream extends OutputStream {
+/**
+ * OutputStream with fixed capacity, not thread safe, for single thread use only
+ */
+public class SpottyFixedByteOutputStream extends OutputStream {
+    private static final byte LINE_SEPARATOR = '\n';
 
     private byte[] data;
-    private volatile int size = 0;
-    private volatile int limit;
+    private int size = 0;
+    private int limit;
 
     public SpottyFixedByteOutputStream(int capacity) {
         this.data = new byte[capacity];
         this.limit = capacity;
     }
 
-    public synchronized void write(byte b) throws IndexOutOfBoundsException {
-        ensureCapacity();
+    public void write(byte b) throws IndexOutOfBoundsException {
+        ensureCapacity(1);
 
         data[size++] = b;
     }
 
     @Override
-    public synchronized void write(int b) throws IndexOutOfBoundsException {
+    public void write(int b) throws IndexOutOfBoundsException {
         write((byte) b);
     }
 
     @Override
-    public synchronized void write(byte[] b) throws IndexOutOfBoundsException {
+    public void write(byte[] b) throws IndexOutOfBoundsException {
         write(b, 0, b.length);
     }
 
     @Override
-    public synchronized void write(byte[] b, int off, int len) throws IndexOutOfBoundsException {
-        ensureCapacity();
-
-        if (len > remaining()) {
-            throw new IndexOutOfBoundsException("length is bigger than remaining");
-        }
+    public void write(byte[] b, int off, int len) throws IndexOutOfBoundsException {
+        ensureCapacity(len);
 
         System.arraycopy(b, off, data, size, len);
         size += len;
     }
 
-    public synchronized void write(String text) {
+    public void print(String text) {
         write(text.getBytes());
     }
 
-    public synchronized void write(ByteBuffer buffer) {
+    public void println(String text) {
+        print(text);
+        println();
+    }
+
+    public void println() {
+        newLine();
+    }
+
+    public void write(ByteBuffer buffer) {
         write(buffer, 0, buffer.remaining());
     }
 
-    public synchronized  void writeRemaining(ByteBuffer buffer) {
+    public void writeRemaining(ByteBuffer buffer) {
         write(buffer, 0, min(remaining(), buffer.remaining()));
     }
 
-    public synchronized void write(ByteBuffer buffer, int off, int len) {
-        ensureCapacity();
-        if (len > remaining()) {
-            throw new BufferOverflowException();
-        }
+    public void write(ByteBuffer buffer, int off, int len) {
+        ensureCapacity(len);
 
         if (off > 0) {
             buffer.position(buffer.position() + off);
@@ -76,11 +81,11 @@ public final class SpottyFixedByteOutputStream extends OutputStream {
         return size == limit;
     }
 
-    public synchronized byte[] toByteArray() {
+    public byte[] toByteArray() {
         return Arrays.copyOf(data, size);
     }
 
-    public synchronized int remaining() {
+    public int remaining() {
         return limit - size;
     }
 
@@ -88,7 +93,7 @@ public final class SpottyFixedByteOutputStream extends OutputStream {
         return data.length;
     }
 
-    public synchronized void capacity(int capacity) {
+    public void capacity(int capacity) {
         if (capacity < 0) {
             throw new IndexOutOfBoundsException("capacity must be >= 0");
         }
@@ -110,7 +115,7 @@ public final class SpottyFixedByteOutputStream extends OutputStream {
         return limit;
     }
 
-    public synchronized void limit(int limit) {
+    public void limit(int limit) {
         if (limit > capacity()) {
             throw new IndexOutOfBoundsException("limit can't be larger than capacity");
         }
@@ -122,13 +127,13 @@ public final class SpottyFixedByteOutputStream extends OutputStream {
         return size;
     }
 
-    public synchronized void reset() {
+    public void reset() {
         this.size = 0;
         this.limit = data.length;
     }
 
     @Override
-    public synchronized String toString() {
+    public String toString() {
         if (size > 0) {
             return new String(data, 0, size);
         }
@@ -136,9 +141,13 @@ public final class SpottyFixedByteOutputStream extends OutputStream {
         return "";
     }
 
-    private void ensureCapacity() {
-        if (size >= limit) {
+    protected void ensureCapacity(int len) {
+        if (len > remaining()) {
             throw new IndexOutOfBoundsException("not enough capacity size: " + size + " limit: " + limit);
         }
+    }
+
+    private void newLine() {
+        write(LINE_SEPARATOR);
     }
 }

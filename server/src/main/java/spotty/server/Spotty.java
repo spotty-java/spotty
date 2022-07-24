@@ -29,6 +29,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.nio.channels.SelectionKey.OP_ACCEPT;
+import static java.nio.channels.SelectionKey.OP_READ;
+import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
@@ -253,7 +256,7 @@ public final class Spotty implements Closeable {
             // Binding this server on the port
             serverSocket.bind(new InetSocketAddress(port));
             serverSocket.configureBlocking(false); // Make Server nonBlocking
-            serverSocket.register(selector, SelectionKey.OP_ACCEPT);
+            serverSocket.register(selector, OP_ACCEPT);
 
             LOG.info("server has been started on port " + port);
 
@@ -296,7 +299,7 @@ public final class Spotty implements Closeable {
         SocketChannel socket = serverSocket.accept();
         socket.configureBlocking(false);
 
-        final SelectionKey key = socket.register(acceptKey.selector(), SelectionKey.OP_READ);
+        final SelectionKey key = socket.register(acceptKey.selector(), OP_READ);
 
         final ConnectionProcessor connectionProcessor = new ConnectionProcessor(socket, requestHandler, exceptionHandlerRegistry);
         final Connection connection = new Connection(connectionProcessor);
@@ -306,17 +309,17 @@ public final class Spotty implements Closeable {
         key.attach(connection);
 
         connection.whenStateIs(READY_TO_WRITE, __ -> {
-            key.interestOps(SelectionKey.OP_WRITE);
+            key.interestOps(OP_WRITE);
             key.selector().wakeup();
         });
 
         connection.whenStateIs(READY_TO_READ, __ -> {
-            key.interestOps(SelectionKey.OP_READ);
+            key.interestOps(OP_READ);
             key.selector().wakeup();
         });
 
         connection.whenStateIs(REQUEST_HANDLING, __ -> {
-            key.interestOps(SelectionKey.OP_CONNECT); // make key is waiting ready to write
+            key.interestOps(SelectionKey.OP_CONNECT); // newer connect, make key is waiting ready to write
         });
 
         connection.whenStateIs(CLOSED, __ -> {
@@ -354,7 +357,7 @@ public final class Spotty implements Closeable {
     }
 
     private void registerSpottyDefaultFilters() {
-        after((request, response) -> {
+        before((request, response) -> {
             response.headers()
                 .add(DATE, RFC_1123_DATE_TIME.format(now(UTC)))
                 .add(SERVER, SPOTTY_VERSION)

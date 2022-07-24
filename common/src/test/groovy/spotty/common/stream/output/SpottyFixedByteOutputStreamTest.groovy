@@ -113,7 +113,7 @@ class SpottyFixedByteOutputStreamTest extends Specification {
         var stream = new SpottyFixedByteOutputStream(15)
 
         when:
-        stream.write("hello world")
+        stream.print("hello world")
         stream.capacity(capacity)
 
         then:

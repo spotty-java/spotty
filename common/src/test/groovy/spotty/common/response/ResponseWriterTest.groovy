@@ -7,6 +7,7 @@ class ResponseWriterTest extends Specification implements WebRequestTestData {
 
     def "should write response correctly"() {
         given:
+        var responseWriter = new ResponseWriter()
         var content = "hello".getBytes()
         var request = aSpottyRequest()
                 .contentLength(content.length)
@@ -15,7 +16,7 @@ class ResponseWriterTest extends Specification implements WebRequestTestData {
         var response = aSpottyResponse(request)
 
         when:
-        var data = ResponseWriter.write(response)
+        var data = responseWriter.write(response)
         var responseString = new String(data)
 
         then:
