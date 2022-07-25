@@ -1,11 +1,15 @@
 package spotty.common.response;
 
+import spotty.common.cookie.Cookie;
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpStatus;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
+import static java.util.Collections.emptyList;
 import static spotty.common.http.HttpStatus.OK;
 
 public final class SpottyResponse {
@@ -16,6 +20,8 @@ public final class SpottyResponse {
     private HttpStatus status = OK;
     private String contentType = DEFAULT_CONTENT_TYPE;
     private byte[] body;
+
+    List<Cookie> cookies = emptyList();
 
     private final HttpHeaders headers = new HttpHeaders();
 
@@ -86,11 +92,101 @@ public final class SpottyResponse {
         return this;
     }
 
+    public SpottyResponse addCookie(Cookie cookie) {
+        final List<Cookie> emptyCookies = emptyList();
+        if (this.cookies == emptyCookies) {
+            this.cookies = new ArrayList<>();
+        }
+
+        this.cookies.add(cookie);
+        return this;
+    }
+
+    public SpottyResponse cookie(String name, String value) {
+        return addCookie(Cookie.builder()
+            .name(name)
+            .value(value)
+            .build());
+    }
+
+    public SpottyResponse cookie(String name, String value, int maxAge) {
+        return addCookie(Cookie.builder()
+            .name(name)
+            .value(value)
+            .maxAge(maxAge)
+            .build());
+    }
+
+    public SpottyResponse cookie(String name, String value, int maxAge, boolean secured) {
+        return addCookie(Cookie.builder()
+            .name(name)
+            .value(value)
+            .maxAge(maxAge)
+            .secure(secured)
+            .build());
+    }
+
+    public SpottyResponse cookie(String name, String value, int maxAge, boolean secured, boolean httpOnly) {
+        return addCookie(Cookie.builder()
+            .name(name)
+            .value(value)
+            .maxAge(maxAge)
+            .secure(secured)
+            .httpOnly(httpOnly)
+            .build());
+    }
+
+    public SpottyResponse cookie(String path, String name, String value, int maxAge, boolean secured) {
+        return addCookie(Cookie.builder()
+            .name(name)
+            .value(value)
+            .path(path)
+            .maxAge(maxAge)
+            .secure(secured)
+            .build());
+    }
+
+    public SpottyResponse cookie(String path, String name, String value, int maxAge, boolean secured, boolean httpOnly) {
+        return addCookie(Cookie.builder()
+            .name(name)
+            .value(value)
+            .path(path)
+            .maxAge(maxAge)
+            .secure(secured)
+            .httpOnly(httpOnly)
+            .build());
+    }
+
+    public SpottyResponse cookie(String domain, String path, String name, String value, int maxAge, boolean secured, boolean httpOnly) {
+        return addCookie(Cookie.builder()
+            .name(name)
+            .value(value)
+            .domain(domain)
+            .path(path)
+            .maxAge(maxAge)
+            .secure(secured)
+            .httpOnly(httpOnly)
+            .build());
+    }
+
+    public SpottyResponse removeCookie(String name) {
+        return removeCookie(null, name);
+    }
+
+    public SpottyResponse removeCookie(String path, String name) {
+        return addCookie(Cookie.builder()
+            .name(name)
+            .path(path)
+            .maxAge(0)
+            .build());
+    }
+
     public void reset() {
         status = OK;
         contentType = DEFAULT_CONTENT_TYPE;
         body = null;
         headers.clear();
+        cookies = emptyList();
     }
 
     @Override

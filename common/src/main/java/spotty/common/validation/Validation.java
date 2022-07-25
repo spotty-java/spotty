@@ -27,6 +27,14 @@ public final class Validation {
         }
     }
 
+    public static boolean isNull(Object value) {
+        return value == null;
+    }
+
+    public static boolean isNotNull(Object value) {
+        return value != null;
+    }
+
     public static boolean isBlank(String value) {
         if (value == null) {
             return true;
@@ -39,6 +47,10 @@ public final class Validation {
         }
 
         return true;
+    }
+
+    public static boolean isNotBlank(String value) {
+        return !isBlank(value);
     }
 
     public static boolean isEmpty(String value) {

@@ -4,6 +4,9 @@ import spotty.common.http.HttpHeaders;
 import spotty.common.response.SpottyResponse;
 import spotty.common.utils.IOUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static java.lang.Integer.parseInt;
 import static spotty.common.http.HttpHeaders.ACCEPT;
 import static spotty.common.http.HttpHeaders.ACCEPT_ENCODING;
@@ -26,6 +29,11 @@ public interface WebRequestTestData {
         .add(CONNECTION, "keep-alive")
         .add(CONTENT_LENGTH, requestBody.length() + "");
 
+    Map<String, String> cookies = new HashMap<String, String>(){{
+        put("name", "John");
+        put("lastName", "Doe");
+    }};
+
     String requestHeaders = "POST / HTTP/1.1\n" + headers;
 
     String fullRequest = requestHeaders + "\n\n" + requestBody;
@@ -43,6 +51,7 @@ public interface WebRequestTestData {
             .contentLength(parseInt(headers.remove(CONTENT_LENGTH)))
             .contentType(headers.remove(CONTENT_TYPE))
             .addHeaders(headers)
+            .cookies(cookies)
             .body(content);
     }
 

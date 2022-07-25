@@ -6,6 +6,7 @@ import org.apache.http.HttpRequest
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
+import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.conn.routing.HttpRoute
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
@@ -49,6 +50,10 @@ class HttpClient implements Closeable {
 
     HttpResponse getResponse(String url) {
         return client.execute(new HttpGet(url))
+    }
+
+    HttpResponse getResponse(String url, HttpClientContext context) {
+        return client.execute(new HttpGet(url), context)
     }
 
     @Override
