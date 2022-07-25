@@ -86,4 +86,44 @@ class ValidationTest extends Specification {
         "1"              | false
         "  \n \t e \r  " | false
     }
+
+    def "should check isNotBlank correctly"() {
+        when:
+        var result = Validation.isNotBlank(value)
+
+        then:
+        result == expectedResult
+
+        where:
+        value            | expectedResult
+        null             | false
+        ""               | false
+        "   "            | false
+        "\n"             | false
+        "\r"             | false
+        "\t"             | false
+        "  \n  \t  \r  " | false
+        "1"              | true
+        "  \n \t e \r  " | true
+    }
+
+    def "should check isNull correctly"() {
+        when:
+        var resultNullTrue = Validation.isNull(null)
+        var resultNullFalse = Validation.isNull("")
+
+        then:
+        resultNullTrue
+        !resultNullFalse
+    }
+
+    def "should check isNotNull correctly"() {
+        when:
+        var resultIsNotNull = Validation.isNotNull("")
+        var resultIsNotNullFalse = Validation.isNotNull(null)
+
+        then:
+        resultIsNotNull
+        !resultIsNotNullFalse
+    }
 }

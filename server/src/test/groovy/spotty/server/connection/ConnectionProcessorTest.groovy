@@ -99,6 +99,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
     def "should throw exception when socket is blocking"() {
         given:
         var socket = new SocketChannelStub()
+        socket.configureBlocking(true)
 
         when:
         new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService)

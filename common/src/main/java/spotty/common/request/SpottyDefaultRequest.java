@@ -20,6 +20,7 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     private final int contentLength;
     private final String contentType;
     private final HttpHeaders headers;
+    private final Map<String, String> cookies;
     private final byte[] body;
 
     private volatile Object attachment;
@@ -33,8 +34,9 @@ public final class SpottyDefaultRequest implements SpottyRequest {
         this.pathParams = request.pathParams();
         this.contentLength = request.contentLength();
         this.contentType = request.contentType();
-        this.body = request.body();
         this.headers = request.headers().copy();
+        this.cookies = request.cookies();
+        this.body = request.body();
     }
 
     @Override
@@ -88,6 +90,11 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     }
 
     @Override
+    public Map<String, String> cookies() {
+        return cookies;
+    }
+
+    @Override
     public void attach(Object attachment) {
         this.attachment = attachment;
     }
@@ -132,12 +139,13 @@ public final class SpottyDefaultRequest implements SpottyRequest {
             && Objects.equals(path, that.path)
             && Objects.equals(contentType, that.contentType)
             && Arrays.equals(body, that.body)
-            && Objects.equals(headers, that.headers);
+            && Objects.equals(headers, that.headers)
+            && Objects.equals(cookies, that.cookies);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers);
+        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers, cookies);
         result = 31 * result + Arrays.hashCode(body);
         return result;
     }

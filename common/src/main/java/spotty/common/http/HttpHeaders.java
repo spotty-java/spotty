@@ -281,6 +281,10 @@ public final class HttpHeaders {
      */
     public static final String WWW_AUTHENTICATE = "www-authenticate";
 
+    public static final String COOKIE = "cookie";
+
+    public static final String SET_COOKIE = "set-cookie";
+
     private final Map<String, String> headers = new HashMap<>();
 
     public HttpHeaders() {

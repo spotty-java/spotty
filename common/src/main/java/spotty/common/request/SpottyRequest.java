@@ -19,6 +19,8 @@ public interface SpottyRequest {
 
     String contentType();
 
+    Map<String, String> cookies();
+
     HttpHeaders headers();
 
     Map<String, String> params();

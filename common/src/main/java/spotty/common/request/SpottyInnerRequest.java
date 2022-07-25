@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import static java.util.Collections.emptyMap;
+import static spotty.common.validation.Validation.notNull;
+
 public final class SpottyInnerRequest implements SpottyRequest {
     private String protocol;
     private String scheme;
@@ -19,6 +22,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     private PathParams pathParams = PathParams.EMPTY;
     private int contentLength;
     private String contentType;
+    private Map<String, String> cookies = emptyMap();
     private byte[] body;
 
     private final HttpHeaders headers = new HttpHeaders();
@@ -80,6 +84,16 @@ public final class SpottyInnerRequest implements SpottyRequest {
 
     public SpottyInnerRequest contentType(String contentType) {
         this.contentType = contentType;
+        return this;
+    }
+
+    @Override
+    public Map<String, String> cookies() {
+        return cookies;
+    }
+
+    public SpottyInnerRequest cookies(Map<String, String> cookies) {
+        this.cookies = notNull("cookies", cookies);
         return this;
     }
 

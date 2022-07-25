@@ -10,10 +10,12 @@ class ResponseWriterTest extends Specification implements WebRequestTestData {
         var responseWriter = new ResponseWriter()
         var content = "hello".getBytes()
         var request = aSpottyRequest()
-                .contentLength(content.length)
-                .body(content)
+            .contentLength(content.length)
+            .body(content)
 
         var response = aSpottyResponse(request)
+            .cookie("name", "name")
+            .cookie("title", "title")
 
         when:
         var data = responseWriter.write(response)
@@ -27,7 +29,9 @@ class ResponseWriterTest extends Specification implements WebRequestTestData {
             HTTP/1.1 200
             content-length: 5
             content-type: text/plain
-            
+            set-cookie: name=name
+            set-cookie: title=title
+
             hello
         """.stripIndent(true).trim()
 

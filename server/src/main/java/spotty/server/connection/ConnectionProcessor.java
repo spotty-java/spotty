@@ -28,9 +28,11 @@ import java.nio.channels.SocketChannel;
 
 import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
 import static spotty.common.http.HttpHeaders.CONTENT_TYPE;
+import static spotty.common.http.HttpHeaders.COOKIE;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 import static spotty.common.request.validator.RequestValidator.validate;
 import static spotty.common.utils.HeaderUtils.parseContentLength;
+import static spotty.common.utils.HeaderUtils.parseCookies;
 import static spotty.common.utils.HeaderUtils.parseHttpMethod;
 import static spotty.common.utils.HeaderUtils.parseUri;
 import static spotty.common.validation.Validation.notNull;
@@ -247,6 +249,10 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
         if (request.headers().has(CONTENT_TYPE)) {
             request.contentType(request.headers().remove(CONTENT_TYPE));
+        }
+
+        if (request.headers().has(COOKIE)) {
+            request.cookies(parseCookies(request.headers().remove(COOKIE)));
         }
 
         validate(request);
