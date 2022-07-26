@@ -16,11 +16,11 @@ class CompressorTest extends Specification implements WebRequestTestData {
         var expected = getClass().getResourceAsStream("/compressor/request.gzip").getBytes()
 
         when:
-        var gzip = compressor.compress(GZIP, fullRequest.getBytes())
+        var gzip = compressor.compress(GZIP, requestBody.getBytes())
 
         then:
         expected == gzip
-        gzip.length < fullRequest.length()
+        gzip.length < requestBody.length()
     }
 
     def "should deflate text correctly"() {
@@ -28,11 +28,11 @@ class CompressorTest extends Specification implements WebRequestTestData {
         var expected = getClass().getResourceAsStream("/compressor/request.deflate").getBytes()
 
         when:
-        var deflate = compressor.compress(DEFLATE, fullRequest.getBytes())
+        var deflate = compressor.compress(DEFLATE, requestBody.getBytes())
 
         then:
         expected == deflate
-        deflate.length < fullRequest.length()
+        deflate.length < requestBody.length()
     }
 
     def "should return error when ContentEncoding does not supported"() {

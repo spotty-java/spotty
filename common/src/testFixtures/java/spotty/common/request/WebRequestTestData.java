@@ -4,18 +4,17 @@ import spotty.common.http.HttpHeaders;
 import spotty.common.response.SpottyResponse;
 import spotty.common.utils.IOUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static java.lang.Integer.parseInt;
 import static spotty.common.http.HttpHeaders.ACCEPT;
 import static spotty.common.http.HttpHeaders.ACCEPT_ENCODING;
 import static spotty.common.http.HttpHeaders.CONNECTION;
 import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
 import static spotty.common.http.HttpHeaders.CONTENT_TYPE;
+import static spotty.common.http.HttpHeaders.COOKIE;
 import static spotty.common.http.HttpHeaders.HOST;
 import static spotty.common.http.HttpHeaders.USER_AGENT;
 import static spotty.common.http.HttpMethod.POST;
+import static spotty.common.utils.HeaderUtils.parseCookies;
 
 public interface WebRequestTestData {
 
@@ -27,12 +26,8 @@ public interface WebRequestTestData {
         .add(HOST, "localhost:4000")
         .add(ACCEPT_ENCODING, "gzip, deflate, br")
         .add(CONNECTION, "keep-alive")
+        .add(COOKIE, "name=John; lastName=Doe")
         .add(CONTENT_LENGTH, requestBody.length() + "");
-
-    Map<String, String> cookies = new HashMap<String, String>(){{
-        put("name", "John");
-        put("lastName", "Doe");
-    }};
 
     String requestHeaders = "POST / HTTP/1.1\n" + headers;
 
@@ -50,8 +45,8 @@ public interface WebRequestTestData {
             .path("/")
             .contentLength(parseInt(headers.remove(CONTENT_LENGTH)))
             .contentType(headers.remove(CONTENT_TYPE))
+            .cookies(parseCookies(headers.remove(COOKIE)))
             .addHeaders(headers)
-            .cookies(cookies)
             .body(content);
     }
 
