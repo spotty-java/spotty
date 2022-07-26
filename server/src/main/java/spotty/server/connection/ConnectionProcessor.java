@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import spotty.common.annotation.VisibleForTesting;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyStreamException;
-import spotty.common.request.SpottyInnerRequest;
+import spotty.common.request.DefaultSpottyRequest;
 import spotty.common.request.params.QueryParams;
 import spotty.common.response.ResponseWriter;
 import spotty.common.response.SpottyResponse;
@@ -60,7 +60,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     private static final ReactorWorker REACTOR_WORKER = ReactorWorker.instance();
 
     @VisibleForTesting
-    final SpottyInnerRequest request = new SpottyInnerRequest();
+    final DefaultSpottyRequest request = new DefaultSpottyRequest();
 
     @VisibleForTesting
     final SpottyResponse response = new SpottyResponse();

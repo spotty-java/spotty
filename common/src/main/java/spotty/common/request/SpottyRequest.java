@@ -2,6 +2,7 @@ package spotty.common.request;
 
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
+import spotty.common.session.Session;
 
 import java.util.Map;
 import java.util.Set;
@@ -38,6 +39,8 @@ public interface SpottyRequest {
     void attach(Object attachment);
 
     Object attachment();
+
+    Session session();
 
     byte[] body();
 

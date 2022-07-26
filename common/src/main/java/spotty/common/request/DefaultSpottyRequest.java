@@ -4,6 +4,7 @@ import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
 import spotty.common.request.params.PathParams;
 import spotty.common.request.params.QueryParams;
+import spotty.common.session.Session;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -13,7 +14,7 @@ import java.util.Set;
 import static java.util.Collections.emptyMap;
 import static spotty.common.validation.Validation.notNull;
 
-public final class SpottyInnerRequest implements SpottyRequest {
+public final class DefaultSpottyRequest implements SpottyRequest {
     private String protocol;
     private String scheme;
     private HttpMethod method;
@@ -23,6 +24,8 @@ public final class SpottyInnerRequest implements SpottyRequest {
     private int contentLength;
     private String contentType;
     private Map<String, String> cookies = emptyMap();
+    private Object attachment;
+    private Session session;
     private byte[] body;
 
     private final HttpHeaders headers = new HttpHeaders();
@@ -32,7 +35,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
         return protocol;
     }
 
-    public SpottyInnerRequest protocol(String protocol) {
+    public DefaultSpottyRequest protocol(String protocol) {
         this.protocol = protocol;
         return this;
     }
@@ -42,7 +45,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
         return scheme;
     }
 
-    public SpottyInnerRequest scheme(String scheme) {
+    public DefaultSpottyRequest scheme(String scheme) {
         this.scheme = scheme;
         return this;
     }
@@ -52,7 +55,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
         return method;
     }
 
-    public SpottyInnerRequest method(HttpMethod method) {
+    public DefaultSpottyRequest method(HttpMethod method) {
         this.method = method;
         return this;
     }
@@ -62,7 +65,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
         return path;
     }
 
-    public SpottyInnerRequest path(String path) {
+    public DefaultSpottyRequest path(String path) {
         this.path = path;
         return this;
     }
@@ -72,7 +75,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
         return contentLength;
     }
 
-    public SpottyInnerRequest contentLength(int contentLength) {
+    public DefaultSpottyRequest contentLength(int contentLength) {
         this.contentLength = contentLength;
         return this;
     }
@@ -82,7 +85,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
         return contentType;
     }
 
-    public SpottyInnerRequest contentType(String contentType) {
+    public DefaultSpottyRequest contentType(String contentType) {
         this.contentType = contentType;
         return this;
     }
@@ -92,7 +95,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
         return cookies;
     }
 
-    public SpottyInnerRequest cookies(Map<String, String> cookies) {
+    public DefaultSpottyRequest cookies(Map<String, String> cookies) {
         this.cookies = notNull("cookies", cookies);
         return this;
     }
@@ -102,12 +105,12 @@ public final class SpottyInnerRequest implements SpottyRequest {
         return headers;
     }
 
-    public SpottyInnerRequest addHeader(String name, String value) {
+    public DefaultSpottyRequest addHeader(String name, String value) {
         this.headers.add(name, value);
         return this;
     }
 
-    public SpottyInnerRequest addHeaders(HttpHeaders headers) {
+    public DefaultSpottyRequest addHeaders(HttpHeaders headers) {
         this.headers.add(headers);
         return this;
     }
@@ -127,7 +130,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
         return pathParams;
     }
 
-    public SpottyInnerRequest pathParams(PathParams pathParams) {
+    public DefaultSpottyRequest pathParams(PathParams pathParams) {
         this.pathParams = pathParams;
         return this;
     }
@@ -146,7 +149,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
         return queryParams;
     }
 
-    public SpottyInnerRequest queryParams(QueryParams queryParams) {
+    public DefaultSpottyRequest queryParams(QueryParams queryParams) {
         this.queryParams = queryParams;
         return this;
     }
@@ -163,12 +166,22 @@ public final class SpottyInnerRequest implements SpottyRequest {
 
     @Override
     public void attach(Object attachment) {
-        throw new UnsupportedOperationException();
+        this.attachment = attachment;
     }
 
     @Override
     public Object attachment() {
-        throw new UnsupportedOperationException();
+        return attachment;
+    }
+
+    public DefaultSpottyRequest session(Session session) {
+        this.session = session;
+        return this;
+    }
+
+    @Override
+    public Session session() {
+        return session;
     }
 
     @Override
@@ -176,7 +189,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
         return body;
     }
 
-    public SpottyInnerRequest body(byte[] body) {
+    public DefaultSpottyRequest body(byte[] body) {
         this.body = body;
         return this;
     }
@@ -198,7 +211,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SpottyInnerRequest that = (SpottyInnerRequest) o;
+        DefaultSpottyRequest that = (DefaultSpottyRequest) o;
 
         return contentLength == that.contentLength
             && Objects.equals(protocol, that.protocol)

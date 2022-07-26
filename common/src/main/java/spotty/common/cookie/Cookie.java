@@ -71,6 +71,24 @@ public final class Cookie {
         return toString;
     }
 
+    @Override
+    public int hashCode() {
+        return toString.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+
+        return toString.equals(obj.toString());
+    }
+
     private String buildString() {
         final StringBuilder sb = new StringBuilder();
         sb.append(name).append("=").append(value);

@@ -285,6 +285,8 @@ public final class HttpHeaders {
 
     public static final String SET_COOKIE = "set-cookie";
 
+    public static final String SPOTTY_SESSION_ID = "SSID";
+
     private final Map<String, String> headers = new HashMap<>();
 
     public HttpHeaders() {

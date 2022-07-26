@@ -92,6 +92,10 @@ public final class SpottyResponse {
         return this;
     }
 
+    public List<Cookie> cookies() {
+        return cookies;
+    }
+
     public SpottyResponse addCookie(Cookie cookie) {
         final List<Cookie> emptyCookies = emptyList();
         if (this.cookies == emptyCookies) {

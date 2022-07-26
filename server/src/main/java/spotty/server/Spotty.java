@@ -15,6 +15,7 @@ import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.router.SpottyRouter;
 import spotty.server.router.route.Route;
 import spotty.server.router.route.RouteGroup;
+import spotty.server.session.SessionManager;
 import spotty.server.worker.ReactorWorker;
 
 import java.io.Closeable;
@@ -59,11 +60,13 @@ public final class Spotty implements Closeable {
     private volatile boolean running = false;
     private volatile boolean started = false;
 
+    private final SessionManager sessionManager = new SessionManager();
+
     private final int port;
     private final AtomicLong connections = new AtomicLong();
 
     private final SpottyRouter router = new SpottyRouter();
-    private final DefaultRequestHandler requestHandler = new DefaultRequestHandler(router, new Compressor());
+    private final DefaultRequestHandler requestHandler = new DefaultRequestHandler(router, new Compressor(), sessionManager);
     private final ExceptionHandlerRegistry exceptionHandlerRegistry = new ExceptionHandlerRegistry();
 
     public Spotty() {
@@ -84,6 +87,10 @@ public final class Spotty implements Closeable {
         registerSpottyDefaultExceptionHandlers();
 
         SERVER_RUN.execute(this::serverInit);
+    }
+
+    public void enableSession() {
+        sessionManager.enableSession();
     }
 
     @Override

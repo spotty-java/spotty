@@ -1,13 +1,13 @@
 package spotty.server.handler;
 
-import spotty.common.request.SpottyInnerRequest;
+import spotty.common.request.DefaultSpottyRequest;
 import spotty.common.response.SpottyResponse;
 import spotty.server.handler.request.RequestHandler;
 
 public final class EchoRequestHandler implements RequestHandler {
 
     @Override
-    public void handle(SpottyInnerRequest innerRequest, SpottyResponse response) {
+    public void handle(DefaultSpottyRequest innerRequest, SpottyResponse response) {
         if (innerRequest.contentType() != null) {
             response.contentType(innerRequest.contentType());
         }
