@@ -5,7 +5,8 @@ plugins {
 dependencies {
     implementation project(":common")
 
-    testImplementation "org.apache.httpcomponents:httpclient:$apacheHttpClientVersion"
+    testImplementation "org.apache.httpcomponents:httpclient:$apacheHttpClientVersion"// https://mvnrepository.com/artifact/org.awaitility/awaitility
+    testImplementation "org.awaitility:awaitility:$awaitilityVersion"
     testImplementation testFixtures(project(":common"))
 }
 

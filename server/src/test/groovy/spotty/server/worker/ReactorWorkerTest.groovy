@@ -1,9 +1,8 @@
 package spotty.server.worker
 
 import spock.lang.Specification
-import spock.util.concurrent.AsyncConditions
 
-import java.util.function.Consumer
+import static org.awaitility.Awaitility.await
 
 class ReactorWorkerTest extends Specification {
 
@@ -11,20 +10,14 @@ class ReactorWorkerTest extends Specification {
 
     def "should execute action"() {
         given:
-        var message = "hello"
-        var Consumer<String> consumer = Mock(Consumer.class)
-
-        var conds = new AsyncConditions()
+        var runIsTrue = false
 
         when:
-        reactorWorker.addAction {
-            conds.evaluate { consumer.accept(message) }
-        }
-
-        conds.await()
+        reactorWorker.addAction { runIsTrue = true }
 
         then:
-        1 * consumer.accept(message)
+        await().until { runIsTrue }
+        runIsTrue
     }
 
 }

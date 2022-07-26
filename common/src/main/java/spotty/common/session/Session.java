@@ -1,11 +1,16 @@
 package spotty.common.session;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.Period;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static java.util.UUID.randomUUID;
 import static spotty.common.validation.Validation.notNull;
@@ -14,6 +19,7 @@ public final class Session {
     private final Map<Object, Object> data = new ConcurrentHashMap<>();
 
     public final UUID id;
+    private Instant expires = Instant.MAX;
 
     public Session() {
         this(randomUUID());
@@ -23,9 +29,48 @@ public final class Session {
         this.id = notNull("id", id);
     }
 
+    public Instant expires() {
+        return expires;
+    }
+
+    public Session expires(Instant expires) {
+        this.expires = notNull("expires", expires);
+        return this;
+    }
+
+    public Session ttl(Period period) {
+        this.expires = Instant.now().plus(period);
+        return this;
+    }
+
+    public Session ttl(Duration duration) {
+        this.expires = Instant.now().plus(duration);
+        return this;
+    }
+
     public Session put(Object key, Object value) {
         data.put(key, value);
         return this;
+    }
+
+    public Session putIfAbsent(Object key, Object value) {
+        data.putIfAbsent(key, value);
+        return this;
+    }
+
+    @SuppressWarnings("all")
+    public <T> T computeIfAbsent(Object key, Function<Object, T> mapper) {
+        return (T) data.computeIfAbsent(key, mapper);
+    }
+
+    @SuppressWarnings("all")
+    public <T> T computeIfPresent(Object key, BiFunction<Object, T, T> mapper) {
+        return (T) data.computeIfPresent(key, (BiFunction) mapper);
+    }
+
+    @SuppressWarnings("all")
+    public <T> T compute(Object key, BiFunction<Object, T, T> mapper) {
+        return (T) data.compute(key, (BiFunction) mapper);
     }
 
     public Session putAll(Map<Object, Object> data) {

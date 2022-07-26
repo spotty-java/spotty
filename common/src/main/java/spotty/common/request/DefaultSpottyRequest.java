@@ -204,7 +204,10 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         contentLength = 0;
         contentType = null;
         body = null;
+        attachment = null;
         headers.clear();
+        cookies = emptyMap();
+        session = null;
     }
 
     @Override
@@ -222,12 +225,15 @@ public final class DefaultSpottyRequest implements SpottyRequest {
             && Objects.equals(path, that.path)
             && Objects.equals(contentType, that.contentType)
             && Arrays.equals(body, that.body)
-            && Objects.equals(headers, that.headers);
+            && Objects.equals(headers, that.headers)
+            && Objects.equals(attachment, that.attachment)
+            && Objects.equals(cookies, that.cookies)
+            && Objects.equals(session, that.session);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers);
+        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers, attachment, cookies, session);
         result = 31 * result + Arrays.hashCode(body);
         return result;
     }

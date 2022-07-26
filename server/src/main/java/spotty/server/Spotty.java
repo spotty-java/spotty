@@ -6,6 +6,7 @@ import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyValidationException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
+import spotty.common.request.DefaultSpottyRequest;
 import spotty.server.compress.Compressor;
 import spotty.server.connection.Connection;
 import spotty.server.connection.ConnectionProcessor;
@@ -40,6 +41,9 @@ import static spotty.common.http.HttpHeaders.DATE;
 import static spotty.common.http.HttpHeaders.SERVER;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static spotty.common.utils.ThreadUtils.threadPool;
+import static spotty.common.validation.Validation.isNotNull;
+import static spotty.common.validation.Validation.notNull;
 import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_READ;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_WRITE;
@@ -55,18 +59,18 @@ public final class Spotty implements Closeable {
         ReactorWorker.init();
     }
 
-    private final ExecutorService SERVER_RUN = Executors.newSingleThreadExecutor();
+    private final ExecutorService SERVER_RUN = Executors.newSingleThreadExecutor(threadPool("spotty-main", false));
 
     private volatile boolean running = false;
     private volatile boolean started = false;
 
-    private final SessionManager sessionManager = new SessionManager();
+    private SessionManager sessionManager;
 
     private final int port;
     private final AtomicLong connections = new AtomicLong();
 
     private final SpottyRouter router = new SpottyRouter();
-    private final DefaultRequestHandler requestHandler = new DefaultRequestHandler(router, new Compressor(), sessionManager);
+    private final DefaultRequestHandler requestHandler = new DefaultRequestHandler(router, new Compressor());
     private final ExceptionHandlerRegistry exceptionHandlerRegistry = new ExceptionHandlerRegistry();
 
     public Spotty() {
@@ -90,13 +94,26 @@ public final class Spotty implements Closeable {
     }
 
     public void enableSession() {
-        sessionManager.enableSession();
+        notNull("sessionManager", sessionManager).enableSession();
+    }
+
+    public void enableSession(long defaultSessionTtl, long defaultSessionCookieTtl) {
+        notNull("sessionManager", sessionManager)
+            .enableSession(defaultSessionTtl, defaultSessionCookieTtl);
+    }
+
+    public void sessionManager(SessionManager sessionManager) {
+        this.sessionManager = notNull("sessionManager", sessionManager);
     }
 
     @Override
     public synchronized void close() {
         stop();
         SERVER_RUN.shutdownNow();
+
+        if (isNotNull(sessionManager)) {
+            sessionManager.close();
+        }
     }
 
     public synchronized void awaitUntilStart() {
@@ -369,6 +386,10 @@ public final class Spotty implements Closeable {
                 .add(DATE, RFC_1123_DATE_TIME.format(now(UTC)))
                 .add(SERVER, SPOTTY_VERSION)
             ;
+
+            if (isNotNull(sessionManager)) {
+                sessionManager.register((DefaultSpottyRequest) request, response);
+            }
         });
     }
 

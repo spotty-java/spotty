@@ -1,7 +1,6 @@
 package spotty.server.connection
 
 import spock.lang.Specification
-import spock.util.concurrent.AsyncConditions
 import spotty.common.exception.SpottyHttpException
 import spotty.common.exception.SpottyStreamException
 import spotty.common.exception.SpottyValidationException
@@ -12,6 +11,7 @@ import spotty.server.handler.EchoRequestHandler
 import spotty.server.registry.exception.ExceptionHandlerRegistry
 import stub.SocketChannelStub
 
+import static org.awaitility.Awaitility.await
 import static spotty.common.http.HttpHeaders.CONTENT_TYPE
 import static spotty.common.http.HttpHeaders.HOST
 import static spotty.common.http.HttpStatus.BAD_REQUEST
@@ -75,17 +75,10 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService, fullRequest.length())
 
         when:
-        var conds = new AsyncConditions()
-        connection.whenStateIs(READY_TO_WRITE, {
-            conds.evaluate {
-                assert connection.is(READY_TO_WRITE)
-            }
-        })
-
         connection.handle()
         socket.clear()
 
-        conds.await()
+        await().until(() -> connection.is(READY_TO_WRITE))
 
         connection.handle()
         socket.flip()
@@ -125,17 +118,10 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService)
 
         when:
-        var conds = new AsyncConditions()
-        connection.whenStateIs(READY_TO_WRITE, {
-            conds.evaluate {
-                assert connection.is(READY_TO_WRITE)
-            }
-        })
-
         connection.handle()
         socket.clear()
 
-        conds.await()
+        await().until(() -> connection.is(READY_TO_WRITE))
 
         connection.handle()
         socket.flip()
@@ -165,17 +151,10 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService)
 
         when:
-        var conds = new AsyncConditions()
-        connection.whenStateIs(READY_TO_WRITE, {
-            conds.evaluate {
-                assert connection.is(READY_TO_WRITE)
-            }
-        })
-
         connection.handle()
         socket.clear()
 
-        conds.await()
+        await().until(() -> connection.is(READY_TO_WRITE))
 
         connection.handle()
         socket.flip()
@@ -210,17 +189,10 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         )
 
         when:
-        var conds = new AsyncConditions()
-        connection.whenStateIs(READY_TO_WRITE, {
-            conds.evaluate {
-                assert connection.is(READY_TO_WRITE)
-            }
-        })
-
         connection.handle()
         socket.clear()
 
-        conds.await()
+        await().until(() -> connection.is(READY_TO_WRITE))
 
         connection.handle()
         socket.flip()
