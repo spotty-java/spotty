@@ -11,12 +11,12 @@ public class SpottyHttpException extends SpottyException {
         this(status, status.reasonPhrase);
     }
 
-    public SpottyHttpException(HttpStatus status, String message) {
-        this(status, message, null);
+    public SpottyHttpException(HttpStatus status, String message, Object... args) {
+        this(status, null, message, args);
     }
 
-    public SpottyHttpException(HttpStatus status, String message, Throwable cause) {
-        super(notBlank("message", message), cause);
+    public SpottyHttpException(HttpStatus status, Throwable cause, String message, Object... args) {
+        super(notBlank("message", message), cause, args);
 
         this.status = status;
     }

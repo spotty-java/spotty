@@ -36,4 +36,17 @@ class SpottyExceptionSpec extends AppTestContext {
         response.entity.content.text == "exception handler"
     }
 
+    def "should execute not found exception handler"() {
+        given:
+        SPOTTY.notFound { e, req, res ->
+            res.body("not found handler")
+        }
+
+        when:
+        var response = httpClient.getResponse("/hello")
+
+        then:
+        response.entity.content.text == "not found handler"
+    }
+
 }
