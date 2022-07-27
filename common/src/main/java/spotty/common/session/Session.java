@@ -38,13 +38,8 @@ public final class Session {
         return this;
     }
 
-    public Session ttl(Period period) {
-        this.expires = Instant.now().plus(period);
-        return this;
-    }
-
-    public Session ttl(Duration duration) {
-        this.expires = Instant.now().plus(duration);
+    public Session ttl(long seconds) {
+        this.expires = Instant.now().plusSeconds(seconds);
         return this;
     }
 

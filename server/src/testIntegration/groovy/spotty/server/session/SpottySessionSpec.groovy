@@ -1,6 +1,7 @@
 package spotty.server.session
 
 import spotty.server.AppTestContext
+import spotty.server.Spotty
 
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.awaitility.Awaitility.await
@@ -8,8 +9,20 @@ import static org.awaitility.Awaitility.await
 class SpottySessionSpec extends AppTestContext {
 
     def setupSpec() {
-        SPOTTY.sessionManager(new SessionManager(1, SECONDS))
-        SPOTTY.enableSession(1, 1)
+        SPOTTY.close()
+        SPOTTY.awaitUntilStop()
+
+        var sessionManager = SessionManager.builder()
+            .sessionCheckTickDelay(1, SECONDS)
+            .defaultSessionCookieTtl(1)
+            .defaultSessionTtl(1)
+            .build()
+
+        SPOTTY = new Spotty(5050, sessionManager)
+
+        SPOTTY.enableSession()
+        SPOTTY.start()
+        SPOTTY.awaitUntilStart()
     }
 
     def "should register session"() {

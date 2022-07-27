@@ -14,7 +14,7 @@ import java.util.Set;
 import static java.util.Collections.emptyMap;
 import static spotty.common.validation.Validation.notNull;
 
-public final class DefaultSpottyRequest implements SpottyRequest {
+public final class SpottyInnerRequest implements SpottyRequest {
     private String protocol;
     private String scheme;
     private HttpMethod method;
@@ -24,7 +24,6 @@ public final class DefaultSpottyRequest implements SpottyRequest {
     private int contentLength;
     private String contentType;
     private Map<String, String> cookies = emptyMap();
-    private Object attachment;
     private Session session;
     private byte[] body;
 
@@ -35,7 +34,7 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         return protocol;
     }
 
-    public DefaultSpottyRequest protocol(String protocol) {
+    public SpottyInnerRequest protocol(String protocol) {
         this.protocol = protocol;
         return this;
     }
@@ -45,7 +44,7 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         return scheme;
     }
 
-    public DefaultSpottyRequest scheme(String scheme) {
+    public SpottyInnerRequest scheme(String scheme) {
         this.scheme = scheme;
         return this;
     }
@@ -55,7 +54,7 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         return method;
     }
 
-    public DefaultSpottyRequest method(HttpMethod method) {
+    public SpottyInnerRequest method(HttpMethod method) {
         this.method = method;
         return this;
     }
@@ -65,7 +64,7 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         return path;
     }
 
-    public DefaultSpottyRequest path(String path) {
+    public SpottyInnerRequest path(String path) {
         this.path = path;
         return this;
     }
@@ -75,7 +74,7 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         return contentLength;
     }
 
-    public DefaultSpottyRequest contentLength(int contentLength) {
+    public SpottyInnerRequest contentLength(int contentLength) {
         this.contentLength = contentLength;
         return this;
     }
@@ -85,7 +84,7 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         return contentType;
     }
 
-    public DefaultSpottyRequest contentType(String contentType) {
+    public SpottyInnerRequest contentType(String contentType) {
         this.contentType = contentType;
         return this;
     }
@@ -95,7 +94,7 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         return cookies;
     }
 
-    public DefaultSpottyRequest cookies(Map<String, String> cookies) {
+    public SpottyInnerRequest cookies(Map<String, String> cookies) {
         this.cookies = notNull("cookies", cookies);
         return this;
     }
@@ -105,12 +104,12 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         return headers;
     }
 
-    public DefaultSpottyRequest addHeader(String name, String value) {
+    public SpottyInnerRequest addHeader(String name, String value) {
         this.headers.add(name, value);
         return this;
     }
 
-    public DefaultSpottyRequest addHeaders(HttpHeaders headers) {
+    public SpottyInnerRequest addHeaders(HttpHeaders headers) {
         this.headers.add(headers);
         return this;
     }
@@ -130,7 +129,7 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         return pathParams;
     }
 
-    public DefaultSpottyRequest pathParams(PathParams pathParams) {
+    public SpottyInnerRequest pathParams(PathParams pathParams) {
         this.pathParams = pathParams;
         return this;
     }
@@ -149,7 +148,7 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         return queryParams;
     }
 
-    public DefaultSpottyRequest queryParams(QueryParams queryParams) {
+    public SpottyInnerRequest queryParams(QueryParams queryParams) {
         this.queryParams = queryParams;
         return this;
     }
@@ -166,15 +165,15 @@ public final class DefaultSpottyRequest implements SpottyRequest {
 
     @Override
     public void attach(Object attachment) {
-        this.attachment = attachment;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Object attachment() {
-        return attachment;
+        throw new UnsupportedOperationException();
     }
 
-    public DefaultSpottyRequest session(Session session) {
+    public SpottyInnerRequest session(Session session) {
         this.session = session;
         return this;
     }
@@ -189,7 +188,7 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         return body;
     }
 
-    public DefaultSpottyRequest body(byte[] body) {
+    public SpottyInnerRequest body(byte[] body) {
         this.body = body;
         return this;
     }
@@ -204,7 +203,6 @@ public final class DefaultSpottyRequest implements SpottyRequest {
         contentLength = 0;
         contentType = null;
         body = null;
-        attachment = null;
         headers.clear();
         cookies = emptyMap();
         session = null;
@@ -214,7 +212,7 @@ public final class DefaultSpottyRequest implements SpottyRequest {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        DefaultSpottyRequest that = (DefaultSpottyRequest) o;
+        SpottyInnerRequest that = (SpottyInnerRequest) o;
 
         return contentLength == that.contentLength
             && Objects.equals(protocol, that.protocol)
@@ -226,14 +224,13 @@ public final class DefaultSpottyRequest implements SpottyRequest {
             && Objects.equals(contentType, that.contentType)
             && Arrays.equals(body, that.body)
             && Objects.equals(headers, that.headers)
-            && Objects.equals(attachment, that.attachment)
             && Objects.equals(cookies, that.cookies)
             && Objects.equals(session, that.session);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers, attachment, cookies, session);
+        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers, cookies, session);
         result = 31 * result + Arrays.hashCode(body);
         return result;
     }

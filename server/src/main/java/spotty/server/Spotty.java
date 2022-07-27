@@ -6,7 +6,6 @@ import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyValidationException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
-import spotty.common.request.DefaultSpottyRequest;
 import spotty.server.compress.Compressor;
 import spotty.server.connection.Connection;
 import spotty.server.connection.ConnectionProcessor;
@@ -64,21 +63,27 @@ public final class Spotty implements Closeable {
     private volatile boolean running = false;
     private volatile boolean started = false;
 
-    private SessionManager sessionManager;
-
     private final int port;
+    private final SessionManager sessionManager;
+    private final DefaultRequestHandler requestHandler;
+
     private final AtomicLong connections = new AtomicLong();
 
     private final SpottyRouter router = new SpottyRouter();
-    private final DefaultRequestHandler requestHandler = new DefaultRequestHandler(router, new Compressor());
     private final ExceptionHandlerRegistry exceptionHandlerRegistry = new ExceptionHandlerRegistry();
 
     public Spotty() {
-        this(DEFAULT_PORT);
+        this(DEFAULT_PORT, SessionManager.builder().build());
     }
 
     public Spotty(int port) {
+        this(port, SessionManager.builder().build());
+    }
+
+    public Spotty(int port, SessionManager sessionManager) {
         this.port = port;
+        this.sessionManager = notNull("sessionManager", sessionManager);
+        this.requestHandler = new DefaultRequestHandler(router, new Compressor(), sessionManager);
     }
 
     public synchronized void start() {
@@ -94,16 +99,7 @@ public final class Spotty implements Closeable {
     }
 
     public void enableSession() {
-        notNull("sessionManager", sessionManager).enableSession();
-    }
-
-    public void enableSession(long defaultSessionTtl, long defaultSessionCookieTtl) {
-        notNull("sessionManager", sessionManager)
-            .enableSession(defaultSessionTtl, defaultSessionCookieTtl);
-    }
-
-    public void sessionManager(SessionManager sessionManager) {
-        this.sessionManager = notNull("sessionManager", sessionManager);
+        sessionManager.enableSession();
     }
 
     @Override
@@ -111,9 +107,7 @@ public final class Spotty implements Closeable {
         stop();
         SERVER_RUN.shutdownNow();
 
-        if (isNotNull(sessionManager)) {
-            sessionManager.close();
-        }
+        sessionManager.close();
     }
 
     public synchronized void awaitUntilStart() {
@@ -386,10 +380,6 @@ public final class Spotty implements Closeable {
                 .add(DATE, RFC_1123_DATE_TIME.format(now(UTC)))
                 .add(SERVER, SPOTTY_VERSION)
             ;
-
-            if (isNotNull(sessionManager)) {
-                sessionManager.register((DefaultSpottyRequest) request, response);
-            }
         });
     }
 

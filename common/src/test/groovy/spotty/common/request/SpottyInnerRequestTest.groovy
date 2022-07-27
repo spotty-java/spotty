@@ -8,9 +8,9 @@ import spotty.common.session.Session
 
 import static spotty.common.http.HttpMethod.GET
 
-class DefaultSpottyRequestTest extends Specification {
+class SpottyInnerRequestTest extends Specification {
 
-    private def request = new DefaultSpottyRequest()
+    private def request = new SpottyInnerRequest()
 
     def setup() {
         request
@@ -26,12 +26,11 @@ class DefaultSpottyRequestTest extends Specification {
             .session(new Session().put("name", "spotty"))
             .body("hello".getBytes())
             .addHeader("header_name", "value")
-            .attach("attachment")
     }
 
     def "should reset all fields"() {
         given:
-        var emptyRequest = new DefaultSpottyRequest()
+        var emptyRequest = new SpottyInnerRequest()
 
         when:
         request.reset()

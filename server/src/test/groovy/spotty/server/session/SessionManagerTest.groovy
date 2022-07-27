@@ -4,7 +4,7 @@ package spotty.server.session
 import spock.lang.Specification
 import spotty.common.cookie.Cookie
 import spotty.common.exception.SpottyValidationException
-import spotty.common.request.DefaultSpottyRequest
+import spotty.common.request.SpottyInnerRequest
 import spotty.common.response.SpottyResponse
 
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -14,10 +14,10 @@ import static spotty.common.http.HttpHeaders.SPOTTY_SESSION_ID
 class SessionManagerTest extends Specification {
     def "should register session when enabled"() {
         given:
-        var manager = new SessionManager()
+        var manager = SessionManager.builder().build()
         manager.enableSession()
 
-        var request = new DefaultSpottyRequest()
+        var request = new SpottyInnerRequest()
         var response = new SpottyResponse()
 
         when:
@@ -35,9 +35,9 @@ class SessionManagerTest extends Specification {
 
     def "should does not register when disabled"() {
         given:
-        var manager = new SessionManager()
+        var manager = SessionManager.builder().build()
 
-        var request = new DefaultSpottyRequest()
+        var request = new SpottyInnerRequest()
         var response = new SpottyResponse()
 
         when:
@@ -50,10 +50,10 @@ class SessionManagerTest extends Specification {
 
     def "should throw error when invalid sessionId"() {
         given:
-        var manager = new SessionManager()
+        var manager = SessionManager.builder().build()
         manager.enableSession()
 
-        var request = new DefaultSpottyRequest()
+        var request = new SpottyInnerRequest()
         request.cookies([(SPOTTY_SESSION_ID): "wrong id"])
 
         var response = new SpottyResponse()
@@ -67,11 +67,16 @@ class SessionManagerTest extends Specification {
 
     def "should expires session correctly"() {
         given:
-        var manager = new SessionManager(1, SECONDS)
         var ttl = 1
-        manager.enableSession(ttl, ttl)
+        var manager = SessionManager.builder()
+            .sessionCheckTickDelay(ttl, SECONDS)
+            .defaultSessionCookieTtl(ttl)
+            .defaultSessionTtl(ttl)
+            .build()
 
-        var request = new DefaultSpottyRequest()
+        manager.enableSession()
+
+        var request = new SpottyInnerRequest()
         var response = new SpottyResponse()
 
         when:

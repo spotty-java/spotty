@@ -5,12 +5,11 @@ import org.slf4j.LoggerFactory;
 import spotty.common.annotation.VisibleForTesting;
 import spotty.common.cookie.Cookie;
 import spotty.common.exception.SpottyValidationException;
-import spotty.common.request.DefaultSpottyRequest;
+import spotty.common.request.SpottyInnerRequest;
 import spotty.common.response.SpottyResponse;
 import spotty.common.session.Session;
 
 import java.io.Closeable;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.Map;
@@ -25,6 +24,7 @@ import static spotty.common.http.HttpHeaders.SPOTTY_SESSION_ID;
 import static spotty.common.utils.ThreadUtils.threadPool;
 import static spotty.common.validation.Validation.isNotNull;
 import static spotty.common.validation.Validation.isNull;
+import static spotty.common.validation.Validation.notNull;
 
 public final class SessionManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(SessionManager.class);
@@ -37,34 +37,25 @@ public final class SessionManager implements Closeable {
 
     private ScheduledExecutorService executor;
     private volatile boolean disabled = true;
+
     private final int sessionCheckTickDelay;
     private final TimeUnit timeUnit;
-    private Duration defaultSessionTtl;
-    private Duration defaultSessionCookieTtl;
+    private final long defaultSessionTtl;
+    private final long defaultSessionCookieTtl;
 
-    public SessionManager() {
-        this(DEFAULT_TICK, DEFAULT_TIME_UNIT);
+    private SessionManager(Builder builder) {
+        this.sessionCheckTickDelay = builder.sessionCheckTickDelay;
+        this.timeUnit = notNull("timeUnit", builder.timeUnit);
+        this.defaultSessionTtl = builder.defaultSessionTtl;
+        this.defaultSessionCookieTtl = builder.defaultSessionCookieTtl;
     }
 
-    public SessionManager(int sessionCheckTickDelay, TimeUnit timeUnit) {
-        this.sessionCheckTickDelay = sessionCheckTickDelay;
-        this.timeUnit = timeUnit;
+    public static Builder builder() {
+        return new Builder();
     }
 
     public void enableSession() {
-        enableSession(0, 0);
-    }
-
-    public void enableSession(long defaultSessionTtl, long defaultSessionCookieTtl) {
         if (disabled) {
-            if (defaultSessionTtl > 0) {
-                this.defaultSessionTtl = Duration.ofSeconds(defaultSessionTtl);
-            }
-
-            if (defaultSessionCookieTtl > 0) {
-                this.defaultSessionCookieTtl = Duration.ofSeconds(defaultSessionCookieTtl);
-            }
-
             disabled = false;
 
             executor = Executors.newSingleThreadScheduledExecutor(threadPool("session-checker"));
@@ -83,7 +74,13 @@ public final class SessionManager implements Closeable {
         }
     }
 
-    public void register(DefaultSpottyRequest request, SpottyResponse response) {
+    public void disableSession() {
+        disabled = true;
+
+        close();
+    }
+
+    public void register(SpottyInnerRequest request, SpottyResponse response) {
         if (disabled) {
             return;
         }
@@ -105,7 +102,7 @@ public final class SessionManager implements Closeable {
 
     private Session newSession(SpottyResponse response) {
         final Session session = new Session();
-        if (isNotNull(defaultSessionTtl)) {
+        if (defaultSessionTtl > 0) {
             session.ttl(defaultSessionTtl);
         }
 
@@ -115,8 +112,8 @@ public final class SessionManager implements Closeable {
             .name(SPOTTY_SESSION_ID)
             .value(session.id.toString());
 
-        if (isNotNull(defaultSessionCookieTtl)) {
-            cookie.maxAge(defaultSessionCookieTtl.getSeconds());
+        if (defaultSessionCookieTtl > 0) {
+            cookie.maxAge(defaultSessionCookieTtl);
         }
 
         response.addCookie(cookie.build());
@@ -141,6 +138,33 @@ public final class SessionManager implements Closeable {
             return UUID.fromString(rawId);
         } catch (IllegalArgumentException e) {
             throw new SpottyValidationException("invalid session id %s", e, rawId);
+        }
+    }
+
+    public static class Builder {
+        private int sessionCheckTickDelay = DEFAULT_TICK;
+        private TimeUnit timeUnit = DEFAULT_TIME_UNIT;
+        private long defaultSessionTtl = 0;
+        private long defaultSessionCookieTtl = 0;
+
+        public Builder sessionCheckTickDelay(int sessionCheckTickDelay, TimeUnit timeUnit) {
+            this.sessionCheckTickDelay = sessionCheckTickDelay;
+            this.timeUnit = timeUnit;
+            return this;
+        }
+
+        public Builder defaultSessionTtl(long defaultSessionTtl) {
+            this.defaultSessionTtl = defaultSessionTtl;
+            return this;
+        }
+
+        public Builder defaultSessionCookieTtl(long defaultSessionCookieTtl) {
+            this.defaultSessionCookieTtl = defaultSessionCookieTtl;
+            return this;
+        }
+
+        public SessionManager build() {
+            return new SessionManager(this);
         }
     }
 }
