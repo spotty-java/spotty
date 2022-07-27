@@ -1,9 +1,9 @@
-package spotty.server.filter
+package spotty.server
 
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
 import spotty.common.filter.Filter
-import spotty.server.AppTestContext
+import spotty.AppTestContext
 
 import static spotty.common.http.HttpHeaders.ACCEPT
 import static spotty.common.http.HttpMethod.GET

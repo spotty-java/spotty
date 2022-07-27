@@ -1,4 +1,4 @@
-package spotty.server.http
+package spotty.http
 
 import org.apache.http.HttpException
 import org.apache.http.HttpHost

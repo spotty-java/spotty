@@ -12,10 +12,14 @@ import spotty.server.registry.exception.ExceptionHandlerRegistry
 import stub.SocketChannelStub
 
 import static org.awaitility.Awaitility.await
+import static spotty.common.http.ConnectionValue.CLOSE
+import static spotty.common.http.HttpHeaders.CONNECTION
 import static spotty.common.http.HttpHeaders.CONTENT_TYPE
 import static spotty.common.http.HttpHeaders.HOST
+import static spotty.common.http.HttpHeaders.LOCATION
 import static spotty.common.http.HttpStatus.BAD_REQUEST
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR
+import static spotty.common.http.HttpStatus.MOVED_PERMANENTLY
 import static spotty.common.http.HttpStatus.TOO_MANY_REQUESTS
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_WRITE
 
@@ -40,7 +44,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         exceptionService.register(Exception.class, (exception, request, response) -> {
             response
                 .status(INTERNAL_SERVER_ERROR)
-                .body(INTERNAL_SERVER_ERROR.reasonPhrase)
+                .body(INTERNAL_SERVER_ERROR.statusMessage)
         })
     }
 
@@ -201,6 +205,45 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
 
         then:
         result == expectedResult
+    }
+
+    def "should close connection when redirect to different server"() {
+        given:
+        var response = new SpottyResponse()
+            .status(MOVED_PERMANENTLY)
+            .contentType("text/plain")
+            .addHeader(LOCATION, "https://google.com")
+            .addHeader(CONNECTION, CLOSE.code)
+            .body(MOVED_PERMANENTLY.statusMessage)
+
+        var expectedResult = new String(responseWriter.write(response))
+
+        var socket = new SocketChannelStub()
+        socket.configureBlocking(false)
+        socket.write(fullRequest)
+        socket.flip()
+
+        var connection = new ConnectionProcessor(
+            socket,
+            { req, res -> res.redirect("https://google.com") },
+            exceptionService,
+            fullRequest.length()
+        )
+
+        when:
+        connection.handle()
+        socket.clear()
+
+        await().until(() -> connection.is(READY_TO_WRITE))
+
+        connection.handle()
+        socket.flip()
+
+        var result = new String(socket.getAllBytes())
+
+        then:
+        result == expectedResult
+        !socket.isOpen()
     }
 
 }

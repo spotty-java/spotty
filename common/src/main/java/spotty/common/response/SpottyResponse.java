@@ -1,6 +1,7 @@
 package spotty.common.response;
 
 import spotty.common.cookie.Cookie;
+import spotty.common.exception.SpottyHttpException;
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpStatus;
 
@@ -10,7 +11,12 @@ import java.util.List;
 import java.util.Objects;
 
 import static java.util.Collections.emptyList;
+import static spotty.common.http.ConnectionValue.CLOSE;
+import static spotty.common.http.HttpHeaders.CONNECTION;
+import static spotty.common.http.HttpHeaders.LOCATION;
+import static spotty.common.http.HttpStatus.MOVED_PERMANENTLY;
 import static spotty.common.http.HttpStatus.OK;
+import static spotty.common.validation.Validation.validate;
 
 public final class SpottyResponse {
     private static final String DEFAULT_CONTENT_TYPE = "text/plain";
@@ -178,11 +184,33 @@ public final class SpottyResponse {
     }
 
     public SpottyResponse removeCookie(String path, String name) {
-        return addCookie(Cookie.builder()
-            .name(name)
-            .path(path)
-            .maxAge(0)
-            .build());
+        return addCookie(
+            Cookie.builder()
+                .name(name)
+                .path(path)
+                .maxAge(0)
+                .build()
+        );
+    }
+
+    public void redirect(String path) {
+        redirect(path, MOVED_PERMANENTLY);
+    }
+
+    public void redirect(String path, HttpStatus status) {
+        validate(status.is3xxRedirection(), "redirection statuses allowed only");
+
+        this.status = status;
+        headers.add(LOCATION, path);
+
+        // if path starts from "http" more likely it means that
+        // client will be redirected to different server, so we can close the connection
+        if (path.startsWith("http")) {
+            headers.add(CONNECTION, CLOSE.code);
+        }
+
+        // throw an exception to stop execution of router handler
+        throw new SpottyHttpException(status);
     }
 
     public void reset() {
@@ -199,20 +227,17 @@ public final class SpottyResponse {
         if (o == null || getClass() != o.getClass()) return false;
         SpottyResponse that = (SpottyResponse) o;
 
-        final String thisContentType = contentType != null ? contentType.toString() : null;
-        final String thatContentType = that.contentType != null ? that.contentType.toString() : null;
-
         return Objects.equals(protocol, that.protocol)
             && status == that.status
-            && Objects.equals(thisContentType, thatContentType)
+            && Objects.equals(contentType, that.contentType)
             && Arrays.equals(body, that.body)
+            && Objects.equals(cookies, that.cookies)
             && Objects.equals(headers, that.headers);
     }
 
     @Override
     public int hashCode() {
-        int contentTypeHash = contentType != null ? contentType.toString().hashCode() : 0;
-        int result = Objects.hash(protocol, status, contentTypeHash, headers);
+        int result = Objects.hash(protocol, status, contentType, cookies, headers);
         result = 31 * result + Arrays.hashCode(body);
         return result;
     }

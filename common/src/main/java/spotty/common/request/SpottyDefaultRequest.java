@@ -25,7 +25,7 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     private final Session session;
     private final byte[] body;
 
-    private volatile Object attachment;
+    private Object attachment;
 
     public SpottyDefaultRequest(SpottyInnerRequest request) {
         this.protocol = request.protocol();

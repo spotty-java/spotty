@@ -121,6 +121,11 @@ public enum HttpStatus {
     @Deprecated
     USE_PROXY(305, Series.REDIRECTION, "Use Proxy"),
     /**
+     * {@code 306 Switch Proxy}.
+     * @see <a href="https://tools.ietf.org/html/rfc7231#section-6.4.6">HTTP/1.1: Semantics and Content, section 6.4.6</a>
+     */
+    SWITCH_PROXY(306, Series.REDIRECTION, "Switch Proxy"),
+    /**
      * {@code 307 Temporary Redirect}.
      * @see <a href="https://tools.ietf.org/html/rfc7231#section-6.4.7">HTTP/1.1: Semantics and Content, section 6.4.7</a>
      */
@@ -393,12 +398,12 @@ public enum HttpStatus {
 
     public final int code;
     public final Series series;
-    public final String reasonPhrase;
+    public final String statusMessage;
 
-    HttpStatus(int code, Series series, String reasonPhrase) {
+    HttpStatus(int code, Series series, String statusMessage) {
         this.code = code;
         this.series = series;
-        this.reasonPhrase = reasonPhrase;
+        this.statusMessage = statusMessage;
     }
 
     /**
@@ -474,9 +479,8 @@ public enum HttpStatus {
      */
     @Override
     public String toString() {
-        return this.code + " " + name();
+        return code + " " + statusMessage;
     }
-
 
     /**
      * Return the {@code HttpStatus} enum constant with the specified numeric value.

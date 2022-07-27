@@ -28,7 +28,7 @@ class SpottyInnerRequestTest extends Specification {
             .addHeader("header_name", "value")
     }
 
-    def "should reset all fields"() {
+    def "should reset all fields correctly"() {
         given:
         var emptyRequest = new SpottyInnerRequest()
 

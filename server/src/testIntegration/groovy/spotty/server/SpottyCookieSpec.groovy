@@ -1,7 +1,7 @@
-package spotty.server.cookie
+package spotty.server
 
 import org.apache.http.client.protocol.HttpClientContext
-import spotty.server.AppTestContext
+import spotty.AppTestContext
 
 class SpottyCookieSpec extends AppTestContext {
 

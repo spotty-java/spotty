@@ -1,7 +1,7 @@
-package spotty.server.session
+package spotty.server
 
-import spotty.server.AppTestContext
-import spotty.server.Spotty
+import spotty.AppTestContext
+import spotty.server.session.SessionManager
 
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.awaitility.Awaitility.await

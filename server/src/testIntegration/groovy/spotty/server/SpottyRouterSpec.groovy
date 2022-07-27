@@ -1,11 +1,11 @@
-package spotty.server.router
+package spotty.server
 
 import org.apache.http.client.methods.HttpGet
 import spotty.common.exception.SpottyException
 import spotty.common.exception.SpottyHttpException
 import spotty.common.request.WebRequestTestData
 import spotty.common.utils.IOUtils
-import spotty.server.AppTestContext
+import spotty.AppTestContext
 
 import static org.apache.http.entity.ContentType.APPLICATION_JSON
 import static org.apache.http.entity.ContentType.APPLICATION_XML
@@ -81,12 +81,12 @@ class SpottyRouterSpec extends AppTestContext implements WebRequestTestData {
 
         where:
         exception                                                           | expectedCode          | expectedMessage
-        new SpottyHttpException(BAD_REQUEST)                                | BAD_REQUEST           | BAD_REQUEST.reasonPhrase
+        new SpottyHttpException(BAD_REQUEST)                                | BAD_REQUEST           | BAD_REQUEST.statusMessage
         new SpottyHttpException(TOO_MANY_REQUESTS, "some custom message")   | TOO_MANY_REQUESTS     | "some custom message"
-        new SpottyException("my SpottyException message")                   | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.reasonPhrase
-        new RuntimeException("my RuntimeException message")                 | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.reasonPhrase
-        new IllegalArgumentException("my IllegalArgumentException message") | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.reasonPhrase
-        new Exception("my Exception message")                               | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.reasonPhrase
+        new SpottyException("my SpottyException message")                   | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.statusMessage
+        new RuntimeException("my RuntimeException message")                 | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.statusMessage
+        new IllegalArgumentException("my IllegalArgumentException message") | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.statusMessage
+        new Exception("my Exception message")                               | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.statusMessage
     }
 
 }

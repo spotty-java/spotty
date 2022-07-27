@@ -1,7 +1,7 @@
-package spotty.server.exception
+package spotty.server
 
 import spotty.common.exception.SpottyHttpException
-import spotty.server.AppTestContext
+import spotty.AppTestContext
 
 import static spotty.common.http.HttpStatus.BAD_REQUEST
 

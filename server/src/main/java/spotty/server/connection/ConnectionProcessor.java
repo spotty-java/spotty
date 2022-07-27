@@ -26,6 +26,8 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
+import static spotty.common.http.ConnectionValue.CLOSE;
+import static spotty.common.http.HttpHeaders.CONNECTION;
 import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
 import static spotty.common.http.HttpHeaders.CONTENT_TYPE;
 import static spotty.common.http.HttpHeaders.COOKIE;
@@ -184,9 +186,9 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
             socketChannel.close();
         } catch (IOException e) {
             // ignore
+        } finally {
+            changeState(CLOSED);
         }
-
-        changeState(CLOSED);
     }
 
     private boolean readRequestHeadLine() {
@@ -330,6 +332,11 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private boolean responseWriteCompleted() {
+        if (response.headers().hasAndEqual(CONNECTION, CLOSE.code)) {
+            close();
+            return false;
+        }
+
         resetResponse();
         request.reset();
 
@@ -356,6 +363,8 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private void parseHeadLine(String line) {
+        LOG.debug(line);
+
         final String[] method = line.split(" ");
         if (method.length != 3 || !line.contains("/")) {
             throw new SpottyHttpException(BAD_REQUEST, "invalid request head line");
@@ -374,6 +383,8 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     }
 
     private void parseHeader(String line) {
+        LOG.debug(line);
+
         final String[] header = line.split(":", 2);
         if (header.length != 2) {
             throw new SpottyHttpException(BAD_REQUEST, "invalid header line: " + line);
@@ -393,14 +404,18 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     private void exceptionHandler(ExceptionalRunnable runnable, Runnable afterExceptionHandler) {
         try {
             runnable.run();
-        } catch (Exception e) {
-            LOG.debug("", e);
+        } catch (Exception exception) {
+            LOG.debug("", exception);
 
-            final ExceptionHandler handler = exceptionHandlerRegistry.getHandler(e.getClass());
-            handler.handle(e, request, response);
-
-            if (afterExceptionHandler != null) {
-                afterExceptionHandler.run();
+            try {
+                final ExceptionHandler handler = exceptionHandlerRegistry.getHandler(exception.getClass());
+                handler.handle(exception, request, response);
+            } catch (Exception e) {
+                LOG.debug("ExceptionHandler error", e);
+            } finally {
+                if (afterExceptionHandler != null) {
+                    afterExceptionHandler.run();
+                }
             }
         }
     }

@@ -8,7 +8,7 @@ public class SpottyHttpException extends SpottyException {
     public final HttpStatus status;
 
     public SpottyHttpException(HttpStatus status) {
-        this(status, status.reasonPhrase);
+        this(status, status.statusMessage);
     }
 
     public SpottyHttpException(HttpStatus status, String message, Object... args) {

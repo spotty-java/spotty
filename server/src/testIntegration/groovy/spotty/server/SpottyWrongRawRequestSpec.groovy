@@ -1,5 +1,6 @@
 package spotty.server
 
+import spotty.AppTestContext
 import spotty.utils.RawHttpClient
 
 class SpottyWrongRawRequestSpec extends AppTestContext {
@@ -43,7 +44,7 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
 
         then:
         result == """
-                    HTTP/1.1 400
+                    HTTP/1.1 400 Bad Request
                     content-length: 25
                     content-type: text/plain
                      
@@ -58,7 +59,7 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
 
         then:
         response == """
-                        HTTP/1.1 400
+                        HTTP/1.1 400 Bad Request
                         content-length: 31
                         content-type: text/plain
                          
