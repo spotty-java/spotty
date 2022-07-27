@@ -8,14 +8,23 @@ import spotty.common.response.SpottyResponse
 import spotty.server.compress.Compressor
 import spotty.server.router.SpottyRouter
 import spotty.server.router.route.Route
+import spotty.server.session.SessionManager
 
+import static java.util.concurrent.TimeUnit.SECONDS
 import static spotty.common.http.HttpHeaders.CONTENT_ENCODING
+import static spotty.common.http.HttpHeaders.SPOTTY_SESSION_ID
 import static spotty.common.http.HttpMethod.GET
 
 class DefaultRequestHandlerTest extends Specification implements WebRequestTestData {
 
+    private def sessionManager = SessionManager.builder()
+        .sessionCheckTickDelay(1, SECONDS)
+        .defaultSessionTtl(1)
+        .defaultSessionCookieTtl(1)
+        .build()
+
     private SpottyRouter router = new SpottyRouter()
-    private DefaultRequestHandler requestHandler = new DefaultRequestHandler(router, new Compressor())
+    private DefaultRequestHandler requestHandler = new DefaultRequestHandler(router, new Compressor(), sessionManager)
 
     def "should handler request correctly"() {
         given:
@@ -92,4 +101,38 @@ class DefaultRequestHandlerTest extends Specification implements WebRequestTestD
         then:
         null == response.body()
     }
+
+    def "should register session when enabled"() {
+        given:
+        sessionManager.enableSession()
+
+        router.get("/", { req, res -> req.session().put("name", "spotty") })
+        router.get("/session", { req, res -> req.session().get("name") })
+
+        when:
+        var response = new SpottyResponse()
+        var request = new SpottyInnerRequest().method(GET).path("/")
+
+        requestHandler.handle(request, response)
+        var sessionId = response.cookies()
+            .stream()
+            .filter(c -> c.name() == SPOTTY_SESSION_ID)
+            .map(c -> c.value())
+            .findFirst()
+            .get()
+
+        var response2 = new SpottyResponse()
+        var request2 = new SpottyInnerRequest()
+            .method(GET)
+            .path("/session")
+            .cookies([(SPOTTY_SESSION_ID): sessionId])
+        requestHandler.handle(request2, response2)
+
+        then:
+        "spotty" == response2.bodyAsString()
+
+        cleanup:
+        sessionManager.disableSession()
+    }
+
 }

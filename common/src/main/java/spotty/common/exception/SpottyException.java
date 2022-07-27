@@ -1,11 +1,9 @@
 package spotty.common.exception;
 
-import static java.lang.String.format;
-
 public class SpottyException extends RuntimeException {
 
     public SpottyException(String message, Object... args) {
-        super(format(message, args));
+        super(args.length > 0 ? String.format(message, args) : message);
     }
 
     public SpottyException(Throwable cause) {
@@ -13,7 +11,7 @@ public class SpottyException extends RuntimeException {
     }
 
     public SpottyException(String message, Throwable cause, Object... args) {
-        super(format(message, args), cause);
+        super(args.length > 0 ? String.format(message, args) : message, cause);
     }
 
 }

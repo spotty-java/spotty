@@ -4,6 +4,7 @@ import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
 import spotty.common.request.params.PathParams;
 import spotty.common.request.params.QueryParams;
+import spotty.common.session.Session;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -21,6 +22,7 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     private final String contentType;
     private final HttpHeaders headers;
     private final Map<String, String> cookies;
+    private final Session session;
     private final byte[] body;
 
     private volatile Object attachment;
@@ -36,6 +38,7 @@ public final class SpottyDefaultRequest implements SpottyRequest {
         this.contentType = request.contentType();
         this.headers = request.headers().copy();
         this.cookies = request.cookies();
+        this.session = request.session();
         this.body = request.body();
     }
 
@@ -110,6 +113,11 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     }
 
     @Override
+    public Session session() {
+        return session;
+    }
+
+    @Override
     public HttpHeaders headers() {
         return headers.copy();
     }
@@ -140,12 +148,14 @@ public final class SpottyDefaultRequest implements SpottyRequest {
             && Objects.equals(contentType, that.contentType)
             && Arrays.equals(body, that.body)
             && Objects.equals(headers, that.headers)
+            && Objects.equals(attachment, that.attachment)
+            && Objects.equals(session, that.session)
             && Objects.equals(cookies, that.cookies);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers, cookies);
+        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers, attachment, session, cookies);
         result = 31 * result + Arrays.hashCode(body);
         return result;
     }

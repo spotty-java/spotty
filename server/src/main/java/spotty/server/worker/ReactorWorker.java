@@ -6,6 +6,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static spotty.common.utils.ThreadUtils.threadPool;
 
 public final class ReactorWorker implements Closeable {
     private static final int DEFAULT_MIN_WORKERS = 3;
@@ -48,7 +49,8 @@ public final class ReactorWorker implements Closeable {
             maxWorkers,
             keepAlive,
             SECONDS,
-            new LinkedBlockingQueue<>()
+            new LinkedBlockingQueue<>(),
+            threadPool("spotty-worker")
         );
     }
 

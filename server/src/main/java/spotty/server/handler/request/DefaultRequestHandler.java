@@ -10,6 +10,7 @@ import spotty.common.response.SpottyResponse;
 import spotty.server.compress.Compressor;
 import spotty.server.router.SpottyRouter;
 import spotty.server.router.route.RouteEntry;
+import spotty.server.session.SessionManager;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,32 +23,36 @@ public final class DefaultRequestHandler implements RequestHandler {
 
     private final SpottyRouter router;
     private final Compressor compressor;
+    private final SessionManager sessionManager;
 
-    public DefaultRequestHandler(SpottyRouter router, Compressor compressor) {
+    public DefaultRequestHandler(SpottyRouter router, Compressor compressor, SessionManager sessionManager) {
         this.router = notNull("router", router);
         this.compressor = notNull("compress", compressor);
+        this.sessionManager = notNull("sessionManager", sessionManager);
     }
 
     @Override
-    public void handle(SpottyInnerRequest innerRequest, SpottyResponse response) throws Exception {
+    public void handle(SpottyInnerRequest request, SpottyResponse response) throws Exception {
         final RouteEntry routeEntry = router.getRoute(
-            innerRequest.path(),
-            innerRequest.method(),
-            innerRequest.headers().get(ACCEPT)
+            request.path(),
+            request.method(),
+            request.headers().get(ACCEPT)
         );
 
         if (routeEntry.hasPathParamKeys()) {
-            innerRequest.pathParams(routeEntry.parsePathParams(innerRequest.path()));
+            request.pathParams(routeEntry.parsePathParams(request.path()));
         }
 
-        final SpottyRequest request = new SpottyDefaultRequest(innerRequest);
+        sessionManager.register(request, response);
+
+        final SpottyDefaultRequest defaultRequest = new SpottyDefaultRequest(request);
 
         final Object result;
         try {
-            executeFilters(routeEntry.beforeFilters(), request, response);
-            result = routeEntry.route().handle(request, response);
+            executeFilters(routeEntry.beforeFilters(), defaultRequest, response);
+            result = routeEntry.route().handle(defaultRequest, response);
         } finally {
-            executeFilters(routeEntry.afterFilters(), request, response);
+            executeFilters(routeEntry.afterFilters(), defaultRequest, response);
         }
 
         if (result == null) {

@@ -6,6 +6,7 @@ dependencies {
     implementation project(":common")
 
     testImplementation "org.apache.httpcomponents:httpclient:$apacheHttpClientVersion"
+    testImplementation "org.awaitility:awaitility:$awaitilityVersion"
     testImplementation testFixtures(project(":common"))
 }
 

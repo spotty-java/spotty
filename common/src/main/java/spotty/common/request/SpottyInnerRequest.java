@@ -4,6 +4,7 @@ import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
 import spotty.common.request.params.PathParams;
 import spotty.common.request.params.QueryParams;
+import spotty.common.session.Session;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -23,6 +24,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     private int contentLength;
     private String contentType;
     private Map<String, String> cookies = emptyMap();
+    private Session session;
     private byte[] body;
 
     private final HttpHeaders headers = new HttpHeaders();
@@ -171,6 +173,16 @@ public final class SpottyInnerRequest implements SpottyRequest {
         throw new UnsupportedOperationException();
     }
 
+    public SpottyInnerRequest session(Session session) {
+        this.session = session;
+        return this;
+    }
+
+    @Override
+    public Session session() {
+        return session;
+    }
+
     @Override
     public byte[] body() {
         return body;
@@ -192,6 +204,8 @@ public final class SpottyInnerRequest implements SpottyRequest {
         contentType = null;
         body = null;
         headers.clear();
+        cookies = emptyMap();
+        session = null;
     }
 
     @Override
@@ -209,12 +223,14 @@ public final class SpottyInnerRequest implements SpottyRequest {
             && Objects.equals(path, that.path)
             && Objects.equals(contentType, that.contentType)
             && Arrays.equals(body, that.body)
-            && Objects.equals(headers, that.headers);
+            && Objects.equals(headers, that.headers)
+            && Objects.equals(cookies, that.cookies)
+            && Objects.equals(session, that.session);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers);
+        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers, cookies, session);
         result = 31 * result + Arrays.hashCode(body);
         return result;
     }

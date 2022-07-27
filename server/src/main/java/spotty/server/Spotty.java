@@ -15,6 +15,7 @@ import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.router.SpottyRouter;
 import spotty.server.router.route.Route;
 import spotty.server.router.route.RouteGroup;
+import spotty.server.session.SessionManager;
 import spotty.server.worker.ReactorWorker;
 
 import java.io.Closeable;
@@ -39,6 +40,9 @@ import static spotty.common.http.HttpHeaders.DATE;
 import static spotty.common.http.HttpHeaders.SERVER;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static spotty.common.utils.ThreadUtils.threadPool;
+import static spotty.common.validation.Validation.isNotNull;
+import static spotty.common.validation.Validation.notNull;
 import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_READ;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_WRITE;
@@ -54,24 +58,32 @@ public final class Spotty implements Closeable {
         ReactorWorker.init();
     }
 
-    private final ExecutorService SERVER_RUN = Executors.newSingleThreadExecutor();
+    private final ExecutorService SERVER_RUN = Executors.newSingleThreadExecutor(threadPool("spotty-main", false));
 
     private volatile boolean running = false;
     private volatile boolean started = false;
 
     private final int port;
+    private final SessionManager sessionManager;
+    private final DefaultRequestHandler requestHandler;
+
     private final AtomicLong connections = new AtomicLong();
 
     private final SpottyRouter router = new SpottyRouter();
-    private final DefaultRequestHandler requestHandler = new DefaultRequestHandler(router, new Compressor());
     private final ExceptionHandlerRegistry exceptionHandlerRegistry = new ExceptionHandlerRegistry();
 
     public Spotty() {
-        this(DEFAULT_PORT);
+        this(DEFAULT_PORT, SessionManager.builder().build());
     }
 
     public Spotty(int port) {
+        this(port, SessionManager.builder().build());
+    }
+
+    public Spotty(int port, SessionManager sessionManager) {
         this.port = port;
+        this.sessionManager = notNull("sessionManager", sessionManager);
+        this.requestHandler = new DefaultRequestHandler(router, new Compressor(), sessionManager);
     }
 
     public synchronized void start() {
@@ -86,10 +98,16 @@ public final class Spotty implements Closeable {
         SERVER_RUN.execute(this::serverInit);
     }
 
+    public void enableSession() {
+        sessionManager.enableSession();
+    }
+
     @Override
     public synchronized void close() {
         stop();
         SERVER_RUN.shutdownNow();
+
+        sessionManager.close();
     }
 
     public synchronized void awaitUntilStart() {

@@ -9,7 +9,7 @@ public final class Cookie {
     private final String name;
     private final String value;
     private final String domain;
-    private final Integer maxAge;
+    private final Long maxAge;
     private final String path;
     private final SameSite sameSite;
     private final boolean secure;
@@ -42,7 +42,7 @@ public final class Cookie {
         return domain;
     }
 
-    public Integer maxAge() {
+    public Long maxAge() {
         return maxAge;
     }
 
@@ -69,6 +69,24 @@ public final class Cookie {
     @Override
     public String toString() {
         return toString;
+    }
+
+    @Override
+    public int hashCode() {
+        return toString.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+
+        return toString.equals(obj.toString());
     }
 
     private String buildString() {
@@ -106,7 +124,7 @@ public final class Cookie {
         private String name;
         private String value = "";
         private String domain;
-        private Integer maxAge;
+        private Long maxAge;
         private String path;
         private SameSite sameSite;
         private boolean secure = false;
@@ -127,7 +145,7 @@ public final class Cookie {
             return this;
         }
 
-        public Builder maxAge(int maxAge) {
+        public Builder maxAge(long maxAge) {
             this.maxAge = maxAge;
             return this;
         }
