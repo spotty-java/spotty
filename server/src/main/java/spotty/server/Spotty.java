@@ -3,6 +3,7 @@ package spotty.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spotty.common.exception.SpottyHttpException;
+import spotty.common.exception.SpottyNotFoundException;
 import spotty.common.exception.SpottyValidationException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
@@ -41,7 +42,6 @@ import static spotty.common.http.HttpHeaders.SERVER;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static spotty.common.utils.ThreadUtils.threadPool;
-import static spotty.common.validation.Validation.isNotNull;
 import static spotty.common.validation.Validation.notNull;
 import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
 import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_READ;
@@ -266,6 +266,10 @@ public final class Spotty implements Closeable {
 
     public <T extends Exception> void exception(Class<T> exceptionClass, ExceptionHandler<T> exceptionHandler) {
         exceptionHandlerRegistry.register(exceptionClass, exceptionHandler);
+    }
+
+    public void notFound(ExceptionHandler<SpottyNotFoundException> exceptionHandler) {
+        exceptionHandlerRegistry.register(SpottyNotFoundException.class, exceptionHandler);
     }
 
     private void serverInit() {

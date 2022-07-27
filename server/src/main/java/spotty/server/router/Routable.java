@@ -3,6 +3,7 @@ package spotty.server.router;
 import spotty.common.annotation.VisibleForTesting;
 import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
+import spotty.common.exception.SpottyNotFoundException;
 import spotty.common.http.HttpMethod;
 import spotty.server.router.route.Route;
 import spotty.server.router.route.RouteEntry;
@@ -117,7 +118,7 @@ final class Routable {
 
         final Map<String, RouteEntry> entry = routes.get(method);
         if (entry == null) {
-            throw new SpottyHttpException(NOT_FOUND, format("route not found for %s %s", method, rawPath));
+            throw new SpottyNotFoundException("route not found for %s %s", method, rawPath);
         }
 
         final String accept = acceptType == null ? DEFAULT_ACCEPT_TYPE : acceptType;
@@ -127,7 +128,7 @@ final class Routable {
         }
 
         if (routeEntry == null) {
-            throw new SpottyHttpException(NOT_FOUND, format("route not found for %s(%s) %s", method, accept, rawPath));
+            throw new SpottyNotFoundException("route not found for %s(%s) %s", method, accept, rawPath);
         }
 
         return routeEntry;
