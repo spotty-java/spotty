@@ -1,7 +1,7 @@
-package spotty.server.compress
+package spotty.server
 
 import spotty.common.request.WebRequestTestData
-import spotty.server.AppTestContext
+import spotty.AppTestContext
 
 import static spotty.common.http.HttpHeaders.CONTENT_ENCODING
 

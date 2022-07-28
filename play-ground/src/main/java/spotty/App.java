@@ -11,7 +11,7 @@ public class App {
             response.contentType(request.contentType());
             return request.body();
         });
-        spotty.post("/*", (request, response) -> {
+        spotty.post("/echo", (request, response) -> {
             response.contentType(request.contentType());
             return request.body();
         });

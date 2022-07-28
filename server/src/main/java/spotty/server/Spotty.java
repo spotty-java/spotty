@@ -405,7 +405,7 @@ public final class Spotty implements Closeable {
         exception(Exception.class, (exception, request, response) -> {
             response
                 .status(INTERNAL_SERVER_ERROR)
-                .body(INTERNAL_SERVER_ERROR.reasonPhrase)
+                .body(INTERNAL_SERVER_ERROR.statusMessage)
             ;
         });
     }

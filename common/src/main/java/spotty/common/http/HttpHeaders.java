@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
+import static spotty.common.validation.Validation.isNull;
+
 public final class HttpHeaders {
     /**
      * RFC 2616 (HTTP/1.1) Section 14.1
@@ -320,6 +322,15 @@ public final class HttpHeaders {
 
     public boolean hasNot(String name) {
         return !headers.containsKey(name);
+    }
+
+    public boolean hasAndEqual(String name, String value) {
+        final String header = headers.get(name);
+        if (isNull(header)) {
+            return false;
+        }
+
+        return header.equals(value);
     }
 
     public int size() {

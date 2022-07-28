@@ -16,7 +16,7 @@ public final class ResponseWriter {
 
     public byte[] write(SpottyResponse response) {
         try {
-            writer.println(response.protocol() + " " + response.status().code);
+            writer.println(response.protocol() + " " + response.status());
             writer.println(CONTENT_LENGTH + HEADER_SPLITTER + response.contentLength());
 
             if (response.contentType() != null) {

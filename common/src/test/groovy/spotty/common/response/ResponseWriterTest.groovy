@@ -26,7 +26,7 @@ class ResponseWriterTest extends Specification implements WebRequestTestData {
     }
 
     def expectedResponse = """
-            HTTP/1.1 200
+            HTTP/1.1 200 OK
             content-length: 5
             content-type: text/plain
             set-cookie: name=name
