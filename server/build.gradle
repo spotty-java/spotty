@@ -41,7 +41,7 @@ sourceSets {
 task spottyVersionTask {
     doLast {
         def file = file("$spottySrc/spotty/version/SpottyVersion.java")
-        if (!file.exists()) {
+        if (!file.parentFile.exists()) {
             file.parentFile.mkdirs()
         }
 
@@ -49,7 +49,7 @@ task spottyVersionTask {
             package spotty.version;
         
             public final class SpottyVersion { 
-                public static final String VERSION = "$version"; 
+                public static final Version VERSION = Version.parse("$version"); 
             }
         """.stripIndent().trim()
     }

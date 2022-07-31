@@ -7,6 +7,8 @@ import spotty.common.exception.SpottyNotFoundException;
 import spotty.common.exception.SpottyValidationException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
+import spotty.common.router.route.Route;
+import spotty.common.router.route.RouteGroup;
 import spotty.server.compress.Compressor;
 import spotty.server.connection.Connection;
 import spotty.server.connection.ConnectionProcessor;
@@ -15,8 +17,6 @@ import spotty.server.handler.exception.ExceptionHandler;
 import spotty.server.handler.request.DefaultRequestHandler;
 import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.router.SpottyRouter;
-import spotty.common.router.route.Route;
-import spotty.common.router.route.RouteGroup;
 import spotty.server.session.SessionManager;
 import spotty.server.worker.ReactorWorker;
 
@@ -52,7 +52,7 @@ import static spotty.version.SpottyVersion.VERSION;
 
 public final class Spotty implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(Spotty.class);
-    private static final String SPOTTY_VERSION = "Spotty v" + VERSION;
+    private static final String SPOTTY_VERSION = "Spotty " + VERSION;
     private static final int DEFAULT_PORT = 4000;
 
     static {
@@ -310,8 +310,10 @@ public final class Spotty implements Closeable {
                     final SelectionKey key = keys.next();
                     keys.remove();
 
-                    if (!key.isValid())
+                    if (!key.isValid()) {
+                        key.cancel();
                         continue;
+                    }
 
                     if (key.isAcceptable()) {
                         accept(key);
