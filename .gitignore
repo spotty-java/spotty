@@ -17,3 +17,4 @@ logs
 .classpath
 */bin/
 /events.db
+node_modules/
