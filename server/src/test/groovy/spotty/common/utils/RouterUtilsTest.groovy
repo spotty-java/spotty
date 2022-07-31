@@ -3,10 +3,10 @@ package spotty.common.utils
 import spock.lang.Specification
 import spotty.common.router.route.ParamName
 
-import static spotty.common.utils.RouterUtils.ALL_REPLACEMENT
-import static spotty.common.utils.RouterUtils.PARAM_REPLACEMENT
-import static spotty.common.utils.RouterUtils.compileMatcher
-import static spotty.common.utils.RouterUtils.normalizePath
+import static RouterUtils.ALL_REPLACEMENT
+import static RouterUtils.PARAM_REPLACEMENT
+import static RouterUtils.compileMatcher
+import static RouterUtils.normalizePath
 
 class RouterUtilsTest extends Specification {
 

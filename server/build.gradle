@@ -1,30 +1,34 @@
 plugins {
-    id 'com.github.johnrengelman.shadow'
+    id 'maven-publish'
+    id 'java-test-fixtures'
 }
 
 dependencies {
-    implementation project(":common")
-
     implementation "org.apache.tika:tika-core:$apacheTika"
 
+    testImplementation "org.apache.commons:commons-lang3:$apacheCommons"
     testImplementation "org.apache.httpcomponents:httpclient:$apacheHttpClientVersion"
     testImplementation "org.awaitility:awaitility:$awaitilityVersion"
-    testImplementation testFixtures(project(":common"))
 }
 
-ext {
-    shadowJarVersion = project.findProperty('buildShadowJarVersion') ?: project.version
+java {
+    // create jar with sources to publish it
+    withSourcesJar()
 }
 
-shadowJar {
-    archivesBaseName = rootProject.name
-    archiveVersion = shadowJarVersion
-    zip64 = true
-    mergeServiceFiles()
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            // disable publish test fixtures
+            components.java.withVariantsFromConfiguration(configurations.testFixturesApiElements) { skip() }
+            components.java.withVariantsFromConfiguration(configurations.testFixturesRuntimeElements) { skip() }
+
+            from components.java
+        }
+    }
 }
 
-build.dependsOn += shadowJar
-
+// generate SpottyVersion file
 def spottySrc = "$buildDir/generated/sources/spotty/java/main"
 sourceSets {
     main {
