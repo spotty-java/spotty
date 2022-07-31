@@ -1,4 +1,4 @@
-package spotty.server.router.route
+package spotty.common.router.route
 
 import spock.lang.Specification
 

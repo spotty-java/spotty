@@ -4,9 +4,9 @@ import spotty.common.annotation.VisibleForTesting;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
-import spotty.server.router.route.Route;
-import spotty.server.router.route.RouteEntry;
-import spotty.server.router.route.RouteGroup;
+import spotty.common.router.route.Route;
+import spotty.common.router.route.RouteEntry;
+import spotty.common.router.route.RouteGroup;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,7 +25,7 @@ import static spotty.common.http.HttpMethod.PATCH;
 import static spotty.common.http.HttpMethod.POST;
 import static spotty.common.http.HttpMethod.PUT;
 import static spotty.common.http.HttpMethod.TRACE;
-import static spotty.server.router.RouteEntryCreator.compileMatcher;
+import static spotty.common.utils.RouterUtils.compileMatcher;
 
 public final class SpottyRouter {
     public static final String DEFAULT_ACCEPT_TYPE = "*/*";

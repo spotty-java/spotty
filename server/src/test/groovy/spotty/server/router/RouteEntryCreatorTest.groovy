@@ -1,14 +1,13 @@
 package spotty.server.router
 
 import spock.lang.Specification
-import spotty.server.router.route.ParamName
-import spotty.server.router.route.RouteEntry
+import spotty.common.router.route.ParamName
+import spotty.common.router.route.RouteEntry
 
 import static spotty.common.http.HttpMethod.GET
-import static spotty.server.router.RouteEntryCreator.ALL_REPLACEMENT
-import static spotty.server.router.RouteEntryCreator.PARAM_REPLACEMENT
+import static spotty.common.utils.RouterUtils.ALL_REPLACEMENT
+import static spotty.common.utils.RouterUtils.PARAM_REPLACEMENT
 import static spotty.server.router.RouteEntryCreator.create
-import static spotty.server.router.RouteEntryCreator.normalizePath
 import static spotty.server.router.SpottyRouter.DEFAULT_ACCEPT_TYPE
 
 class RouteEntryCreatorTest extends Specification {
@@ -53,22 +52,6 @@ class RouteEntryCreatorTest extends Specification {
         "/api/*/product/*/category/:category" | "/api/v1/product/1/category/iphone_13" | true
         "/api/*/product/*/category/:category" | "/api/v1/product/1/category/"          | false
         "/api/*/product/*/category/:category" | "/api/v1/product/1/category/phone/13"  | false
-    }
-
-    def "should normalize path correctly"() {
-        when:
-        var result = normalizePath(template)
-
-        then:
-        result == pathNormalized
-
-        where:
-        template                              | pathNormalized
-        "/api/product/:id/:category"          | "/api/product/*/*"
-        "/api/*"                              | "/api/*"
-        "/api/*/product/*/category/:category" | "/api/*/product/*/category/*"
-        "/:name/user/:id/*/delete"            | "/*/user/*/*/delete"
-        "/*"                                  | "/*"
     }
 
 }

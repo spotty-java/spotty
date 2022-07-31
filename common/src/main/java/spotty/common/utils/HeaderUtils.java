@@ -14,8 +14,6 @@ import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 
 public final class HeaderUtils {
-    private HeaderUtils() {
-    }
 
     public static int parseContentLength(String contentLength) {
         try {

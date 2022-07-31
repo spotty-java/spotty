@@ -9,7 +9,7 @@ import spotty.common.request.SpottyRequest;
 import spotty.common.response.SpottyResponse;
 import spotty.server.compress.Compressor;
 import spotty.server.router.SpottyRouter;
-import spotty.server.router.route.RouteEntry;
+import spotty.common.router.route.RouteEntry;
 import spotty.server.session.SessionManager;
 
 import java.util.Arrays;
@@ -17,6 +17,7 @@ import java.util.Collection;
 
 import static spotty.common.http.HttpHeaders.ACCEPT;
 import static spotty.common.http.HttpHeaders.CONTENT_ENCODING;
+import static spotty.common.validation.Validation.isNotNull;
 import static spotty.common.validation.Validation.notNull;
 
 public final class DefaultRequestHandler implements RequestHandler {
@@ -55,11 +56,15 @@ public final class DefaultRequestHandler implements RequestHandler {
             executeFilters(routeEntry.afterFilters(), defaultRequest, response);
         }
 
-        if (result == null) {
+        byte[] body = response.body();
+        if (isNotNull(result)) {
+            body = render().render(result);
+        }
+
+        if (body == null) {
             return;
         }
 
-        byte[] body = render().render(result);
         if (response.headers().has(CONTENT_ENCODING)) {
             final ContentEncoding contentEncoding = ContentEncoding.of(response.headers().get(CONTENT_ENCODING));
             if (contentEncoding == null) {

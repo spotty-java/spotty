@@ -7,7 +7,7 @@ import spotty.common.request.WebRequestTestData
 import spotty.common.response.SpottyResponse
 import spotty.server.compress.Compressor
 import spotty.server.router.SpottyRouter
-import spotty.server.router.route.Route
+import spotty.common.router.route.Route
 import spotty.server.session.SessionManager
 
 import static java.util.concurrent.TimeUnit.SECONDS

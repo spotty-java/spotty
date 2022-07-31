@@ -3,7 +3,7 @@ package spotty.server.router
 import spock.lang.Specification
 import spotty.common.exception.SpottyException
 import spotty.common.exception.SpottyHttpException
-import spotty.server.router.route.Route
+import spotty.common.router.route.Route
 
 import static org.apache.http.entity.ContentType.APPLICATION_JSON
 import static spotty.common.http.HttpMethod.CONNECT

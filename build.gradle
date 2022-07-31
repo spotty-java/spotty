@@ -29,6 +29,8 @@ subprojects {
     }
 
     dependencies {
+        implementation "com.google.guava:guava:$googleGuavaVersion"
+
         compileOnly "org.slf4j:slf4j-api:$slf4jApiVersion"
         runtimeOnly "ch.qos.logback:logback-classic:$logbackClassicVersion"
 
