@@ -14,3 +14,5 @@ let currentVersion = Version.parse(currentProperties.version)
 if (currentVersion.compare(masterVersion) <= 0) {
     throw new Error(`current version ${currentVersion} must be greater then master ${masterVersion}`);
 }
+
+console.log(`current version ${currentVersion} is greater then master ${masterVersion}, all is good :)`)

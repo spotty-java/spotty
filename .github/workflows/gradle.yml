@@ -32,12 +32,13 @@ jobs:
           retention-days: 1
 
   check_version:
-    if: ${{ github.ref_name != 'master' }}
+    if: false # disabled for now
+#    if: ${{ github.ref_name != 'master' }}
     needs: build
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3 # checkout current branch
+      - uses: actions/checkout@v3 # checkout master
         with:
           ref: master
           path: master-branch

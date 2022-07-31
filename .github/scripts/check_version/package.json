@@ -1,7 +1,7 @@
 {
   "name": "check_version",
   "version": "1.0.0",
-  "description": "check gradle version beetwen current and master branch",
+  "description": "check gradle version between current and master branches",
   "main": "main.js",
   "author": "Alex Danilenko",
   "license": "ISC",
