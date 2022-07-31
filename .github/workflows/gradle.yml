@@ -9,7 +9,22 @@ permissions:
   contents: read
 
 jobs:
+  check_version:
+    if: ${{ github.ref_name != 'master' }}
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        with:
+          ref: master
+          path: master-branch
+      - name: check version install npm modules
+        run: cd ./.github/scripts/check_version && npm install
+      - name: check version
+        run: node ./.github/scripts/check_version/main.js
+
   build:
+    needs: check_version
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3

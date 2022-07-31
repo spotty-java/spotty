@@ -1,0 +1,11 @@
+{
+  "name": "check_version",
+  "version": "1.0.0",
+  "description": "check gradle version beetwen current and master branch",
+  "main": "main.js",
+  "author": "Alex Danilenko",
+  "license": "ISC",
+  "dependencies": {
+    "properties-file": "2.0.8"
+  }
+}
