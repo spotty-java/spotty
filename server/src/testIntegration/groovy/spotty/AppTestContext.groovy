@@ -2,7 +2,6 @@ package spotty
 
 import spock.lang.Shared
 import spock.lang.Specification
-import spotty.server.Spotty
 import spotty.http.HttpClient
 
 abstract class AppTestContext extends Specification {

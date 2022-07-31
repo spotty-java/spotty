@@ -6,7 +6,7 @@ import static org.awaitility.Awaitility.await
 
 class ReactorWorkerTest extends Specification {
 
-    private final ReactorWorker reactorWorker = ReactorWorker.instance()
+    private final ReactorWorker reactorWorker = new ReactorWorker()
 
     def "should execute action"() {
         given:

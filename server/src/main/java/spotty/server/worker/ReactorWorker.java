@@ -13,37 +13,21 @@ public final class ReactorWorker implements Closeable {
     private static final int DEFAULT_MAX_WORKERS = 24;
     private static final int DEFAULT_WORKER_KEEP_ALIVE = 60;
 
-    private static volatile ReactorWorker INSTANCE;
-
     private final ExecutorService REACTOR_POOL;
 
-    public static void init() {
-        init(DEFAULT_MIN_WORKERS, DEFAULT_MAX_WORKERS, DEFAULT_WORKER_KEEP_ALIVE);
+    public ReactorWorker() {
+        this(DEFAULT_MIN_WORKERS, DEFAULT_MAX_WORKERS, DEFAULT_WORKER_KEEP_ALIVE);
     }
 
-    public static void init(int maxWorkers) {
-        init(DEFAULT_MIN_WORKERS, maxWorkers, DEFAULT_WORKER_KEEP_ALIVE);
+    public ReactorWorker(int maxWorkers) {
+        this(DEFAULT_MIN_WORKERS, maxWorkers, DEFAULT_WORKER_KEEP_ALIVE);
     }
 
-    public static void init(int minWorkers, int maxWorkers) {
-        init(minWorkers, maxWorkers, DEFAULT_WORKER_KEEP_ALIVE);
+    public ReactorWorker(int minWorkers, int maxWorkers) {
+        this(minWorkers, maxWorkers, DEFAULT_WORKER_KEEP_ALIVE);
     }
 
-    public synchronized static void init(int minWorkers, int maxWorkers, int keepAlive) {
-        if (INSTANCE == null) {
-            INSTANCE = new ReactorWorker(minWorkers, maxWorkers, keepAlive);
-        }
-    }
-
-    public static ReactorWorker instance() {
-        if (INSTANCE == null) {
-            init();
-        }
-
-        return INSTANCE;
-    }
-
-    private ReactorWorker(int minWorkers, int maxWorkers, int keepAlive) {
+    public ReactorWorker(int minWorkers, int maxWorkers, int keepAlive) {
         REACTOR_POOL = new ThreadPoolExecutor(
             minWorkers,
             maxWorkers,

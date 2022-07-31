@@ -1,4 +1,4 @@
-package spotty.server;
+package spotty;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,32 +9,17 @@ import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
 import spotty.common.router.route.Route;
 import spotty.common.router.route.RouteGroup;
+import spotty.server.Server;
 import spotty.server.compress.Compressor;
-import spotty.server.connection.Connection;
-import spotty.server.connection.ConnectionProcessor;
 import spotty.server.files.StaticFilesManager;
 import spotty.server.handler.exception.ExceptionHandler;
 import spotty.server.handler.request.DefaultRequestHandler;
 import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.router.SpottyRouter;
 import spotty.server.session.SessionManager;
-import spotty.server.worker.ReactorWorker;
 
 import java.io.Closeable;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicLong;
 
-import static java.nio.channels.SelectionKey.OP_ACCEPT;
-import static java.nio.channels.SelectionKey.OP_READ;
-import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
@@ -42,12 +27,7 @@ import static spotty.common.http.HttpHeaders.DATE;
 import static spotty.common.http.HttpHeaders.SERVER;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
-import static spotty.common.utils.ThreadUtils.threadPool;
 import static spotty.common.validation.Validation.notNull;
-import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
-import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_READ;
-import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_WRITE;
-import static spotty.server.connection.state.ConnectionProcessorState.REQUEST_HANDLING;
 import static spotty.version.SpottyVersion.VERSION;
 
 public final class Spotty implements Closeable {
@@ -55,24 +35,13 @@ public final class Spotty implements Closeable {
     private static final String SPOTTY_VERSION = "Spotty " + VERSION;
     private static final int DEFAULT_PORT = 4000;
 
-    static {
-        ReactorWorker.init();
-    }
-
-    private final ExecutorService SERVER_RUN = Executors.newSingleThreadExecutor(threadPool("spotty-main", false));
-
-    private volatile boolean running = false;
-    private volatile boolean started = false;
-
-    private final int port;
     private final SessionManager sessionManager;
-    private final DefaultRequestHandler requestHandler;
-
-    private final AtomicLong connections = new AtomicLong();
 
     private final SpottyRouter router = new SpottyRouter();
     private final StaticFilesManager staticFilesManager = new StaticFilesManager(router);
     private final ExceptionHandlerRegistry exceptionHandlerRegistry = new ExceptionHandlerRegistry();
+
+    private final Server server;
 
     public Spotty() {
         this(DEFAULT_PORT, SessionManager.builder().build());
@@ -83,13 +52,17 @@ public final class Spotty implements Closeable {
     }
 
     public Spotty(int port, SessionManager sessionManager) {
-        this.port = port;
         this.sessionManager = notNull("sessionManager", sessionManager);
-        this.requestHandler = new DefaultRequestHandler(router, new Compressor(), sessionManager);
+
+        this.server = new Server(
+            port,
+            new DefaultRequestHandler(router, new Compressor(), sessionManager),
+            exceptionHandlerRegistry
+        );
     }
 
     public synchronized void start() {
-        if (started) {
+        if (server.isStarted()) {
             LOG.warn("server has been started already");
             return;
         }
@@ -97,7 +70,23 @@ public final class Spotty implements Closeable {
         registerSpottyDefaultFilters();
         registerSpottyDefaultExceptionHandlers();
 
-        SERVER_RUN.execute(this::serverInit);
+        server.start();
+    }
+
+    public void awaitUntilStart() {
+        server.awaitUntilStart();
+    }
+
+    public void awaitUntilStop() {
+        server.awaitUntilStop();
+    }
+
+    public boolean isStarted() {
+        return server.isStarted();
+    }
+
+    public boolean isRunning() {
+        return server.isRunning();
     }
 
     public void enableSession() {
@@ -106,40 +95,12 @@ public final class Spotty implements Closeable {
 
     @Override
     public synchronized void close() {
-        stop();
-        SERVER_RUN.shutdownNow();
-
+        server.close();
         sessionManager.close();
     }
 
-    public synchronized void awaitUntilStart() {
-        try {
-            while (!started)
-                wait(1000);
-        } catch (Exception e) {
-            LOG.error("", e);
-        }
-    }
-
-    public synchronized void awaitUntilStop() {
-        try {
-            while (started)
-                wait(1000);
-        } catch (Exception e) {
-            LOG.error("", e);
-        }
-    }
-
-    public boolean isRunning() {
-        return running;
-    }
-
-    public boolean isStarted() {
-        return started;
-    }
-
     public int port() {
-        return port;
+        return server.port();
     }
 
     public void path(String pathTemplate, RouteGroup group) {
@@ -288,114 +249,6 @@ public final class Spotty implements Closeable {
 
     public void staticFilesCache(long cacheTtl, long cacheSize) {
         staticFilesManager.enableCache(cacheTtl, cacheSize);
-    }
-
-    private void serverInit() {
-        try (final ServerSocketChannel serverSocket = ServerSocketChannel.open();
-             final Selector selector = Selector.open()) {
-            // Binding this server on the port
-            serverSocket.bind(new InetSocketAddress(port));
-            serverSocket.configureBlocking(false); // Make Server nonBlocking
-            serverSocket.register(selector, OP_ACCEPT);
-
-            LOG.info("server has been started on port " + port);
-
-            run();
-            started();
-
-            while (running && !Thread.currentThread().isInterrupted()) {
-                selector.select();
-                final Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-                while (keys.hasNext()) {
-                    final SelectionKey key = keys.next();
-                    keys.remove();
-
-                    if (!key.isValid()) {
-                        key.cancel();
-                        continue;
-                    }
-
-                    if (key.isAcceptable()) {
-                        accept(key);
-                    } else if (key.isReadable()) {
-                        read(key);
-                    } else if (key.isWritable()) {
-                        write(key);
-                    } else {
-                        LOG.warn("unsupported key ops {}", key.readyOps());
-                    }
-                }
-            }
-        } catch (IOException e) {
-            LOG.error("start server error", e);
-        } finally {
-            close();
-
-            stopped();
-            LOG.info("server has been stopped");
-        }
-    }
-
-    private void accept(SelectionKey acceptKey) throws IOException {
-        ServerSocketChannel serverSocket = (ServerSocketChannel) acceptKey.channel();
-        SocketChannel socket = serverSocket.accept();
-        socket.configureBlocking(false);
-
-        final SelectionKey key = socket.register(acceptKey.selector(), OP_READ);
-
-        final ConnectionProcessor connectionProcessor = new ConnectionProcessor(socket, requestHandler, exceptionHandlerRegistry);
-        final Connection connection = new Connection(connectionProcessor);
-
-        LOG.debug("{} accepted, count={}", connection, connections.incrementAndGet());
-
-        key.attach(connection);
-
-        connection.whenStateIs(READY_TO_WRITE, __ -> {
-            key.interestOps(OP_WRITE);
-            key.selector().wakeup();
-        });
-
-        connection.whenStateIs(READY_TO_READ, __ -> {
-            key.interestOps(OP_READ);
-            key.selector().wakeup();
-        });
-
-        connection.whenStateIs(REQUEST_HANDLING, __ -> {
-            key.interestOps(SelectionKey.OP_CONNECT); // newer connect, make key is waiting ready to write
-        });
-
-        connection.whenStateIs(CLOSED, __ -> {
-            LOG.debug("{} closed, count={}", connection, connections.decrementAndGet());
-            key.cancel();
-        });
-    }
-
-    private void read(SelectionKey key) {
-        final Connection connection = (Connection) key.attachment();
-        connection.handle();
-    }
-
-    private void write(SelectionKey key) {
-        final Connection connection = (Connection) key.attachment();
-        connection.handle();
-    }
-
-    private void run() {
-        this.running = true;
-    }
-
-    private void stop() {
-        this.running = false;
-    }
-
-    private synchronized void started() {
-        this.started = true;
-        notifyAll();
-    }
-
-    private synchronized void stopped() {
-        this.started = false;
-        notifyAll();
     }
 
     private void registerSpottyDefaultFilters() {

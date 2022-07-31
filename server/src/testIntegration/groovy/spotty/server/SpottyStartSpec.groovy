@@ -1,6 +1,7 @@
 package spotty.server
 
 import spock.lang.Specification
+import spotty.Spotty
 
 class SpottyStartSpec extends Specification {
 
