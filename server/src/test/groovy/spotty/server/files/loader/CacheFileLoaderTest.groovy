@@ -25,12 +25,14 @@ class CacheFileLoaderTest extends Specification {
         when:
         var content = loader.loadFile(file, response)
         var expired = ZonedDateTime.parse(response.headers().get(EXPIRES), RFC_1123_DATE_TIME.withZone(UTC))
+        var maximumExpected = now(UTC).plusSeconds(12).toEpochSecond()
+        var now = now(UTC).toEpochSecond()
 
         then:
         file.bytes == content
         response.contentType() == "application/gzip"
         response.headers().hasAndEqual(CACHE_CONTROL, "private, max-age=10")
-        now(UTC).plusSeconds(10).toEpochSecond() == expired.toEpochSecond()
+        expired.toEpochSecond() >= now && expired.toEpochSecond() <= maximumExpected
     }
 
     def "should not run file load logic after cache"() {
