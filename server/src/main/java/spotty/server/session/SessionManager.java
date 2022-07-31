@@ -22,14 +22,13 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static spotty.common.http.HttpHeaders.SPOTTY_SESSION_ID;
 import static spotty.common.utils.ThreadUtils.threadPool;
-import static spotty.common.validation.Validation.isNotNull;
 import static spotty.common.validation.Validation.isNull;
 import static spotty.common.validation.Validation.notNull;
 
 public final class SessionManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(SessionManager.class);
 
-    private static final int DEFAULT_TICK = 60;
+    private static final int DEFAULT_TICK = 10;
     private static final TimeUnit DEFAULT_TIME_UNIT = SECONDS;
 
     @VisibleForTesting
@@ -125,9 +124,7 @@ public final class SessionManager implements Closeable {
         final UUID sessionId = fromString(rawId);
         return sessions.computeIfAbsent(sessionId, id -> {
             final Session session = new Session(id);
-            if (isNotNull(defaultSessionTtl)) {
-                session.ttl(defaultSessionTtl);
-            }
+            session.ttl(defaultSessionTtl);
 
             return session;
         });
