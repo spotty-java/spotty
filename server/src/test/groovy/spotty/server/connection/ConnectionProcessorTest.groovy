@@ -9,6 +9,7 @@ import spotty.common.response.ResponseWriter
 import spotty.common.response.SpottyResponse
 import spotty.server.handler.EchoRequestHandler
 import spotty.server.registry.exception.ExceptionHandlerRegistry
+import spotty.server.worker.ReactorWorker
 import stub.SocketChannelStub
 
 import static org.awaitility.Awaitility.await
@@ -27,6 +28,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
 
     private def responseWriter = new ResponseWriter()
     private def exceptionService = new ExceptionHandlerRegistry()
+    private def reactorWorker = new ReactorWorker()
 
     def setup() {
         exceptionService.register(SpottyHttpException.class, (exception, request, response) -> {
@@ -48,6 +50,10 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         })
     }
 
+    def cleanup() {
+        reactorWorker.close()
+    }
+
     def "should read request correctly"() {
         given:
         var expectedRequest = aSpottyRequest()
@@ -56,7 +62,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService)
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService)
 
         when:
         while (socket.hasRemaining()) {
@@ -76,7 +82,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var request = aSpottyRequest()
         var expectedResponse = new String(responseWriter.write(aSpottyResponse(request)))
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService, fullRequest.length())
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, fullRequest.length())
 
         when:
         connection.handle()
@@ -99,7 +105,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.configureBlocking(true)
 
         when:
-        new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService)
+        new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService)
 
         then:
         thrown SpottyStreamException
@@ -119,7 +125,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write("wrong request head line\n")
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService)
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService)
 
         when:
         connection.handle()
@@ -152,7 +158,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write("$HOST: localhost:4000\n\n")
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), exceptionService)
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService)
 
         when:
         connection.handle()
@@ -188,6 +194,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
             { req, res ->
                 throw new SpottyHttpException(TOO_MANY_REQUESTS, "some message")
             },
+            reactorWorker,
             exceptionService,
             fullRequest.length()
         )
@@ -226,6 +233,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var connection = new ConnectionProcessor(
             socket,
             { req, res -> res.redirect("https://google.com") },
+            reactorWorker,
             exceptionService,
             fullRequest.length()
         )

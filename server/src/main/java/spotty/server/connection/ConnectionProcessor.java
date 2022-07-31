@@ -59,7 +59,6 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     private static final int DEFAULT_BUFFER_SIZE = 2048;
     private static final int DEFAULT_LINE_SIZE = 256;
 
-    private static final ReactorWorker REACTOR_WORKER = ReactorWorker.instance();
 
     @VisibleForTesting
     final SpottyInnerRequest request = new SpottyInnerRequest();
@@ -73,26 +72,30 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
     private final StateHandlerGraph<ConnectionProcessorState> stateHandlerGraph = new StateHandlerGraph<>();
 
-    private final ExceptionHandlerRegistry exceptionHandlerRegistry;
     private final SocketChannel socketChannel;
+    private final ReactorWorker reactorWorker;
+    private final ExceptionHandlerRegistry exceptionHandlerRegistry;
     private ByteBuffer readBuffer;
     private RequestHandler requestHandler;
     private ByteBuffer writeBuffer;
 
     public ConnectionProcessor(SocketChannel socketChannel,
                                RequestHandler requestHandler,
+                               ReactorWorker reactorWorker,
                                ExceptionHandlerRegistry exceptionHandlerRegistry) throws SpottyStreamException {
-        this(socketChannel, requestHandler, exceptionHandlerRegistry, DEFAULT_BUFFER_SIZE);
+        this(socketChannel, requestHandler, reactorWorker, exceptionHandlerRegistry, DEFAULT_BUFFER_SIZE);
     }
 
     public ConnectionProcessor(SocketChannel socketChannel,
                                RequestHandler requestHandler,
+                               ReactorWorker reactorWorker,
                                ExceptionHandlerRegistry exceptionHandlerRegistry,
                                int bufferSize) throws SpottyStreamException {
         super(READY_TO_READ);
 
         this.socketChannel = notNull("socketChannel", socketChannel);
         this.requestHandler = notNull("requestHandler", requestHandler);
+        this.reactorWorker = notNull("reactorWorker", reactorWorker);
         this.exceptionHandlerRegistry = notNull("exceptionHandlerService", exceptionHandlerRegistry);
 
         if (socketChannel.isBlocking()) {
@@ -295,7 +298,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
 
     private boolean requestHandling() {
         changeState(REQUEST_HANDLING);
-        REACTOR_WORKER.addAction(handlerRequest);
+        reactorWorker.addAction(handlerRequest);
 
         return false;
     }

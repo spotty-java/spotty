@@ -1,6 +1,7 @@
 package spotty.server
 
 import spotty.AppTestContext
+import spotty.Spotty
 import spotty.server.session.SessionManager
 
 import static java.util.concurrent.TimeUnit.SECONDS
