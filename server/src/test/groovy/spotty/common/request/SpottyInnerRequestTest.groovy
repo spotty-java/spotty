@@ -1,6 +1,5 @@
 package spotty.common.request
 
-
 import spock.lang.Specification
 import spotty.common.request.params.PathParams
 import spotty.common.request.params.QueryParams
