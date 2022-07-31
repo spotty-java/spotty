@@ -5,8 +5,8 @@ import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyNotFoundException;
 import spotty.common.http.HttpMethod;
-import spotty.server.router.route.Route;
-import spotty.server.router.route.RouteEntry;
+import spotty.common.router.route.Route;
+import spotty.common.router.route.RouteEntry;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -17,13 +17,11 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
-import static spotty.common.http.HttpStatus.NOT_FOUND;
+import static spotty.common.utils.RouterUtils.normalizePath;
 import static spotty.common.validation.Validation.notBlank;
 import static spotty.common.validation.Validation.notNull;
-import static spotty.server.router.RouteEntryCreator.normalizePath;
 import static spotty.server.router.SpottyRouter.DEFAULT_ACCEPT_TYPE;
 
 @VisibleForTesting

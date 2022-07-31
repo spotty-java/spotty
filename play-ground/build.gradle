@@ -1,9 +1,27 @@
+plugins {
+    id 'com.github.johnrengelman.shadow'
+}
+
 dependencies {
     implementation project(":common")
     implementation project(":server")
 
     implementation "com.sparkjava:spark-core:2.9.4"
+    implementation "org.apache.tika:tika-core:$apacheTika"
 
     compileOnly "org.projectlombok:lombok:1.18.24"
     annotationProcessor "org.projectlombok:lombok:1.18.24"
 }
+
+
+shadowJar {
+    archiveVersion = rootProject.version
+    zip64 = true
+    mergeServiceFiles()
+
+    manifest {
+        attributes 'Main-Class': "spotty.App"
+    }
+}
+
+build.dependsOn += shadowJar

@@ -2,7 +2,7 @@ package spotty.server.router
 
 import spock.lang.Specification
 import spotty.common.filter.Filter
-import spotty.server.router.route.Route
+import spotty.common.router.route.Route
 
 import static spotty.common.http.HttpMethod.CONNECT
 import static spotty.common.http.HttpMethod.DELETE

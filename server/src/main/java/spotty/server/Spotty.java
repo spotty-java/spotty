@@ -10,12 +10,13 @@ import spotty.common.http.HttpMethod;
 import spotty.server.compress.Compressor;
 import spotty.server.connection.Connection;
 import spotty.server.connection.ConnectionProcessor;
+import spotty.server.files.StaticFilesManager;
 import spotty.server.handler.exception.ExceptionHandler;
 import spotty.server.handler.request.DefaultRequestHandler;
 import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.router.SpottyRouter;
-import spotty.server.router.route.Route;
-import spotty.server.router.route.RouteGroup;
+import spotty.common.router.route.Route;
+import spotty.common.router.route.RouteGroup;
 import spotty.server.session.SessionManager;
 import spotty.server.worker.ReactorWorker;
 
@@ -70,6 +71,7 @@ public final class Spotty implements Closeable {
     private final AtomicLong connections = new AtomicLong();
 
     private final SpottyRouter router = new SpottyRouter();
+    private final StaticFilesManager staticFilesManager = new StaticFilesManager(router);
     private final ExceptionHandlerRegistry exceptionHandlerRegistry = new ExceptionHandlerRegistry();
 
     public Spotty() {
@@ -270,6 +272,22 @@ public final class Spotty implements Closeable {
 
     public void notFound(ExceptionHandler<SpottyNotFoundException> exceptionHandler) {
         exceptionHandlerRegistry.register(SpottyNotFoundException.class, exceptionHandler);
+    }
+
+    public void staticFiles(String templatePath) {
+        staticFilesManager.staticFiles(templatePath);
+    }
+
+    public void staticFiles(String filesDir, String templatePath) {
+        staticFilesManager.staticFiles(filesDir, templatePath);
+    }
+
+    public void externalStaticFiles(String filesDir, String templatePath) {
+        staticFilesManager.externalStaticFiles(filesDir, templatePath);
+    }
+
+    public void staticFilesCache(long cacheTtl, long cacheSize) {
+        staticFilesManager.enableCache(cacheTtl, cacheSize);
     }
 
     private void serverInit() {

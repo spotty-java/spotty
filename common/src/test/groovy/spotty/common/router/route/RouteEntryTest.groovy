@@ -1,11 +1,11 @@
-package spotty.server.router.route
+package spotty.common.router.route
 
 import spock.lang.Specification
 import spotty.common.request.params.PathParams
 
 import static spotty.common.http.HttpMethod.GET
-import static spotty.server.router.RouteEntryCreator.ALL_REPLACEMENT
-import static spotty.server.router.RouteEntryCreator.PARAM_REPLACEMENT
+import static spotty.common.utils.RouterUtils.ALL_REPLACEMENT
+import static spotty.common.utils.RouterUtils.PARAM_REPLACEMENT
 
 class RouteEntryTest extends Specification {
 

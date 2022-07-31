@@ -5,6 +5,8 @@ plugins {
 dependencies {
     implementation project(":common")
 
+    implementation "org.apache.tika:tika-core:$apacheTika"
+
     testImplementation "org.apache.httpcomponents:httpclient:$apacheHttpClientVersion"
     testImplementation "org.awaitility:awaitility:$awaitilityVersion"
     testImplementation testFixtures(project(":common"))

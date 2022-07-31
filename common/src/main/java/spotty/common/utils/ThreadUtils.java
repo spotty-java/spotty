@@ -4,8 +4,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ThreadUtils {
-    private ThreadUtils() {
-    }
 
     public static ThreadFactory threadPool(String poolName) {
         return threadPool(poolName, true);
