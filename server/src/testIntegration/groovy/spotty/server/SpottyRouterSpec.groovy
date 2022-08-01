@@ -122,4 +122,38 @@ class SpottyRouterSpec extends AppTestContext implements WebRequestTestData {
                """.stripIndent().trim()
     }
 
+    def "should return request host"() {
+        given:
+        SPOTTY.get("/", { req, res -> req.host() })
+
+        when:
+        var response = httpClient.get("/")
+
+        then:
+        response == "localhost"
+    }
+
+    def "should return request ip"() {
+        given:
+        SPOTTY.get("/", { req, res -> req.ip() })
+
+        when:
+        var response = httpClient.get("/")
+
+        then:
+        response == "127.0.0.1"
+    }
+
+    def "should return request port"() {
+        given:
+        int port = 0
+        SPOTTY.get("/", { req, res -> port = req.port() })
+
+        when:
+        var response = httpClient.get("/")
+
+        then:
+        Integer.parseInt(response) == port
+    }
+
 }

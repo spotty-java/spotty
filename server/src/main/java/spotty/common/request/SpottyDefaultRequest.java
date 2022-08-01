@@ -20,6 +20,9 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     private final PathParams pathParams;
     private final int contentLength;
     private final String contentType;
+    private final String host;
+    private final String ip;
+    private final int port;
     private final HttpHeaders headers;
     private final Map<String, String> cookies;
     private final Session session;
@@ -36,6 +39,9 @@ public final class SpottyDefaultRequest implements SpottyRequest {
         this.pathParams = request.pathParams();
         this.contentLength = request.contentLength();
         this.contentType = request.contentType();
+        this.host = request.host();
+        this.ip = request.ip();
+        this.port = request.port();
         this.headers = request.headers().copy();
         this.cookies = request.cookies();
         this.session = request.session();
@@ -93,6 +99,21 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     }
 
     @Override
+    public String host() {
+        return host;
+    }
+
+    @Override
+    public String ip() {
+        return ip;
+    }
+
+    @Override
+    public int port() {
+        return port;
+    }
+
+    @Override
     public Map<String, String> cookies() {
         return cookies;
     }
@@ -146,6 +167,9 @@ public final class SpottyDefaultRequest implements SpottyRequest {
             && Objects.equals(pathParams, that.pathParams)
             && Objects.equals(path, that.path)
             && Objects.equals(contentType, that.contentType)
+            && Objects.equals(host, that.host)
+            && Objects.equals(ip, that.ip)
+            && port == that.port
             && Arrays.equals(body, that.body)
             && Objects.equals(headers, that.headers)
             && Objects.equals(attachment, that.attachment)
@@ -155,7 +179,7 @@ public final class SpottyDefaultRequest implements SpottyRequest {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers, attachment, session, cookies);
+        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, host, ip, port, headers, attachment, session, cookies);
         result = 31 * result + Arrays.hashCode(body);
         return result;
     }
