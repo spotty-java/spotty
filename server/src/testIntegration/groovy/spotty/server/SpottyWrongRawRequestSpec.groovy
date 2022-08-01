@@ -47,6 +47,7 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
                     HTTP/1.1 400 Bad Request
                     content-length: 25
                     content-type: text/plain
+                    connection: close
                      
                     invalid request head line
                   """.stripIndent().trim()
@@ -62,6 +63,7 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
                         HTTP/1.1 400 Bad Request
                         content-length: 31
                         content-type: text/plain
+                        connection: close
                          
                         unsupported method WRONG_METHOD
                     """.stripIndent().trim()

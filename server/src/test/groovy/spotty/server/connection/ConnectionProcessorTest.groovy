@@ -29,6 +29,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
     private def responseWriter = new ResponseWriter()
     private def exceptionService = new ExceptionHandlerRegistry()
     private def reactorWorker = new ReactorWorker()
+    private def maxBodyLimit = 10 * 1024 * 1024 // 10Mb
 
     def setup() {
         exceptionService.register(SpottyHttpException.class, (exception, request, response) -> {
@@ -62,7 +63,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService)
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
 
         when:
         while (socket.hasRemaining()) {
@@ -82,7 +83,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var request = aSpottyRequest()
         var expectedResponse = new String(responseWriter.write(aSpottyResponse(request)))
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, fullRequest.length())
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit, fullRequest.length())
 
         when:
         connection.handle()
@@ -105,7 +106,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.configureBlocking(true)
 
         when:
-        new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService)
+        new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
 
         then:
         thrown SpottyStreamException
@@ -113,19 +114,12 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
 
     def "should respond with error when request head line is wrong"() {
         given:
-        var response = new SpottyResponse()
-            .status(BAD_REQUEST)
-            .contentType("text/plain")
-            .body("invalid request head line")
-
-        var expectedResult = new String(responseWriter.write(response))
-
         var socket = new SocketChannelStub()
         socket.configureBlocking(false)
         socket.write("wrong request head line\n")
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService)
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
 
         when:
         connection.handle()
@@ -139,18 +133,18 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var result = new String(socket.getAllBytes())
 
         then:
-        result == expectedResult
+        result == """
+                    HTTP/1.1 400 Bad Request
+                    content-length: 25
+                    content-type: text/plain
+                    connection: close
+                     
+                    invalid request head line
+                  """.stripIndent().trim()
     }
 
     def "should respond error when contentLength is missing"() {
         given:
-        var response = new SpottyResponse()
-            .status(BAD_REQUEST)
-            .contentType("text/plain")
-            .body("content-length header is required")
-
-        var expectedResult = new String(responseWriter.write(response))
-
         var socket = new SocketChannelStub()
         socket.configureBlocking(false)
         socket.write("POST / HTTP/1.1\n")
@@ -158,7 +152,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write("$HOST: localhost:4000\n\n")
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService)
+        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
 
         when:
         connection.handle()
@@ -172,7 +166,14 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var result = new String(socket.getAllBytes())
 
         then:
-        result == expectedResult
+        result == """
+                    HTTP/1.1 400 Bad Request
+                    content-length: 33
+                    content-type: text/plain
+                    connection: close
+                     
+                    content-length header is required
+                  """.stripIndent().trim()
     }
 
     def "should respond error when client handler return error"() {
@@ -196,6 +197,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
             },
             reactorWorker,
             exceptionService,
+            maxBodyLimit,
             fullRequest.length()
         )
 
@@ -235,6 +237,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
             { req, res -> res.redirect("https://google.com") },
             reactorWorker,
             exceptionService,
+            maxBodyLimit,
             fullRequest.length()
         )
 
@@ -252,6 +255,48 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         then:
         result == expectedResult
         !socket.isOpen()
+    }
+
+    def "should return error and close connection when content length bigger then limit"() {
+        given:
+        var maxRequestBodySize = 10
+        var socket = new SocketChannelStub()
+        socket.configureBlocking(false)
+        socket.write(fullRequest)
+        socket.flip()
+
+        var connection = new ConnectionProcessor(
+            socket,
+            { req, res ->
+                throw new SpottyHttpException(TOO_MANY_REQUESTS, "some message")
+            },
+            reactorWorker,
+            exceptionService,
+            maxRequestBodySize,
+            fullRequest.length()
+        )
+
+        when:
+        connection.handle()
+        socket.clear()
+
+        await().until(() -> connection.is(READY_TO_WRITE))
+
+        connection.handle()
+        socket.flip()
+
+        var result = new String(socket.getAllBytes())
+
+        then:
+        !socket.isOpen()
+        result == """
+                    HTTP/1.1 400 Bad Request
+                    content-length: 44
+                    content-type: text/plain
+                    connection: close
+                     
+                    maximum body size is $maxRequestBodySize bytes, but sent ${requestBody.length()}
+                  """.stripIndent().trim()
     }
 
 }

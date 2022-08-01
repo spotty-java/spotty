@@ -59,7 +59,6 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     private static final int DEFAULT_BUFFER_SIZE = 2048;
     private static final int DEFAULT_LINE_SIZE = 256;
 
-
     @VisibleForTesting
     final SpottyInnerRequest request = new SpottyInnerRequest();
 
@@ -75,6 +74,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     private final SocketChannel socketChannel;
     private final ReactorWorker reactorWorker;
     private final ExceptionHandlerRegistry exceptionHandlerRegistry;
+    private final int maxRequestBodySize;
     private ByteBuffer readBuffer;
     private RequestHandler requestHandler;
     private ByteBuffer writeBuffer;
@@ -82,14 +82,16 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     public ConnectionProcessor(SocketChannel socketChannel,
                                RequestHandler requestHandler,
                                ReactorWorker reactorWorker,
-                               ExceptionHandlerRegistry exceptionHandlerRegistry) throws SpottyStreamException {
-        this(socketChannel, requestHandler, reactorWorker, exceptionHandlerRegistry, DEFAULT_BUFFER_SIZE);
+                               ExceptionHandlerRegistry exceptionHandlerRegistry,
+                               int maxRequestBodySize) throws SpottyStreamException {
+        this(socketChannel, requestHandler, reactorWorker, exceptionHandlerRegistry, maxRequestBodySize, DEFAULT_BUFFER_SIZE);
     }
 
     public ConnectionProcessor(SocketChannel socketChannel,
                                RequestHandler requestHandler,
                                ReactorWorker reactorWorker,
                                ExceptionHandlerRegistry exceptionHandlerRegistry,
+                               int maxRequestBodySize,
                                int bufferSize) throws SpottyStreamException {
         super(READY_TO_READ);
 
@@ -97,6 +99,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         this.requestHandler = notNull("requestHandler", requestHandler);
         this.reactorWorker = notNull("reactorWorker", reactorWorker);
         this.exceptionHandlerRegistry = notNull("exceptionHandlerService", exceptionHandlerRegistry);
+        this.maxRequestBodySize = maxRequestBodySize;
 
         if (socketChannel.isBlocking()) {
             throw new SpottyStreamException("SocketChannel must be non blocking");
@@ -176,6 +179,13 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     // optimization to not spawn callback objects each time
     private final Runnable afterExceptionHandler = () -> {
         readBuffer.clear(); // reset buffer
+
+        // close connection to not be abused with big wrong request
+        // for example request with content length bigger than max limit
+        // after response spotty will be reading rest content that can be in socket
+        // this will cause a lot of errors (wrong headline)
+        response.headers().add(CONNECTION, CLOSE.code);
+
         changeState(READY_TO_WRITE);
     };
 
@@ -268,6 +278,10 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
     private boolean readBody() {
         if (request.contentLength() == 0 && readBuffer.hasRemaining()) {
             throw new SpottyHttpException(BAD_REQUEST, "invalid request, content-length is 0, but body not empty");
+        }
+
+        if (request.contentLength() > maxRequestBodySize) {
+            throw new SpottyHttpException(BAD_REQUEST, "maximum body size is %s bytes, but sent %s", maxRequestBodySize, request.contentLength());
         }
 
         if (request.contentLength() > body.capacity()) {
