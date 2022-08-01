@@ -20,6 +20,12 @@ public interface SpottyRequest {
 
     String contentType();
 
+    String host();
+
+    String ip();
+
+    int port();
+
     Map<String, String> cookies();
 
     HttpHeaders headers();

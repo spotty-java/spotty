@@ -25,6 +25,9 @@ class SpottyInnerRequestTest extends Specification {
             .session(new Session().put("name", "spotty"))
             .body("hello".getBytes())
             .addHeader("header_name", "value")
+            .host("localhost")
+            .ip("0.0.0.0")
+            .port(3000)
     }
 
     def "should reset all fields correctly"() {

@@ -22,6 +22,7 @@ import spotty.server.worker.ReactorWorker;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -150,14 +151,14 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
                     }
                 }
             )
-            .entry(READY_TO_READ).apply(() -> changeState(READING_REQUEST_HEAD_LINE))
+            .entry(READY_TO_READ).apply(this::prepareRequest)
             .node(READING_REQUEST_HEAD_LINE).apply(this::readRequestHeadLine)
             .node(HEADERS_READY_TO_READ).apply(() -> changeState(READING_HEADERS))
             .node(READING_HEADERS).apply(this::readHeaders)
             .node(PREPARE_HEADERS).apply(this::prepareHeaders)
             .node(BODY_READY_TO_READ).apply(() -> changeState(READING_BODY))
             .node(READING_BODY).apply(this::readBody)
-            .node(BODY_READY).apply(this::prepareRequest)
+            .node(BODY_READY).apply(this::finishBuildRequest)
             .node(REQUEST_READY).apply(this::requestHandling)
 
             .entry(READY_TO_WRITE).apply(this::readyToWrite)
@@ -201,6 +202,24 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
             // ignore
         } finally {
             changeState(CLOSED);
+        }
+    }
+
+    private boolean prepareRequest() {
+        try {
+            final InetSocketAddress remoteAddress = (InetSocketAddress) socketChannel.getRemoteAddress();
+            request
+                .host(remoteAddress.getHostName())
+                .ip(remoteAddress.getAddress().getHostAddress())
+                .port(remoteAddress.getPort())
+            ;
+
+            return changeState(READING_REQUEST_HEAD_LINE);
+        } catch (IOException e) {
+            LOG.error("read socket error", e);
+            close();
+
+            return false;
         }
     }
 
@@ -303,7 +322,7 @@ public final class ConnectionProcessor extends StateMachine<ConnectionProcessorS
         return false;
     }
 
-    private boolean prepareRequest() {
+    private boolean finishBuildRequest() {
         request.body(body.toByteArray());
         resetBuilders();
 

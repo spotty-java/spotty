@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import static java.util.Collections.emptyMap;
+import static spotty.common.validation.Validation.notBlank;
 import static spotty.common.validation.Validation.notNull;
 
 public final class SpottyInnerRequest implements SpottyRequest {
@@ -23,6 +24,9 @@ public final class SpottyInnerRequest implements SpottyRequest {
     private PathParams pathParams = PathParams.EMPTY;
     private int contentLength;
     private String contentType;
+    private String host;
+    private String ip;
+    private int port;
     private Map<String, String> cookies = emptyMap();
     private Session session;
     private byte[] body;
@@ -35,7 +39,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     }
 
     public SpottyInnerRequest protocol(String protocol) {
-        this.protocol = protocol;
+        this.protocol = notBlank("protocol", protocol);
         return this;
     }
 
@@ -45,7 +49,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     }
 
     public SpottyInnerRequest scheme(String scheme) {
-        this.scheme = scheme;
+        this.scheme = notBlank("scheme", scheme);
         return this;
     }
 
@@ -55,7 +59,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     }
 
     public SpottyInnerRequest method(HttpMethod method) {
-        this.method = method;
+        this.method = notNull("method", method);
         return this;
     }
 
@@ -65,7 +69,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     }
 
     public SpottyInnerRequest path(String path) {
-        this.path = path;
+        this.path = notBlank("path", path);
         return this;
     }
 
@@ -85,7 +89,37 @@ public final class SpottyInnerRequest implements SpottyRequest {
     }
 
     public SpottyInnerRequest contentType(String contentType) {
-        this.contentType = contentType;
+        this.contentType = notBlank("contentType", contentType);
+        return this;
+    }
+
+    @Override
+    public String host() {
+        return host;
+    }
+
+    public SpottyInnerRequest host(String host) {
+        this.host = notBlank("host", host);
+        return this;
+    }
+
+    @Override
+    public String ip() {
+        return ip;
+    }
+
+    public SpottyInnerRequest ip(String ip) {
+        this.ip = notBlank("ip", ip);
+        return this;
+    }
+
+    @Override
+    public int port() {
+        return port;
+    }
+
+    public SpottyInnerRequest port(int port) {
+        this.port = port;
         return this;
     }
 
@@ -110,7 +144,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     }
 
     public SpottyInnerRequest addHeaders(HttpHeaders headers) {
-        this.headers.add(headers);
+        this.headers.add(notNull("headers", headers));
         return this;
     }
 
@@ -130,7 +164,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     }
 
     public SpottyInnerRequest pathParams(PathParams pathParams) {
-        this.pathParams = pathParams;
+        this.pathParams = notNull("pathParams", pathParams);
         return this;
     }
 
@@ -149,7 +183,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     }
 
     public SpottyInnerRequest queryParams(QueryParams queryParams) {
-        this.queryParams = queryParams;
+        this.queryParams = notNull("queryParams", queryParams);
         return this;
     }
 
@@ -174,7 +208,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     }
 
     public SpottyInnerRequest session(Session session) {
-        this.session = session;
+        this.session = notNull("session", session);
         return this;
     }
 
@@ -189,7 +223,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
     }
 
     public SpottyInnerRequest body(byte[] body) {
-        this.body = body;
+        this.body = notNull("body", body);
         return this;
     }
 
@@ -202,6 +236,9 @@ public final class SpottyInnerRequest implements SpottyRequest {
         pathParams = PathParams.EMPTY;
         contentLength = 0;
         contentType = null;
+        host = null;
+        ip = null;
+        port = 0;
         body = null;
         headers.clear();
         cookies = emptyMap();
@@ -222,6 +259,9 @@ public final class SpottyInnerRequest implements SpottyRequest {
             && Objects.equals(pathParams, that.pathParams)
             && Objects.equals(path, that.path)
             && Objects.equals(contentType, that.contentType)
+            && Objects.equals(host, that.host)
+            && Objects.equals(ip, that.ip)
+            && port == that.port
             && Arrays.equals(body, that.body)
             && Objects.equals(headers, that.headers)
             && Objects.equals(cookies, that.cookies)
@@ -230,7 +270,7 @@ public final class SpottyInnerRequest implements SpottyRequest {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, headers, cookies, session);
+        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, host, ip, port, headers, cookies, session);
         result = 31 * result + Arrays.hashCode(body);
         return result;
     }
