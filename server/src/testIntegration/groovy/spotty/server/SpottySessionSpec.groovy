@@ -19,7 +19,7 @@ class SpottySessionSpec extends AppTestContext {
             .defaultSessionTtl(1)
             .build()
 
-        SPOTTY = new Spotty(5050, sessionManager)
+        SPOTTY = new Spotty(5050, 8192, sessionManager)
 
         SPOTTY.enableSession()
         SPOTTY.start()

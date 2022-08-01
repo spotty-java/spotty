@@ -43,11 +43,13 @@ public final class Server implements Closeable {
     private final ReactorWorker reactorWorker = new ReactorWorker();
 
     private final int port;
+    private final int maxRequestBodySize;
     private final RequestHandler requestHandler;
     private final ExceptionHandlerRegistry exceptionHandlerRegistry;
 
-    public Server(int port, RequestHandler requestHandler, ExceptionHandlerRegistry exceptionHandlerRegistry) {
+    public Server(int port, int maxRequestBodySize, RequestHandler requestHandler, ExceptionHandlerRegistry exceptionHandlerRegistry) {
         this.port = port;
+        this.maxRequestBodySize = maxRequestBodySize;
         this.requestHandler = notNull("requestHandler", requestHandler);
         this.exceptionHandlerRegistry = notNull("exceptionHandlerRegistry", exceptionHandlerRegistry);
     }
@@ -151,7 +153,7 @@ public final class Server implements Closeable {
 
         final SelectionKey key = socket.register(acceptKey.selector(), OP_READ);
 
-        final ConnectionProcessor connectionProcessor = new ConnectionProcessor(socket, requestHandler, reactorWorker, exceptionHandlerRegistry);
+        final ConnectionProcessor connectionProcessor = new ConnectionProcessor(socket, requestHandler, reactorWorker, exceptionHandlerRegistry, maxRequestBodySize);
         final Connection connection = new Connection(connectionProcessor);
 
         LOG.debug("{} accepted, count={}", connection, connections.incrementAndGet());

@@ -1,16 +1,17 @@
 package spotty.server
 
 import org.apache.http.client.methods.HttpGet
+import spotty.AppTestContext
 import spotty.common.exception.SpottyException
 import spotty.common.exception.SpottyHttpException
 import spotty.common.request.WebRequestTestData
 import spotty.common.utils.IOUtils
-import spotty.AppTestContext
 
 import static org.apache.http.entity.ContentType.APPLICATION_JSON
 import static org.apache.http.entity.ContentType.APPLICATION_XML
 import static org.apache.http.entity.ContentType.WILDCARD
 import static spotty.common.http.HttpHeaders.ACCEPT
+import static spotty.common.http.HttpHeaders.CONTENT_LENGTH
 import static spotty.common.http.HttpStatus.BAD_REQUEST
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR
 import static spotty.common.http.HttpStatus.TOO_MANY_REQUESTS
@@ -87,6 +88,38 @@ class SpottyRouterSpec extends AppTestContext implements WebRequestTestData {
         new RuntimeException("my RuntimeException message")                 | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.statusMessage
         new IllegalArgumentException("my IllegalArgumentException message") | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.statusMessage
         new Exception("my Exception message")                               | INTERNAL_SERVER_ERROR | INTERNAL_SERVER_ERROR.statusMessage
+    }
+
+    def "should return error when request body limit bigger then limit"() {
+        given:
+        SPOTTY.post("/", { req, res ->
+            res.contentType(req.contentType())
+            return req.body()
+        })
+
+        var contentLength = 20 * 1024 * 1024 // 20Mb
+        var socket = new Socket("localhost", SPOTTY.port())
+
+        final InputStream inputStream = socket.getInputStream()
+        final OutputStream out = socket.getOutputStream()
+
+        when:
+        out.write("POST / HTTP/1.1\n".bytes)
+        out.write("Host: localhost:${SPOTTY.port()}\n".bytes)
+        out.write("$CONTENT_LENGTH: $contentLength\n".bytes)
+        out.write("\n".bytes)
+
+        var res = IOUtils.toString(inputStream)
+
+        then:
+        res == """
+                HTTP/1.1 400 Bad Request
+                content-length: 54
+                content-type: text/plain
+                connection: close
+
+                maximum body size is 10485760 bytes, but sent $contentLength
+               """.stripIndent().trim()
     }
 
 }

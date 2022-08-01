@@ -28,12 +28,14 @@ import static spotty.common.http.HttpHeaders.SERVER;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static spotty.common.validation.Validation.notNull;
+import static spotty.common.validation.Validation.validate;
 import static spotty.version.SpottyVersion.VERSION;
 
 public final class Spotty implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(Spotty.class);
     private static final String SPOTTY_VERSION = "Spotty " + VERSION;
     private static final int DEFAULT_PORT = 4000;
+    private static final int DEFAULT_MAX_REQUEST_BODY_SIZE = 10 * 1024 * 1024; // 10Mb
 
     private final SessionManager sessionManager;
 
@@ -44,18 +46,24 @@ public final class Spotty implements Closeable {
     private final Server server;
 
     public Spotty() {
-        this(DEFAULT_PORT, SessionManager.builder().build());
+        this(DEFAULT_PORT, DEFAULT_MAX_REQUEST_BODY_SIZE, SessionManager.builder().build());
     }
 
     public Spotty(int port) {
-        this(port, SessionManager.builder().build());
+        this(port, DEFAULT_MAX_REQUEST_BODY_SIZE, SessionManager.builder().build());
     }
 
-    public Spotty(int port, SessionManager sessionManager) {
+    public Spotty(int port, int maxRequestBodySize) {
+        this(port, maxRequestBodySize, SessionManager.builder().build());
+    }
+
+    public Spotty(int port, int maxRequestBodySize, SessionManager sessionManager) {
         this.sessionManager = notNull("sessionManager", sessionManager);
+        validate(maxRequestBodySize > 0, "maximum request body size must be greater then 0");
 
         this.server = new Server(
             port,
+            maxRequestBodySize,
             new DefaultRequestHandler(router, new Compressor(), sessionManager),
             exceptionHandlerRegistry
         );
