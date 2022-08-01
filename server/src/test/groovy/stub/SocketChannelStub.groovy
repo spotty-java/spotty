@@ -62,7 +62,7 @@ class SocketChannelStub extends SocketChannel {
 
     @Override
     SocketAddress getRemoteAddress() throws IOException {
-        throw new UnsupportedOperationException()
+        return new InetSocketAddress(InetAddress.getByName("localhost"), 3333)
     }
 
     @Override

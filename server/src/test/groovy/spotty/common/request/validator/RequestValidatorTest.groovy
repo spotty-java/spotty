@@ -2,10 +2,13 @@ package spotty.common.request.validator
 
 import spock.lang.Specification
 import spotty.common.exception.SpottyHttpException
+import spotty.common.request.SpottyInnerRequest
 import spotty.common.request.WebRequestTestData
 
 import static spotty.common.http.HttpMethod.POST
 import static spotty.common.http.HttpStatus.BAD_REQUEST
+import static spotty.common.validation.Validation.isNotBlank
+import static spotty.common.validation.Validation.isNotNull
 
 class RequestValidatorTest extends Specification implements WebRequestTestData {
 
@@ -43,11 +46,22 @@ class RequestValidatorTest extends Specification implements WebRequestTestData {
 
     def "should fail when protocol #protocol, scheme #scheme, method #method or path #path is empty"() {
         given:
-        var request = aSpottyRequest()
-            .protocol(protocol)
-            .scheme(scheme)
-            .method(method)
-            .path(path)
+        var request = new SpottyInnerRequest()
+        if (isNotBlank(protocol)) {
+            request.protocol(protocol)
+        }
+
+        if (isNotBlank(scheme)) {
+            request.scheme(scheme)
+        }
+
+        if (isNotNull(method)) {
+            request.method(method)
+        }
+
+        if (isNotNull(path)) {
+            request.path(path)
+        }
 
         when:
         RequestValidator.validate(request)

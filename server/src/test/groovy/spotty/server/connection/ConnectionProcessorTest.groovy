@@ -66,9 +66,8 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
 
         when:
-        while (socket.hasRemaining()) {
-            connection.handle()
-        }
+        connection.handle()
+        connection.handle()
 
         then:
         connection.request == expectedRequest
