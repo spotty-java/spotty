@@ -2,33 +2,47 @@ package spotty.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spotty.common.exception.SpottyException;
 import spotty.server.connection.Connection;
-import spotty.server.connection.ConnectionProcessor;
+import spotty.server.connection.socket.SocketFactory;
+import spotty.server.connection.socket.SpottySocket;
 import spotty.server.handler.request.RequestHandler;
 import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.worker.ReactorWorker;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.Closeable;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.security.KeyStore;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
+import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static spotty.common.utils.ThreadUtils.threadPool;
+import static spotty.common.validation.Validation.isNotBlank;
+import static spotty.common.validation.Validation.notBlank;
 import static spotty.common.validation.Validation.notNull;
-import static spotty.server.connection.state.ConnectionProcessorState.CLOSED;
-import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_READ;
-import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_WRITE;
-import static spotty.server.connection.state.ConnectionProcessorState.REQUEST_HANDLING;
+import static spotty.server.connection.state.ConnectionState.CLOSED;
+import static spotty.server.connection.state.ConnectionState.DATA_REMAINING;
+import static spotty.server.connection.state.ConnectionState.INITIALIZED;
+import static spotty.server.connection.state.ConnectionState.READY_TO_READ;
+import static spotty.server.connection.state.ConnectionState.READY_TO_WRITE;
+import static spotty.server.connection.state.ConnectionState.REQUEST_HANDLING;
 
 public final class Server implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
@@ -37,10 +51,12 @@ public final class Server implements Closeable {
 
     private volatile boolean running = false;
     private volatile boolean started = false;
+    private volatile boolean enabledHttps = false;
 
     private final AtomicLong connections = new AtomicLong();
 
     private final ReactorWorker reactorWorker = new ReactorWorker();
+    private final SocketFactory socketFactory = new SocketFactory();
 
     private final int port;
     private final int maxRequestBodySize;
@@ -61,6 +77,50 @@ public final class Server implements Closeable {
         }
 
         SERVER_RUN.execute(this::serverInit);
+    }
+
+    public void enableHttps(String keyStorePath, String keyStorePassword, String trustStorePath, String trustStorePassword) {
+        notBlank("keyStorePath", keyStorePath);
+
+        final char[] keyPassword = keyStorePassword == null ? null : keyStorePassword.toCharArray();
+        final char[] trustPassword = trustStorePassword == null ? null : trustStorePassword.toCharArray();
+
+        try {
+            // Initialise the keystore
+            final KeyStore ks = KeyStore.getInstance("JKS");
+            try (final InputStream file = new FileInputStream(keyStorePath)) {
+                ks.load(file, keyPassword);
+            }
+
+            // Set up the key manager factory
+            final KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+            kmf.init(ks, keyPassword);
+
+            TrustManager[] trustMapper = null;
+            if (isNotBlank(trustStorePath)) {
+                // Initialise the keystore
+                final KeyStore tks = KeyStore.getInstance("JKS");
+                try (final InputStream file = new FileInputStream(trustStorePath)) {
+                    tks.load(file, trustPassword);
+                }
+
+                // Set up the trust manager factory
+                final TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+                tmf.init(tks);
+
+                trustMapper = tmf.getTrustManagers();
+            }
+
+            final SSLContext sslContext = SSLContext.getInstance("SSL");
+
+            // Set up the HTTPS context and parameters
+            sslContext.init(kmf.getKeyManagers(), trustMapper, null);
+
+            socketFactory.enableSsl(sslContext);
+            enabledHttps = true;
+        } catch (Exception e) {
+            throw new SpottyException("ssl initialization error", e);
+        }
     }
 
     @Override
@@ -147,18 +207,33 @@ public final class Server implements Closeable {
     }
 
     private void accept(SelectionKey acceptKey) throws IOException {
-        ServerSocketChannel serverSocket = (ServerSocketChannel) acceptKey.channel();
-        SocketChannel socket = serverSocket.accept();
-        socket.configureBlocking(false);
+        final ServerSocketChannel serverSocket = (ServerSocketChannel) acceptKey.channel();
+        final SocketChannel channel = serverSocket.accept();
+        channel.configureBlocking(false);
 
-        final SelectionKey key = socket.register(acceptKey.selector(), OP_READ);
+        final SpottySocket socket = socketFactory.createSocket(channel);
 
-        final ConnectionProcessor connectionProcessor = new ConnectionProcessor(socket, requestHandler, reactorWorker, exceptionHandlerRegistry, maxRequestBodySize);
-        final Connection connection = new Connection(connectionProcessor);
-
+        final Connection connection = new Connection(socket, requestHandler, reactorWorker, exceptionHandlerRegistry, maxRequestBodySize);
         LOG.debug("{} accepted, count={}", connection, connections.incrementAndGet());
 
-        key.attach(connection);
+        connection.whenStateIs(CLOSED, __ -> {
+            LOG.debug("{} closed, count={}", connection, connections.decrementAndGet());
+        });
+
+        if (enabledHttps) {
+            reactorWorker.addTask(() -> registerConnection(connection, acceptKey.selector()));
+        } else {
+            registerConnection(connection, acceptKey.selector());
+        }
+    }
+
+    private void registerConnection(Connection connection, Selector selector) {
+        final SelectionKey key = connection.register(selector);
+        if (key == null) {
+            return;
+        }
+
+        LOG.debug("socket registered {}", connection);
 
         connection.whenStateIs(READY_TO_WRITE, __ -> {
             key.interestOps(OP_WRITE);
@@ -171,13 +246,25 @@ public final class Server implements Closeable {
         });
 
         connection.whenStateIs(REQUEST_HANDLING, __ -> {
-            key.interestOps(SelectionKey.OP_CONNECT); // newer connect, make key is waiting ready to write
+            key.interestOps(OP_CONNECT); // newer connect, make key is waiting ready to write
         });
 
         connection.whenStateIs(CLOSED, __ -> {
-            LOG.debug("{} closed, count={}", connection, connections.decrementAndGet());
             key.cancel();
         });
+
+        if (connection.is(INITIALIZED)) {
+            connection.markReadyToRead();
+        }
+
+        if (connection.is(DATA_REMAINING)) {
+            connection.handle();
+        }
+
+        if (key.isValid() && key.interestOps() == OP_CONNECT) {
+            key.interestOps(OP_READ);
+            key.selector().wakeup();
+        }
     }
 
     private void read(SelectionKey key) {

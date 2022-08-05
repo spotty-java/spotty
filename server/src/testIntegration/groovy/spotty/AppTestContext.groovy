@@ -22,7 +22,7 @@ abstract class AppTestContext extends Specification {
 
     def cleanupSpec() {
         httpClient.close()
-        SPOTTY.close()
+        SPOTTY.stop()
         SPOTTY.awaitUntilStop()
     }
 

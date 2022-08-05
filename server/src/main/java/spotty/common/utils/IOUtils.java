@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 
 public final class IOUtils {
 
@@ -45,6 +46,22 @@ public final class IOUtils {
 
     public static String toString(InputStream in) {
         return new String(toByteArray(in));
+    }
+
+    /**
+     * copy src buffer to dest buffer by remaining of both
+     *
+     * @param src  buffer
+     * @param dest buffer
+     * @return count read bytes
+     */
+    public static int bufferCopyRemaining(ByteBuffer src, ByteBuffer dest) {
+        final int init = dest.position();
+        while (src.hasRemaining() && dest.hasRemaining()) {
+            dest.put(src.get());
+        }
+
+        return dest.position() - init;
     }
 
 }

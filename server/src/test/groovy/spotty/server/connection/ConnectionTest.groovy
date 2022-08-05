@@ -7,6 +7,7 @@ import spotty.common.exception.SpottyValidationException
 import spotty.common.request.WebRequestTestData
 import spotty.common.response.ResponseWriter
 import spotty.common.response.SpottyResponse
+import spotty.server.connection.socket.TCPSocket
 import spotty.server.handler.EchoRequestHandler
 import spotty.server.registry.exception.ExceptionHandlerRegistry
 import spotty.server.worker.ReactorWorker
@@ -22,9 +23,9 @@ import static spotty.common.http.HttpStatus.BAD_REQUEST
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR
 import static spotty.common.http.HttpStatus.MOVED_PERMANENTLY
 import static spotty.common.http.HttpStatus.TOO_MANY_REQUESTS
-import static spotty.server.connection.state.ConnectionProcessorState.READY_TO_WRITE
+import static spotty.server.connection.state.ConnectionState.READY_TO_WRITE
 
-class ConnectionProcessorTest extends Specification implements WebRequestTestData {
+class ConnectionTest extends Specification implements WebRequestTestData {
 
     private def responseWriter = new ResponseWriter()
     private def exceptionService = new ExceptionHandlerRegistry()
@@ -63,7 +64,8 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        var connection = new Connection(new TCPSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        connection.markReadyToRead()
 
         when:
         connection.handle()
@@ -82,7 +84,8 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         var request = aSpottyRequest()
         var expectedResponse = new String(responseWriter.write(aSpottyResponse(request)))
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit, fullRequest.length())
+        var connection = new Connection(new TCPSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit, fullRequest.length())
+        connection.markReadyToRead()
 
         when:
         connection.handle()
@@ -105,7 +108,8 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.configureBlocking(true)
 
         when:
-        new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        new Connection(new TCPSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+            .markReadyToRead()
 
         then:
         thrown SpottyStreamException
@@ -118,7 +122,8 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write("wrong request head line\n")
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        var connection = new Connection(new TCPSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        connection.markReadyToRead()
 
         when:
         connection.handle()
@@ -134,11 +139,11 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         then:
         result == """
                     HTTP/1.1 400 Bad Request
-                    content-length: 25
+                    content-length: 50
                     content-type: text/plain
                     connection: close
                      
-                    invalid request head line
+                    invalid request head line: wrong request head line
                   """.stripIndent().trim()
     }
 
@@ -151,7 +156,8 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write("$HOST: localhost:4000\n\n")
         socket.flip()
 
-        var connection = new ConnectionProcessor(socket, new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        var connection = new Connection(new TCPSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        connection.markReadyToRead()
 
         when:
         connection.handle()
@@ -189,8 +195,8 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new ConnectionProcessor(
-            socket,
+        var connection = new Connection(
+            new TCPSocket(socket),
             { req, res ->
                 throw new SpottyHttpException(TOO_MANY_REQUESTS, "some message")
             },
@@ -199,6 +205,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
             maxBodyLimit,
             fullRequest.length()
         )
+        connection.markReadyToRead()
 
         when:
         connection.handle()
@@ -231,14 +238,15 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new ConnectionProcessor(
-            socket,
+        var connection = new Connection(
+            new TCPSocket(socket),
             { req, res -> res.redirect("https://google.com") },
             reactorWorker,
             exceptionService,
             maxBodyLimit,
             fullRequest.length()
         )
+        connection.markReadyToRead()
 
         when:
         connection.handle()
@@ -264,8 +272,8 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new ConnectionProcessor(
-            socket,
+        var connection = new Connection(
+            new TCPSocket(socket),
             { req, res ->
                 throw new SpottyHttpException(TOO_MANY_REQUESTS, "some message")
             },
@@ -274,6 +282,7 @@ class ConnectionProcessorTest extends Specification implements WebRequestTestDat
             maxRequestBodySize,
             fullRequest.length()
         )
+        connection.markReadyToRead()
 
         when:
         connection.handle()

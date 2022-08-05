@@ -19,8 +19,8 @@ public final class ReactorWorker implements Closeable {
         reactorPool = Executors.newFixedThreadPool(workers, threadPool("spotty-worker"));
     }
 
-    public void addAction(Runnable action) {
-        reactorPool.execute(action);
+    public void addTask(Runnable task) {
+        reactorPool.execute(task);
     }
 
     @Override
