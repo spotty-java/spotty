@@ -18,11 +18,16 @@ jobs:
         with:
           java-version: 8
           distribution: temurin
-      - name: Build with Gradle
+      - name: Test
         uses: gradle/gradle-build-action@v2
         with:
           gradle-version: 7.4
-          arguments: build --no-daemon
+          arguments: test --no-daemon
+      - name: Test Integration
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 7.4
+          arguments: testIntegration --no-daemon
       - name: Upload Test Report
         uses: actions/upload-artifact@v3
         if: failure()
