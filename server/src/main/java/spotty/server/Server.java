@@ -58,16 +58,16 @@ public final class Server implements Closeable {
     private final ReactorWorker reactorWorker = new ReactorWorker();
     private final SocketFactory socketFactory = new SocketFactory();
 
-    private final int port;
     private final int maxRequestBodySize;
     private final RequestHandler requestHandler;
     private final ExceptionHandlerRegistry exceptionHandlerRegistry;
+    private final InetSocketAddress socketAddress;
 
     public Server(int port, int maxRequestBodySize, RequestHandler requestHandler, ExceptionHandlerRegistry exceptionHandlerRegistry) {
-        this.port = port;
         this.maxRequestBodySize = maxRequestBodySize;
         this.requestHandler = notNull("requestHandler", requestHandler);
         this.exceptionHandlerRegistry = notNull("exceptionHandlerRegistry", exceptionHandlerRegistry);
+        this.socketAddress = new InetSocketAddress(port);
     }
 
     public synchronized void start() {
@@ -157,18 +157,36 @@ public final class Server implements Closeable {
     }
 
     public int port() {
-        return port;
+        return socketAddress.getPort();
+    }
+
+    public String host() {
+        return socketAddress.getHostString();
+    }
+
+    public String hostUrl() {
+        final StringBuilder sb = new StringBuilder("http");
+        if (enabledHttps) {
+            sb.append("s");
+        }
+
+        sb.append("://");
+        sb.append(host());
+        sb.append(":");
+        sb.append(port());
+
+        return sb.toString();
     }
 
     private void serverInit() {
         try (final ServerSocketChannel serverSocket = ServerSocketChannel.open();
              final Selector selector = Selector.open()) {
             // Binding this server on the port
-            serverSocket.bind(new InetSocketAddress(port));
+            serverSocket.bind(socketAddress);
             serverSocket.configureBlocking(false); // Make Server nonBlocking
             serverSocket.register(selector, OP_ACCEPT);
 
-            LOG.info("server has been started on port " + port);
+            LOG.info("server has been started on port {}", socketAddress.getPort());
 
             run();
             started();

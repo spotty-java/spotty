@@ -9,6 +9,7 @@ dependencies {
     testImplementation "org.apache.commons:commons-lang3:$apacheCommons"
     testImplementation "org.apache.httpcomponents:httpclient:$apacheHttpClientVersion"
     testImplementation "org.awaitility:awaitility:$awaitilityVersion"
+    testImplementation "com.konghq:unirest-java:$unirestVersion"
 }
 
 java {

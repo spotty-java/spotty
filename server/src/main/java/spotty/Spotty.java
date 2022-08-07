@@ -112,6 +112,14 @@ public final class Spotty {
         return server.port();
     }
 
+    public String host() {
+        return server.host();
+    }
+
+    public String hostUrl() {
+        return server.hostUrl();
+    }
+
     public void path(String pathTemplate, RouteGroup group) {
         router.path(pathTemplate, group);
     }

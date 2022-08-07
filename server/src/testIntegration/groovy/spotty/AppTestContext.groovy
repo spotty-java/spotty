@@ -24,7 +24,6 @@ abstract class AppTestContext extends Specification {
         httpClient.close()
         SPOTTY.stop()
         SPOTTY.awaitUntilStop()
-        httpClient.close()
     }
 
     def cleanup() {
