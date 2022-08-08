@@ -7,7 +7,7 @@ import spotty.common.exception.SpottyValidationException
 import spotty.common.request.WebRequestTestData
 import spotty.common.response.ResponseWriter
 import spotty.common.response.SpottyResponse
-import spotty.server.connection.socket.TCPSocket
+import spotty.server.connection.socket.SocketFactory
 import spotty.server.handler.EchoRequestHandler
 import spotty.server.registry.exception.ExceptionHandlerRegistry
 import spotty.server.worker.ReactorWorker
@@ -27,6 +27,7 @@ import static spotty.server.connection.state.ConnectionState.READY_TO_WRITE
 
 class ConnectionTest extends Specification implements WebRequestTestData {
 
+    private def socketFactory = new SocketFactory()
     private def responseWriter = new ResponseWriter()
     private def exceptionService = new ExceptionHandlerRegistry()
     private def reactorWorker = new ReactorWorker()
@@ -64,7 +65,7 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new Connection(new TCPSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        var connection = new Connection(socketFactory.createSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
         connection.markReadyToRead()
 
         when:
@@ -84,7 +85,7 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         var request = aSpottyRequest()
         var expectedResponse = new String(responseWriter.write(aSpottyResponse(request)))
 
-        var connection = new Connection(new TCPSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit, fullRequest.length())
+        var connection = new Connection(socketFactory.createSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit, fullRequest.length())
         connection.markReadyToRead()
 
         when:
@@ -108,7 +109,7 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.configureBlocking(true)
 
         when:
-        new Connection(new TCPSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        new Connection(socketFactory.createSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
             .markReadyToRead()
 
         then:
@@ -122,7 +123,7 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.write("wrong request head line\n")
         socket.flip()
 
-        var connection = new Connection(new TCPSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        var connection = new Connection(socketFactory.createSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
         connection.markReadyToRead()
 
         when:
@@ -156,7 +157,7 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.write("$HOST: localhost:4000\n\n")
         socket.flip()
 
-        var connection = new Connection(new TCPSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        var connection = new Connection(socketFactory.createSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
         connection.markReadyToRead()
 
         when:
@@ -196,7 +197,7 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.flip()
 
         var connection = new Connection(
-            new TCPSocket(socket),
+            socketFactory.createSocket(socket),
             { req, res ->
                 throw new SpottyHttpException(TOO_MANY_REQUESTS, "some message")
             },
@@ -239,7 +240,7 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.flip()
 
         var connection = new Connection(
-            new TCPSocket(socket),
+            socketFactory.createSocket(socket),
             { req, res -> res.redirect("https://google.com") },
             reactorWorker,
             exceptionService,
@@ -273,7 +274,7 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.flip()
 
         var connection = new Connection(
-            new TCPSocket(socket),
+            socketFactory.createSocket(socket),
             { req, res ->
                 throw new SpottyHttpException(TOO_MANY_REQUESTS, "some message")
             },

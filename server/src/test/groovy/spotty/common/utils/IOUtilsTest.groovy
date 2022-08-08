@@ -53,4 +53,52 @@ class IOUtilsTest extends Specification {
         then:
         data == new String(result.array(), 0, bytes)
     }
+
+    def "should return byte array for URL"() {
+        given:
+        var resource = getClass().getResource("/compressor/request.gzip")
+        var expected = resource.bytes
+
+        when:
+        var data = IOUtils.toByteArray(resource)
+
+        then:
+        data == expected
+    }
+
+    def "should return byte array for File"() {
+        given:
+        var resource = getClass().getResource("/compressor/request.gzip")
+        var expected = resource.bytes
+
+        when:
+        var data = IOUtils.toByteArray(new File(resource.getPath()))
+
+        then:
+        data == expected
+    }
+
+    def "should return byte array for InputStream"() {
+        given:
+        var resource = getClass().getResource("/compressor/request.gzip")
+        var expected = resource.bytes
+
+        when:
+        var data = IOUtils.toByteArray(resource.openStream())
+
+        then:
+        data == expected
+    }
+
+    def "should return string for InputStream"() {
+        given:
+        var data = "some text"
+        var stream = new ByteArrayInputStream(data.bytes)
+
+        when:
+        var result = IOUtils.toString(stream)
+
+        then:
+        result == data
+    }
 }

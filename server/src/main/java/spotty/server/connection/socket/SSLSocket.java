@@ -3,7 +3,6 @@ package spotty.server.connection.socket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spotty.common.exception.SpottyException;
-import spotty.common.exception.SpottyStreamException;
 import spotty.common.exception.SpottyValidationException;
 import spotty.server.connection.Connection;
 
@@ -34,12 +33,8 @@ public final class SSLSocket implements SpottySocket {
     private ByteBuffer myNetBuffer;
     private ByteBuffer myAppBuffer;
 
-    public SSLSocket(SocketChannel socketChannel, SSLEngine sslEngine) {
+    SSLSocket(SocketChannel socketChannel, SSLEngine sslEngine) {
         this.socketChannel = notNull("socketChannel", socketChannel);
-        if (socketChannel.isBlocking()) {
-            throw new SpottyStreamException("SocketChannel must be non blocking");
-        }
-
         this.sslEngine = notNull("sslEngine", sslEngine);
         if (sslEngine.getUseClientMode()) {
             throw new SpottyValidationException("sslEngine must be in server mode");

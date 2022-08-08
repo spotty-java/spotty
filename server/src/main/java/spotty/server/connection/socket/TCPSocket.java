@@ -1,6 +1,5 @@
 package spotty.server.connection.socket;
 
-import spotty.common.exception.SpottyStreamException;
 import spotty.server.connection.Connection;
 
 import java.io.IOException;
@@ -16,12 +15,8 @@ public final class TCPSocket implements SpottySocket {
 
     private final SocketChannel socketChannel;
 
-    public TCPSocket(SocketChannel socketChannel) {
+    TCPSocket(SocketChannel socketChannel) {
         this.socketChannel = notNull("socketChannel", socketChannel);
-
-        if (socketChannel.isBlocking()) {
-            throw new SpottyStreamException("SocketChannel must be non blocking");
-        }
     }
 
     @Override

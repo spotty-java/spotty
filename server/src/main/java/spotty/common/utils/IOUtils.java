@@ -34,7 +34,7 @@ public final class IOUtils {
 
             int read;
             final byte[] data = new byte[2048];
-            while ((read = in.read(data)) > 0) {
+            while ((read = in.read(data)) != -1) {
                 out.write(data, 0, read);
             }
 
