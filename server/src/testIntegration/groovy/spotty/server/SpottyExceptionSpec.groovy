@@ -1,9 +1,11 @@
 package spotty.server
 
-import spotty.common.exception.SpottyHttpException
 import spotty.AppTestContext
+import spotty.common.exception.SpottyHttpException
 
 import static spotty.common.http.HttpStatus.BAD_REQUEST
+import static spotty.common.http.HttpStatus.CONFLICT
+import static spotty.common.http.HttpStatus.TOO_MANY_REQUESTS
 
 class SpottyExceptionSpec extends AppTestContext {
 
@@ -47,6 +49,30 @@ class SpottyExceptionSpec extends AppTestContext {
 
         then:
         response.entity.content.text == "not found handler"
+    }
+
+    def "should halt without body"() {
+        given:
+        SPOTTY.get("/hello", { req, res -> SPOTTY.halt(CONFLICT) })
+
+        when:
+        var response = httpClient.getResponse("/hello")
+
+        then:
+        response.statusLine.statusCode == CONFLICT.code
+        response.entity.content.text == CONFLICT.statusMessage
+    }
+
+    def "should halt with custom body"() {
+        given:
+        SPOTTY.get("/hello", { req, res -> SPOTTY.halt(TOO_MANY_REQUESTS, "custom message") })
+
+        when:
+        var response = httpClient.getResponse("/hello")
+
+        then:
+        response.statusLine.statusCode == TOO_MANY_REQUESTS.code
+        response.entity.content.text == "custom message"
     }
 
 }

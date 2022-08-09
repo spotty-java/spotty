@@ -7,6 +7,7 @@ import spotty.common.exception.SpottyNotFoundException;
 import spotty.common.exception.SpottyValidationException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;
+import spotty.common.http.HttpStatus;
 import spotty.common.router.route.Route;
 import spotty.common.router.route.RouteGroup;
 import spotty.server.Server;
@@ -226,6 +227,14 @@ public final class Spotty {
 
     public void options(String pathTemplate, String acceptType, Route route) {
         router.options(pathTemplate, acceptType, route);
+    }
+
+    public void halt(HttpStatus status) {
+        throw new SpottyHttpException(status);
+    }
+
+    public void halt(HttpStatus status, String body) {
+        throw new SpottyHttpException(status, body);
     }
 
     public void clearRoutes() {
