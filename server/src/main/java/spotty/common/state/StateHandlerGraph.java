@@ -30,8 +30,8 @@ public final class StateHandlerGraph<S extends Enum<S>> {
         }
     }
 
-    public Function<Action, Node> entry(S state) {
-        return action -> new Node(action, state);
+    public Function<Action, Node> entry(S state, S... states) {
+        return action -> new Node(action, state, states);
     }
 
     @SafeVarargs
@@ -49,13 +49,17 @@ public final class StateHandlerGraph<S extends Enum<S>> {
         private final Action action;
         private Node next;
 
-        private Node(Action action, S state) {
+        private Node(Action action, S state, S... states) {
             this.action = notNull("action", action);
             nodes.put(state, this);
+
+            for (S s : states) {
+                nodes.put(s, this);
+            }
         }
 
-        public Function<Action, Node> entry(S state) {
-            return action -> new Node(action, state);
+        public Function<Action, Node> entry(S state, S... states) {
+            return action -> new Node(action, state, states);
         }
 
         public Function<Action, Node> node(S state) {

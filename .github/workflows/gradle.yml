@@ -18,7 +18,7 @@ jobs:
         with:
           java-version: 8
           distribution: temurin
-      - name: Build with Gradle
+      - name: Build
         uses: gradle/gradle-build-action@v2
         with:
           gradle-version: 7.4

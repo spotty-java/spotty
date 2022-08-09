@@ -18,8 +18,6 @@ import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.router.SpottyRouter;
 import spotty.server.session.SessionManager;
 
-import java.io.Closeable;
-
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
@@ -31,7 +29,7 @@ import static spotty.common.validation.Validation.notNull;
 import static spotty.common.validation.Validation.validate;
 import static spotty.version.SpottyVersion.VERSION;
 
-public final class Spotty implements Closeable {
+public final class Spotty {
     private static final Logger LOG = LoggerFactory.getLogger(Spotty.class);
     private static final String SPOTTY_VERSION = "Spotty " + VERSION;
     private static final int DEFAULT_PORT = 4000;
@@ -97,18 +95,29 @@ public final class Spotty implements Closeable {
         return server.isRunning();
     }
 
+    public void enableHttps(String keyStorePath, String keyStorePassword, String trustStorePath, String trustStorePassword) {
+        server.enableHttps(keyStorePath, keyStorePassword, trustStorePath, trustStorePassword);
+    }
+
     public void enableSession() {
         sessionManager.enableSession();
     }
 
-    @Override
-    public synchronized void close() {
+    public synchronized void stop() {
         server.close();
         sessionManager.close();
     }
 
     public int port() {
         return server.port();
+    }
+
+    public String host() {
+        return server.host();
+    }
+
+    public String hostUrl() {
+        return server.hostUrl();
     }
 
     public void path(String pathTemplate, RouteGroup group) {

@@ -7,6 +7,7 @@ import spotty.common.state.StateHandlerGraph.GraphFilter
 import spotty.common.test.TestState
 
 import static spotty.common.test.TestState.CLOSED
+import static spotty.common.test.TestState.DATA_REMAINING
 import static spotty.common.test.TestState.READY_TO_READ
 import static spotty.common.test.TestState.READY_TO_WRITE
 import static spotty.common.test.TestState.RESPONSE_WRITE_COMPLETED
@@ -173,6 +174,30 @@ class StateHandlerGraphTest extends Specification {
         0 * readyToWrite.run()
         0 * responseWriteCompleted.run()
         1 * closed.run()
+    }
+
+    def "should execute graph when trigger 2 head nodes correctly"() {
+        given:
+        var readyToRead = Spy(action(true)) // FIXME: why does not work with Mock
+        var readyToWrite = Spy(action(true))
+        var responseWriteCompleted = Spy(action(true))
+        var closed = Spy(action(true))
+
+        graph
+            .entry(DATA_REMAINING, READY_TO_READ).apply(readyToRead)
+            .node(READY_TO_WRITE).apply(readyToWrite)
+            .node(RESPONSE_WRITE_COMPLETED).apply(responseWriteCompleted)
+            .node(CLOSED).apply(closed)
+
+        when:
+        graph.handleState(DATA_REMAINING)
+        graph.handleState(READY_TO_READ)
+
+        then:
+        2 * readyToRead.run()
+        2 * readyToWrite.run()
+        2 * responseWriteCompleted.run()
+        2 * closed.run()
     }
 
     private def action(boolean result) {

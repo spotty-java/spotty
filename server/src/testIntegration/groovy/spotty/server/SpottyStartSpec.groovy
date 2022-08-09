@@ -13,7 +13,7 @@ class SpottyStartSpec extends Specification {
 
     def cleanup() {
         server.awaitUntilStart()
-        server.close()
+        server.stop()
         server.awaitUntilStop()
     }
 

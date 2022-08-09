@@ -10,7 +10,7 @@ import static org.awaitility.Awaitility.await
 class SpottySessionSpec extends AppTestContext {
 
     def setupSpec() {
-        SPOTTY.close()
+        SPOTTY.stop()
         SPOTTY.awaitUntilStop()
 
         var sessionManager = SessionManager.builder()

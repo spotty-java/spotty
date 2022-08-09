@@ -13,7 +13,7 @@ class ReactorWorkerTest extends Specification {
         var runIsTrue = false
 
         when:
-        reactorWorker.addAction { runIsTrue = true }
+        reactorWorker.addTask { runIsTrue = true }
 
         then:
         await().until { runIsTrue }
