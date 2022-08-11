@@ -7,13 +7,7 @@ import java.util.concurrent.Executors;
 import static spotty.common.utils.ThreadUtils.threadPool;
 
 public final class ReactorWorker implements Closeable {
-    private static final int DEFAULT_WORKERS = 24;
-
     private final ExecutorService reactorPool;
-
-    public ReactorWorker() {
-        this(DEFAULT_WORKERS);
-    }
 
     public ReactorWorker(int workers) {
         reactorPool = Executors.newFixedThreadPool(workers, threadPool("spotty-worker"));

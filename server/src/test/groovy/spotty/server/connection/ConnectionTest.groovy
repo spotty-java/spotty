@@ -30,7 +30,7 @@ class ConnectionTest extends Specification implements WebRequestTestData {
     private def socketFactory = new SocketFactory()
     private def responseWriter = new ResponseWriter()
     private def exceptionService = new ExceptionHandlerRegistry()
-    private def reactorWorker = new ReactorWorker()
+    private def reactorWorker = new ReactorWorker(1)
     private def maxBodyLimit = 10 * 1024 * 1024 // 10Mb
 
     def setup() {

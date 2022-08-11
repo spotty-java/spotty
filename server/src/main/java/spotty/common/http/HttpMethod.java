@@ -1,7 +1,8 @@
 package spotty.common.http;
 
+import com.google.common.collect.Sets;
+
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,17 +18,12 @@ public enum HttpMethod {
     OPTIONS;
 
     private static final Map<String, HttpMethod> MAPPINGS = new HashMap<>();
-    private static final Set<HttpMethod> CONTENT_LENGTH_REQUIRED = new HashSet<>();
+    private static final Set<HttpMethod> CONTENT_LENGTH_REQUIRED = Sets.newHashSet(POST, PUT, PATCH, DELETE);
 
     static {
         for (HttpMethod httpMethod : values()) {
             MAPPINGS.put(httpMethod.name(), httpMethod);
         }
-
-        CONTENT_LENGTH_REQUIRED.add(POST);
-        CONTENT_LENGTH_REQUIRED.add(PUT);
-        CONTENT_LENGTH_REQUIRED.add(PATCH);
-        CONTENT_LENGTH_REQUIRED.add(DELETE);
     }
 
     /**

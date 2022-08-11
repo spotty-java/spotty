@@ -2,7 +2,7 @@ package spotty.server.handler.request
 
 import spock.lang.Specification
 import spotty.common.filter.Filter
-import spotty.common.request.SpottyInnerRequest
+import spotty.common.request.SpottyDefaultRequest
 import spotty.common.request.WebRequestTestData
 import spotty.common.response.SpottyResponse
 import spotty.server.compress.Compressor
@@ -34,7 +34,7 @@ class DefaultRequestHandlerTest extends Specification implements WebRequestTestD
         router.get("/", route)
 
         var response = new SpottyResponse()
-        var request = new SpottyInnerRequest().method(GET).path("/")
+        var request = new SpottyDefaultRequest().method(GET).path("/")
 
         when:
         requestHandler.handle(request, response)
@@ -57,7 +57,7 @@ class DefaultRequestHandlerTest extends Specification implements WebRequestTestD
         router.after(after)
 
         var response = new SpottyResponse()
-        var request = new SpottyInnerRequest().method(GET).path("/")
+        var request = new SpottyDefaultRequest().method(GET).path("/")
 
         when:
         requestHandler.handle(request, response)
@@ -76,7 +76,7 @@ class DefaultRequestHandlerTest extends Specification implements WebRequestTestD
         })
 
         var response = new SpottyResponse()
-        var request = new SpottyInnerRequest().method(GET).path("/")
+        var request = new SpottyDefaultRequest().method(GET).path("/")
 
         when:
         requestHandler.handle(request, response)
@@ -93,7 +93,7 @@ class DefaultRequestHandlerTest extends Specification implements WebRequestTestD
         })
 
         var response = new SpottyResponse()
-        var request = new SpottyInnerRequest().method(GET).path("/")
+        var request = new SpottyDefaultRequest().method(GET).path("/")
 
         when:
         requestHandler.handle(request, response)
@@ -111,7 +111,7 @@ class DefaultRequestHandlerTest extends Specification implements WebRequestTestD
 
         when:
         var response = new SpottyResponse()
-        var request = new SpottyInnerRequest().method(GET).path("/")
+        var request = new SpottyDefaultRequest().method(GET).path("/")
 
         requestHandler.handle(request, response)
         var sessionId = response.cookies()
@@ -122,7 +122,7 @@ class DefaultRequestHandlerTest extends Specification implements WebRequestTestD
             .get()
 
         var response2 = new SpottyResponse()
-        var request2 = new SpottyInnerRequest()
+        var request2 = new SpottyDefaultRequest()
             .method(GET)
             .path("/session")
             .cookies([(SPOTTY_SESSION_ID): sessionId])

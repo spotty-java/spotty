@@ -18,6 +18,9 @@ import spotty.server.handler.request.DefaultRequestHandler;
 import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.router.SpottyRouter;
 import spotty.server.session.SessionManager;
+import spotty.server.worker.ReactorWorker;
+
+import java.util.concurrent.TimeUnit;
 
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
@@ -26,15 +29,14 @@ import static spotty.common.http.HttpHeaders.DATE;
 import static spotty.common.http.HttpHeaders.SERVER;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
-import static spotty.common.validation.Validation.notNull;
-import static spotty.common.validation.Validation.validate;
 import static spotty.version.SpottyVersion.VERSION;
 
 public final class Spotty {
     private static final Logger LOG = LoggerFactory.getLogger(Spotty.class);
-    private static final String SPOTTY_VERSION = "Spotty " + VERSION;
+    private static final String SPOTTY_VERSION = "Spotty v" + VERSION;
     private static final int DEFAULT_PORT = 4000;
     private static final int DEFAULT_MAX_REQUEST_BODY_SIZE = 10 * 1024 * 1024; // 10Mb
+    private static final int DEFAULT_REACTOR_WORKERS = 24;
 
     private final SessionManager sessionManager;
 
@@ -45,27 +47,27 @@ public final class Spotty {
     private final Server server;
 
     public Spotty() {
-        this(DEFAULT_PORT, DEFAULT_MAX_REQUEST_BODY_SIZE, SessionManager.builder().build());
+        this(builder());
     }
 
     public Spotty(int port) {
-        this(port, DEFAULT_MAX_REQUEST_BODY_SIZE, SessionManager.builder().build());
+        this(builder().port(port));
     }
 
-    public Spotty(int port, int maxRequestBodySize) {
-        this(port, maxRequestBodySize, SessionManager.builder().build());
-    }
-
-    public Spotty(int port, int maxRequestBodySize, SessionManager sessionManager) {
-        this.sessionManager = notNull("sessionManager", sessionManager);
-        validate(maxRequestBodySize > 0, "maximum request body size must be greater then 0");
+    public Spotty(Builder builder) {
+        this.sessionManager = builder.sessionManagerBuilder.build();
 
         this.server = new Server(
-            port,
-            maxRequestBodySize,
+            builder.port,
+            builder.maxRequestBodySize,
             new DefaultRequestHandler(router, new Compressor(), sessionManager),
-            exceptionHandlerRegistry
+            exceptionHandlerRegistry,
+            new ReactorWorker(builder.reactorWorkers)
         );
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     public synchronized void start() {
@@ -107,6 +109,10 @@ public final class Spotty {
     public synchronized void stop() {
         server.close();
         sessionManager.close();
+    }
+
+    public int connections() {
+        return server.connections();
     }
 
     public int port() {
@@ -253,26 +259,61 @@ public final class Spotty {
         return router.removeRoute(pathTemplate, acceptType, method);
     }
 
+    /**
+     * register exception handler to handle any exceptions that can happen during requests
+     *
+     * @param exceptionClass exception class type
+     * @param exceptionHandler exception handler
+     * @param <T> class type of registered exception
+     */
     public <T extends Exception> void exception(Class<T> exceptionClass, ExceptionHandler<T> exceptionHandler) {
         exceptionHandlerRegistry.register(exceptionClass, exceptionHandler);
     }
 
+    /**
+     * register exception handler for http 404 route not found error
+     *
+     * @param exceptionHandler handle for not found exception
+     */
     public void notFound(ExceptionHandler<SpottyNotFoundException> exceptionHandler) {
         exceptionHandlerRegistry.register(SpottyNotFoundException.class, exceptionHandler);
     }
 
+    /**
+     * enable static files for root resource directory with route path
+     *
+     * @param templatePath route path
+     */
     public void staticFiles(String templatePath) {
         staticFilesManager.staticFiles(templatePath);
     }
 
+    /**
+     * enable static files for resource child directory with route path
+     *
+     * @param filesDir path to files in resources directory
+     * @param templatePath route path
+     */
     public void staticFiles(String filesDir, String templatePath) {
         staticFilesManager.staticFiles(filesDir, templatePath);
     }
 
+    /**
+     * enable static files for directory with route path
+     *
+     * @param filesDir directory path to files
+     * @param templatePath route path
+     */
     public void externalStaticFiles(String filesDir, String templatePath) {
         staticFilesManager.externalStaticFiles(filesDir, templatePath);
     }
 
+    /**
+     * enable files cache to not load it each time from disk
+     *
+     * @param cacheTtl cache time to live in seconds
+     * @param cacheSize maximum elements in cache
+     */
     public void staticFilesCache(long cacheTtl, long cacheSize) {
         staticFilesManager.enableCache(cacheTtl, cacheSize);
     }
@@ -307,6 +348,51 @@ public final class Spotty {
                 .body(INTERNAL_SERVER_ERROR.statusMessage)
             ;
         });
+    }
+
+    public static final class Builder {
+        private int port = DEFAULT_PORT;
+        private int maxRequestBodySize = DEFAULT_MAX_REQUEST_BODY_SIZE;
+        private final SessionManager.Builder sessionManagerBuilder = SessionManager.builder();
+        private int reactorWorkers = DEFAULT_REACTOR_WORKERS;
+
+        private Builder() {
+
+        }
+
+        public Builder port(int port) {
+            this.port = port;
+            return this;
+        }
+
+        public Builder maxRequestBodySize(int maxRequestBodySize) {
+            this.maxRequestBodySize = maxRequestBodySize;
+            return this;
+        }
+
+        public Builder sessionCheckTickDelay(int sessionCheckTickDelay, TimeUnit timeUnit) {
+            sessionManagerBuilder.sessionCheckTickDelay(sessionCheckTickDelay, timeUnit);
+            return this;
+        }
+
+        public Builder defaultSessionTtl(long defaultSessionTtl) {
+            sessionManagerBuilder.defaultSessionTtl(defaultSessionTtl);
+            return this;
+        }
+
+        public Builder defaultSessionCookieTtl(long defaultSessionCookieTtl) {
+            sessionManagerBuilder.defaultSessionCookieTtl(defaultSessionCookieTtl);
+            return this;
+        }
+
+        public Builder reactorWorkers(int reactorWorkers) {
+            this.reactorWorkers = reactorWorkers;
+            return this;
+        }
+
+        public Spotty build() {
+            return new Spotty(this);
+        }
     }
 
 }

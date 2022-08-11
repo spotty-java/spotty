@@ -1,11 +1,14 @@
 package spotty.version;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import static spotty.common.validation.Validation.notBlank;
 import static spotty.common.validation.Validation.validate;
 
-public final class Version implements Comparable<Version> {
+public final class Version implements Comparable<Version>, Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final int major;
     private final int minor;
     private final int patch;
@@ -18,7 +21,7 @@ public final class Version implements Comparable<Version> {
         this.minor = minor;
         this.patch = patch;
 
-        this.toString = "v" + major + "." + minor + "." + patch;
+        this.toString = major + "." + minor + "." + patch;
         this.hash = Objects.hash(major, minor, patch);
     }
 

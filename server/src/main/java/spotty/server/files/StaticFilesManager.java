@@ -1,6 +1,6 @@
 package spotty.server.files;
 
-import spotty.common.annotation.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import spotty.common.exception.SpottyNotFoundException;
 import spotty.server.files.detector.FileTypeDetector;
 import spotty.server.files.detector.TypeDetector;
@@ -66,7 +66,7 @@ public final class StaticFilesManager {
 
     @VisibleForTesting
     String getFilePath(String templatePath, String urlPath) {
-        final String path = templatePath.substring(0, templatePath.length() - 2)
+        final String path = templatePath.substring(0, templatePath.length() - 2) // remove /* at the end
             .replace("*", "(.+?)")
             .replaceAll(REGEX, "(.+?)");
 

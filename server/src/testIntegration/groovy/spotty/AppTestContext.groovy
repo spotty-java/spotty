@@ -1,18 +1,24 @@
 package spotty
 
+import spock.lang.Shared
 import spock.lang.Specification
 import spotty.http.HttpClient
 
+import static spotty.utils.PortGenerator.nextPort
+
 abstract class AppTestContext extends Specification {
-    protected static Spotty SPOTTY
-    protected static HttpClient httpClient
+    @Shared
+    protected Spotty SPOTTY
+
+    @Shared
+    protected HttpClient httpClient
 
     def setupSpec() {
-        SPOTTY = new Spotty(5050)
+        SPOTTY = new Spotty(nextPort())
         SPOTTY.start()
         SPOTTY.awaitUntilStart()
 
-        httpClient = new HttpClient(SPOTTY.port())
+        httpClient = new HttpClient(SPOTTY.host(), SPOTTY.port())
     }
 
     def cleanupSpec() {

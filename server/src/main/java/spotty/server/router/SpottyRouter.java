@@ -1,6 +1,6 @@
 package spotty.server.router;
 
-import spotty.common.annotation.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.filter.Filter;
 import spotty.common.http.HttpMethod;

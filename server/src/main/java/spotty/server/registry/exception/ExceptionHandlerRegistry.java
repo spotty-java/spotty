@@ -1,6 +1,6 @@
 package spotty.server.registry.exception;
 
-import spotty.common.annotation.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import spotty.common.exception.SpottyException;
 import spotty.server.handler.exception.ExceptionHandler;
 

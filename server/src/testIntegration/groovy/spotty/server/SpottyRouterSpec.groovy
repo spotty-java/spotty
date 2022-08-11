@@ -98,7 +98,7 @@ class SpottyRouterSpec extends AppTestContext implements WebRequestTestData {
         })
 
         var contentLength = 20 * 1024 * 1024 // 20Mb
-        var socket = new Socket("localhost", SPOTTY.port())
+        var socket = new Socket(SPOTTY.host(), SPOTTY.port())
 
         final InputStream inputStream = socket.getInputStream()
         final OutputStream out = socket.getOutputStream()
@@ -130,7 +130,7 @@ class SpottyRouterSpec extends AppTestContext implements WebRequestTestData {
         var response = httpClient.get("/")
 
         then:
-        response == "localhost"
+        InetAddress.getByName(response).isReachable(1000)
     }
 
     def "should return request ip"() {
@@ -141,7 +141,7 @@ class SpottyRouterSpec extends AppTestContext implements WebRequestTestData {
         var response = httpClient.get("/")
 
         then:
-        response == "127.0.0.1"
+        InetAddress.getByName(response).isReachable(1000)
     }
 
     def "should return request port"() {

@@ -2,7 +2,6 @@ package spotty.common.http;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import static spotty.common.validation.Validation.isNull;
@@ -338,7 +337,7 @@ public final class HttpHeaders {
     }
 
     public boolean isEmpty() {
-        return headers.size() == 0;
+        return headers.isEmpty();
     }
 
     public boolean isNotEmpty() {
@@ -379,8 +378,8 @@ public final class HttpHeaders {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        HttpHeaders that = (HttpHeaders) o;
+        final HttpHeaders that = (HttpHeaders) o;
 
-        return Objects.equals(headers, that.headers);
+        return headers.equals(that.headers);
     }
 }

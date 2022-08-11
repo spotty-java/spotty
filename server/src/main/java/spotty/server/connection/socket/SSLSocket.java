@@ -165,14 +165,14 @@ public final class SSLSocket implements SpottySocket {
     public void close() {
         try {
             socketChannel.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             // ignore
         }
 
         try {
             sslEngine.closeOutbound();
             sslEngine.closeInbound();
-        } catch (IOException e) {
+        } catch (Exception e) {
             // ignore
         }
     }

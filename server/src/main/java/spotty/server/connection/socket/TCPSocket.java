@@ -53,7 +53,7 @@ public final class TCPSocket implements SpottySocket {
     public void close() {
         try {
             socketChannel.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             // ignore
         }
     }

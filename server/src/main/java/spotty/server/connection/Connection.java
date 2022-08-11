@@ -1,11 +1,11 @@
 package spotty.server.connection;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spotty.common.annotation.VisibleForTesting;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyStreamException;
-import spotty.common.request.SpottyInnerRequest;
+import spotty.common.request.SpottyDefaultRequest;
 import spotty.common.request.params.QueryParams;
 import spotty.common.response.ResponseWriter;
 import spotty.common.response.SpottyResponse;
@@ -72,7 +72,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     public final long id = ID_GENERATOR.incrementAndGet();
 
     @VisibleForTesting
-    final SpottyInnerRequest request = new SpottyInnerRequest();
+    final SpottyDefaultRequest request = new SpottyDefaultRequest();
 
     @VisibleForTesting
     final SpottyResponse response = new SpottyResponse();
@@ -435,13 +435,15 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     private boolean responseWriteCompleted() {
         checkStateIs(RESPONSE_WRITE_COMPLETED);
 
-        if (response.headers().hasAndEqual(CONNECTION, CLOSE.code)) {
-            close();
-            return false;
+        try {
+            if (response.headers().hasAndEqual(CONNECTION, CLOSE.code)) {
+                close();
+                return false;
+            }
+        } finally {
+            resetResponse();
+            request.reset();
         }
-
-        resetResponse();
-        request.reset();
 
         changeState(READY_TO_READ);
 

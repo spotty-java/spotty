@@ -4,12 +4,11 @@ import spotty.common.exception.SpottyException;
 import spotty.common.filter.Filter;
 import spotty.common.http.ContentEncoding;
 import spotty.common.request.SpottyDefaultRequest;
-import spotty.common.request.SpottyInnerRequest;
 import spotty.common.request.SpottyRequest;
 import spotty.common.response.SpottyResponse;
+import spotty.common.router.route.RouteEntry;
 import spotty.server.compress.Compressor;
 import spotty.server.router.SpottyRouter;
-import spotty.common.router.route.RouteEntry;
 import spotty.server.session.SessionManager;
 
 import java.util.Arrays;
@@ -17,7 +16,6 @@ import java.util.Collection;
 
 import static spotty.common.http.HttpHeaders.ACCEPT;
 import static spotty.common.http.HttpHeaders.CONTENT_ENCODING;
-import static spotty.common.validation.Validation.isNotNull;
 import static spotty.common.validation.Validation.notNull;
 
 public final class DefaultRequestHandler implements RequestHandler {
@@ -33,7 +31,7 @@ public final class DefaultRequestHandler implements RequestHandler {
     }
 
     @Override
-    public void handle(SpottyInnerRequest request, SpottyResponse response) throws Exception {
+    public void handle(SpottyDefaultRequest request, SpottyResponse response) throws Exception {
         final RouteEntry routeEntry = router.getRoute(
             request.path(),
             request.method(),
@@ -46,18 +44,16 @@ public final class DefaultRequestHandler implements RequestHandler {
 
         sessionManager.register(request, response);
 
-        final SpottyDefaultRequest defaultRequest = new SpottyDefaultRequest(request);
-
         final Object result;
         try {
-            executeFilters(routeEntry.beforeFilters(), defaultRequest, response);
-            result = routeEntry.route().handle(defaultRequest, response);
+            executeFilters(routeEntry.beforeFilters(), request, response);
+            result = routeEntry.route().handle(request, response);
         } finally {
-            executeFilters(routeEntry.afterFilters(), defaultRequest, response);
+            executeFilters(routeEntry.afterFilters(), request, response);
         }
 
         byte[] body = response.body();
-        if (isNotNull(result)) {
+        if (result != null) {
             body = render().render(result);
         }
 
