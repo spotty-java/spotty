@@ -1,3 +1,18 @@
+/*
+ * Copyright 2022 - Alex Danilenko
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package spotty;
 
 import org.slf4j.Logger;
@@ -54,7 +69,7 @@ public final class Spotty {
         this(builder().port(port));
     }
 
-    public Spotty(Builder builder) {
+    private Spotty(Builder builder) {
         this.sessionManager = builder.sessionManagerBuilder.build();
 
         this.server = new Server(
@@ -98,10 +113,25 @@ public final class Spotty {
         return server.isRunning();
     }
 
+    /**
+     * Set the connection to be secure, using the specified keystore and
+     * truststore. This has to be called before any route mapping is done. You
+     * have to supply a keystore file, truststore file is optional (keystore
+     * will be reused).
+     *
+     * @param keyStorePath       The keystore file location as string
+     * @param keyStorePassword   the password for the keystore, leave null if no password
+     * @param trustStorePath     the truststore file location as string, leave null to reuse
+     *                           keystore
+     * @param trustStorePassword the trust store password
+     */
     public void enableHttps(String keyStorePath, String keyStorePassword, String trustStorePath, String trustStorePassword) {
         server.enableHttps(keyStorePath, keyStorePassword, trustStorePath, trustStorePassword);
     }
 
+    /**
+     * create session on request
+     */
     public void enableSession() {
         sessionManager.enableSession();
     }
@@ -111,6 +141,11 @@ public final class Spotty {
         sessionManager.close();
     }
 
+    /**
+     * get total server connections count
+     *
+     * @return connections count
+     */
     public int connections() {
         return server.connections();
     }
@@ -127,110 +162,307 @@ public final class Spotty {
         return server.hostUrl();
     }
 
+    /**
+     * Add a path-prefix to the routes declared in the routeGroup
+     * The path() method adds a path-fragment to a path-stack, adds
+     * routes from the routeGroup, then pops the path-fragment again.
+     * It's used for separating routes into groups, for example:
+     *
+     * <pre>
+     * {@code
+     *     path("/api/user", () -> {
+     *          post("/add",   User::add);
+     *          put("/change", User::change);
+     *     });
+     * }
+     * </pre>
+     *
+     * Multiple path() calls can be nested.
+     *
+     * @param pathTemplate  the path to prefix routes with
+     * @param group         group of routes (can also contain path() calls)
+     */
     public void path(String pathTemplate, RouteGroup group) {
         router.path(pathTemplate, group);
     }
 
+    /**
+     * Maps an array of filters to be executed before any routes
+     *
+     * @param filter  the filter
+     * @param filters the filters
+     */
     public void before(Filter filter, Filter... filters) {
         router.before(filter, filters);
     }
 
+    /**
+     * Maps an array of filters to be executed after any routes
+     *
+     * @param filter  the filter
+     * @param filters the filters
+     */
     public void after(Filter filter, Filter... filters) {
         router.after(filter, filters);
     }
 
+    /**
+     * Maps an array of filters to be executed before any matching routes
+     *
+     * @param pathTemplate  the route path
+     * @param filter        the filter
+     * @param filters       the filters
+     */
     public void before(String pathTemplate, Filter filter, Filter... filters) {
         router.before(pathTemplate, filter, filters);
     }
 
+    /**
+     * Maps an array of filters to be executed after any matching routes
+     *
+     * @param pathTemplate  the route path
+     * @param filter        the filter
+     * @param filters       the filters
+     */
     public void after(String pathTemplate, Filter filter, Filter... filters) {
         router.after(pathTemplate, filter, filters);
     }
 
+    /**
+     * Maps an array of filters to be executed before any matching routes
+     *
+     * @param pathTemplate  the route path
+     * @param method        the route HTTP METHOD
+     * @param filter        the filter
+     * @param filters       the filters
+     */
     public void before(String pathTemplate, HttpMethod method, Filter filter, Filter... filters) {
         router.before(pathTemplate, method, filter, filters);
     }
 
+    /**
+     * Maps an array of filters to be executed after any matching routes
+     *
+     * @param pathTemplate  the route path
+     * @param method        the route HTTP METHOD
+     * @param filter        the filter
+     * @param filters       the filters
+     */
     public void after(String pathTemplate, HttpMethod method, Filter filter, Filter... filters) {
         router.after(pathTemplate, method, filter, filters);
     }
 
+    /**
+     * Maps an array of filters to be executed before any matching routes
+     *
+     * @param pathTemplate  the route path
+     * @param method        the route HTTP METHOD
+     * @param acceptType    the route Accept-Type
+     * @param filter        the filter
+     * @param filters       the filters
+     */
     public void before(String pathTemplate, HttpMethod method, String acceptType, Filter filter, Filter... filters) {
         router.before(pathTemplate, method, acceptType, filter, filters);
     }
 
+    /**
+     * Maps an array of filters to be executed after any matching routes
+     *
+     * @param pathTemplate  the route path
+     * @param method        the route HTTP METHOD
+     * @param acceptType    the route Accept-Type
+     * @param filter        the filter
+     * @param filters       the filters
+     */
     public void after(String pathTemplate, HttpMethod method, String acceptType, Filter filter, Filter... filters) {
         router.after(pathTemplate, method, acceptType, filter, filters);
     }
 
+    /**
+     * Map the route for HTTP GET requests
+     *
+     * @param pathTemplate the route path
+     * @param route the route handler
+     */
     public void get(String pathTemplate, Route route) {
         router.get(pathTemplate, route);
     }
 
+    /**
+     * Map the route for HTTP POST requests
+     *
+     * @param pathTemplate the route path
+     * @param route the route handler
+     */
     public void post(String pathTemplate, Route route) {
         router.post(pathTemplate, route);
     }
 
+    /**
+     * Map the route for HTTP PUT requests
+     *
+     * @param pathTemplate the route path
+     * @param route the route handler
+     */
     public void put(String pathTemplate, Route route) {
         router.put(pathTemplate, route);
     }
 
+    /**
+     * Map the route for HTTP PATCH requests
+     *
+     * @param pathTemplate the route path
+     * @param route the route handler
+     */
     public void patch(String pathTemplate, Route route) {
         router.patch(pathTemplate, route);
     }
 
+    /**
+     * Map the route for HTTP DELETE requests
+     *
+     * @param pathTemplate the route path
+     * @param route the route handler
+     */
     public void delete(String pathTemplate, Route route) {
         router.delete(pathTemplate, route);
     }
 
+    /**
+     * Map the route for HTTP HEAD requests
+     *
+     * @param pathTemplate the route path
+     * @param route the route handler
+     */
     public void head(String pathTemplate, Route route) {
         router.head(pathTemplate, route);
     }
 
+    /**
+     * Map the route for HTTP TRACE requests
+     *
+     * @param pathTemplate the route path
+     * @param route the route handler
+     */
     public void trace(String pathTemplate, Route route) {
         router.trace(pathTemplate, route);
     }
 
+    /**
+     * Map the route for HTTP CONNECT requests
+     *
+     * @param pathTemplate the route path
+     * @param route the route handler
+     */
     public void connect(String pathTemplate, Route route) {
         router.connect(pathTemplate, route);
     }
 
+    /**
+     * Map the route for HTTP OPTIONS requests
+     *
+     * @param pathTemplate the route path
+     * @param route the route handler
+     */
     public void options(String pathTemplate, Route route) {
         router.options(pathTemplate, route);
     }
 
+    /**
+     * Map the route for HTTP GET requests
+     *
+     * @param pathTemplate the route path
+     * @param acceptType the accept-type that route bind to
+     * @param route the route handler
+     */
     public void get(String pathTemplate, String acceptType, Route route) {
         router.get(pathTemplate, acceptType, route);
     }
 
+    /**
+     * Map the route for HTTP POST requests
+     *
+     * @param pathTemplate the route path
+     * @param acceptType the accept-type that route bind to
+     * @param route the route handler
+     */
     public void post(String pathTemplate, String acceptType, Route route) {
         router.post(pathTemplate, acceptType, route);
     }
 
+    /**
+     * Map the route for HTTP PUT requests
+     *
+     * @param pathTemplate the route path
+     * @param acceptType the accept-type that route bind to
+     * @param route the route handler
+     */
     public void put(String pathTemplate, String acceptType, Route route) {
         router.put(pathTemplate, acceptType, route);
     }
 
+    /**
+     * Map the route for HTTP PATCH requests
+     *
+     * @param pathTemplate the route path
+     * @param acceptType the accept-type that route bind to
+     * @param route the route handler
+     */
     public void patch(String pathTemplate, String acceptType, Route route) {
         router.patch(pathTemplate, acceptType, route);
     }
 
+    /**
+     * Map the route for HTTP DELETE requests
+     *
+     * @param pathTemplate the route path
+     * @param acceptType the accept-type that route bind to
+     * @param route the route handler
+     */
     public void delete(String pathTemplate, String acceptType, Route route) {
         router.delete(pathTemplate, acceptType, route);
     }
 
+    /**
+     * Map the route for HTTP HEAD requests
+     *
+     * @param pathTemplate the route path
+     * @param acceptType the accept-type that route bind to
+     * @param route the route handler
+     */
     public void head(String pathTemplate, String acceptType, Route route) {
         router.head(pathTemplate, acceptType, route);
     }
 
+    /**
+     * Map the route for HTTP TRACE requests
+     *
+     * @param pathTemplate the route path
+     * @param acceptType the accept-type that route bind to
+     * @param route the route handler
+     */
     public void trace(String pathTemplate, String acceptType, Route route) {
         router.trace(pathTemplate, acceptType, route);
     }
 
+    /**
+     * Map the route for HTTP CONNECT requests
+     *
+     * @param pathTemplate the route path
+     * @param acceptType the accept-type that route bind to
+     * @param route the route handler
+     */
     public void connect(String pathTemplate, String acceptType, Route route) {
         router.connect(pathTemplate, acceptType, route);
     }
 
+    /**
+     * Map the route for HTTP OPTIONS requests
+     *
+     * @param pathTemplate the route path
+     * @param acceptType the accept-type that route bind to
+     * @param route the route handler
+     */
     public void options(String pathTemplate, String acceptType, Route route) {
         router.options(pathTemplate, acceptType, route);
     }

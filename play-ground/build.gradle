@@ -2,16 +2,39 @@ plugins {
     id 'com.github.johnrengelman.shadow'
 }
 
+// this is required due to JMeter open issue: https://bz.apache.org/bugzilla/show_bug.cgi?id=64465
+@CacheableRule
+class JmeterRule implements ComponentMetadataRule {
+    void execute(ComponentMetadataContext context) {
+        context.details.allVariants {
+            withDependencies {
+                removeAll { it.group == "org.apache.jmeter" && it.name == "bom" }
+            }
+        }
+    }
+}
+
 dependencies {
     implementation project(":server")
 
     implementation "com.sparkjava:spark-core:2.9.4"
     implementation "org.apache.tika:tika-core:$apacheTika"
 
+    implementation 'us.abstracta.jmeter:jmeter-java-dsl:0.64.2'
+    components {
+        withModule("org.apache.jmeter:ApacheJMeter_core", JmeterRule)
+        withModule("org.apache.jmeter:ApacheJMeter_java", JmeterRule)
+        withModule("org.apache.jmeter:ApacheJMeter", JmeterRule)
+        withModule("org.apache.jmeter:ApacheJMeter_http", JmeterRule)
+        withModule("org.apache.jmeter:ApacheJMeter_functions", JmeterRule)
+        withModule("org.apache.jmeter:ApacheJMeter_components", JmeterRule)
+        withModule("org.apache.jmeter:ApacheJMeter_config", JmeterRule)
+        withModule("org.apache.jmeter:jorphan", JmeterRule)
+    }
+
     compileOnly "org.projectlombok:lombok:1.18.24"
     annotationProcessor "org.projectlombok:lombok:1.18.24"
 }
-
 
 shadowJar {
     archiveVersion = rootProject.version

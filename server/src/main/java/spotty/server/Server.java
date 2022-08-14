@@ -87,8 +87,6 @@ public final class Server implements Closeable {
         notBlank("keyStorePath", keyStorePath);
 
         final char[] keyPassword = keyStorePassword == null ? null : keyStorePassword.toCharArray();
-        final char[] trustPassword = trustStorePassword == null ? null : trustStorePassword.toCharArray();
-
         try {
             // Initialise the keystore
             final KeyStore ks = KeyStore.getInstance("JKS");
@@ -100,21 +98,23 @@ public final class Server implements Closeable {
             final KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
             kmf.init(ks, keyPassword);
 
-            TrustManager[] trustMapper = null;
+            final KeyStore tks;
             if (isNotBlank(trustStorePath)) {
                 // Initialise the keystore
-                final KeyStore tks = KeyStore.getInstance("JKS");
+                tks = KeyStore.getInstance("JKS");
                 try (final InputStream file = new FileInputStream(trustStorePath)) {
+                    final char[] trustPassword = trustStorePassword == null ? null : trustStorePassword.toCharArray();
                     tks.load(file, trustPassword);
                 }
-
-                // Set up the trust manager factory
-                final TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-                tmf.init(tks);
-
-                trustMapper = tmf.getTrustManagers();
+            } else {
+                tks = ks;
             }
 
+            // Set up the trust manager factory
+            final TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+            tmf.init(tks);
+
+            final TrustManager[] trustMapper = tmf.getTrustManagers();
             final SSLContext sslContext = SSLContext.getInstance("SSL");
 
             // Set up the HTTPS context and parameters
