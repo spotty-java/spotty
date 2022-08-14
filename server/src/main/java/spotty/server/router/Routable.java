@@ -92,11 +92,16 @@ final class Routable {
     }
 
     boolean removeRoute(String routePath) {
+        notBlank("routePath", routePath);
+
         final String normalizedPath = normalizePath(routePath);
         return routes.remove(normalizedPath) != null && sortedList.removeByPath(normalizedPath);
     }
 
     boolean removeRoute(String routePath, HttpMethod method) {
+        notBlank("routePath", routePath);
+        notNull("method", method);
+
         final Map<HttpMethod, Map<String, RouteEntry>> route = routes.get(normalizePath(routePath));
         if (route == null) {
             return false;
@@ -106,6 +111,10 @@ final class Routable {
     }
 
     boolean removeRoute(String routePath, HttpMethod method, String acceptType) {
+        notBlank("routePath", routePath);
+        notNull("method", method);
+        notBlank("acceptType", acceptType);
+
         final Map<HttpMethod, Map<String, RouteEntry>> route = routes.get(normalizePath(routePath));
         if (route == null) {
             return false;

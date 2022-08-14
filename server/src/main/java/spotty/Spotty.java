@@ -17,6 +17,7 @@ package spotty;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spotty.common.exception.SpottyHaltException;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyNotFoundException;
 import spotty.common.exception.SpottyValidationException;
@@ -46,6 +47,9 @@ import static spotty.common.http.HttpStatus.BAD_REQUEST;
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static spotty.version.SpottyVersion.VERSION;
 
+/**
+ * main Spotty facade is a set routes, filters etc.
+ */
 public final class Spotty {
     private static final Logger LOG = LoggerFactory.getLogger(Spotty.class);
     private static final String SPOTTY_VERSION = "Spotty v" + VERSION;
@@ -142,7 +146,7 @@ public final class Spotty {
     }
 
     /**
-     * get total server connections count
+     * get total server connections count at this moment
      *
      * @return connections count
      */
@@ -150,14 +154,29 @@ public final class Spotty {
         return server.connections();
     }
 
+    /**
+     * get server port
+     *
+     * @return port
+     */
     public int port() {
         return server.port();
     }
 
+    /**
+     * get servet host, for example: localhost
+     *
+     * @return host
+     */
     public String host() {
         return server.host();
     }
 
+    /**
+     * get server url, for example: http://localhost:4000
+     *
+     * @return host url
+     */
     public String hostUrl() {
         return server.hostUrl();
     }
@@ -467,26 +486,73 @@ public final class Spotty {
         router.options(pathTemplate, acceptType, route);
     }
 
+    /**
+     * Immediately stops a request within a filter or route with specified status code and body content
+     * NOTE: When using this don't catch exceptions of type {@link SpottyHaltException}, or if catched, re-throw otherwise
+     * halt will not work
+     *
+     * @param status The status code
+     */
     public void halt(HttpStatus status) {
-        throw new SpottyHttpException(status);
+        throw new SpottyHaltException(status);
     }
 
+    /**
+     * Immediately stops a request within a filter or route with specified status code and body content
+     * NOTE: When using this don't catch exceptions of type {@link SpottyHaltException}, or if catched, re-throw otherwise
+     * halt will not work
+     *
+     * @param status The status code
+     * @param body   The body content
+     */
     public void halt(HttpStatus status, String body) {
-        throw new SpottyHttpException(status, body);
+        throw new SpottyHaltException(status, body);
     }
 
+    /**
+     * remove all registered routes
+     */
     public void clearRoutes() {
         router.clearRoutes();
     }
 
+    /**
+     * Remove a particular route from the collection of those that have been previously routed.
+     * Search for previously established routes using the given path and unmaps any matches that are found.
+     *
+     * @param pathTemplate  the route path
+     * @return              true if this is a matching route which has been previously routed
+     * @throws SpottyValidationException if pathTemplate is null or blank
+     */
     public boolean removeRoute(String pathTemplate) {
         return router.removeRoute(pathTemplate);
     }
 
+    /**
+     * Remove a particular route from the collection of those that have been previously routed.
+     * Search for previously established routes using the given path and HTTP method, unmaps any
+     * matches that are found.
+     *
+     * @param pathTemplate  the route path
+     * @param method        the route HTTP METHOD
+     * @return              true if this is a matching route which has been previously routed
+     * @throws SpottyValidationException if pathTemplate or method is null or blank
+     */
     public boolean removeRoute(String pathTemplate, HttpMethod method) {
         return router.removeRoute(pathTemplate, method);
     }
 
+    /**
+     * Remove a particular route from the collection of those that have been previously routed.
+     * Search for previously established routes using the given path, acceptType and HTTP method, unmaps any
+     * matches that are found.
+     *
+     * @param pathTemplate  the route path
+     * @param acceptType    the route accept-type
+     * @param method        the route HTTP METHOD
+     * @return              true if this is a matching route which has been previously routed
+     * @throws SpottyValidationException if pathTemplate, acceptType or method is null or blank
+     */
     public boolean removeRoute(String pathTemplate, String acceptType, HttpMethod method) {
         return router.removeRoute(pathTemplate, acceptType, method);
     }
@@ -561,6 +627,13 @@ public final class Spotty {
 
     private void registerSpottyDefaultExceptionHandlers() {
         exception(SpottyHttpException.class, (exception, request, response) -> {
+            response
+                .status(exception.status)
+                .body(exception.getMessage())
+            ;
+        });
+
+        exception(SpottyHaltException.class, (exception, request, response) -> {
             response
                 .status(exception.status)
                 .body(exception.getMessage())
