@@ -33,11 +33,11 @@ public interface WebRequestTestData {
 
     String fullRequest = requestHeaders + "\n\n" + requestBody;
 
-    default SpottyInnerRequest aSpottyRequest() {
+    default SpottyDefaultRequest aSpottyRequest() {
         final byte[] content = requestBody.getBytes();
         final HttpHeaders headers = this.headers.copy();
 
-        final SpottyInnerRequest request = new SpottyInnerRequest();
+        final SpottyDefaultRequest request = new SpottyDefaultRequest();
         return request
             .protocol("HTTP/1.1")
             .scheme("http")

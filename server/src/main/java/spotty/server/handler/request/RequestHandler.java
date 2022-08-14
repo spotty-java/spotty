@@ -1,6 +1,21 @@
+/*
+ * Copyright 2022 - Alex Danilenko
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package spotty.server.handler.request;
 
-import spotty.common.request.SpottyInnerRequest;
+import spotty.common.request.SpottyDefaultRequest;
 import spotty.common.response.SpottyResponse;
 import spotty.server.render.DefaultResponseRender;
 import spotty.server.render.ResponseRender;
@@ -8,7 +23,7 @@ import spotty.server.render.ResponseRender;
 public interface RequestHandler {
     ResponseRender DEFAULT_RESPONSE_RENDER = new DefaultResponseRender();
 
-    void handle(SpottyInnerRequest innerRequest, SpottyResponse response) throws Exception;
+    void handle(SpottyDefaultRequest innerRequest, SpottyResponse response) throws Exception;
 
     default ResponseRender render() {
         return DEFAULT_RESPONSE_RENDER;

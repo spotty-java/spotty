@@ -1,3 +1,18 @@
+/*
+ * Copyright 2022 - Alex Danilenko
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package spotty.common.state;
 
 import java.util.ArrayList;
@@ -7,7 +22,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static java.util.Collections.emptyList;
-import static java.util.Objects.requireNonNull;
 import static spotty.common.validation.Validation.notNull;
 import static spotty.common.validation.Validation.validate;
 
@@ -28,6 +42,10 @@ public abstract class StateMachine<S extends Enum<S>> {
         return this.state == state;
     }
 
+    public boolean isNot(S state) {
+        return this.state != state;
+    }
+
     protected void checkStateIs(S from) {
         validate(is(from), "%s state must be %s, but is %s", getClass().getSimpleName(), from, state);
     }
@@ -36,13 +54,13 @@ public abstract class StateMachine<S extends Enum<S>> {
         validate(is(from1) || is(from2), "%s state must be %s or %s, but is %s", getClass().getSimpleName(), from1, from2, state);
     }
 
-    public synchronized void whenStateIs(S state, Consumer<S> subscriber) {
+    public void whenStateIs(S state, Consumer<S> subscriber) {
         subscribers.computeIfAbsent(state, __ -> new ArrayList<>())
             .add(subscriber);
     }
 
-    protected synchronized boolean changeState(S newState) {
-        requireNonNull(newState, "newState must be not null");
+    protected boolean changeState(S newState) {
+        notNull("newState", newState);
 
         if (state != newState) {
             final S prevState = state;

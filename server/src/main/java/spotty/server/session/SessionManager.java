@@ -1,11 +1,26 @@
+/*
+ * Copyright 2022 - Alex Danilenko
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package spotty.server.session;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spotty.common.annotation.VisibleForTesting;
 import spotty.common.cookie.Cookie;
 import spotty.common.exception.SpottyValidationException;
-import spotty.common.request.SpottyInnerRequest;
+import spotty.common.request.SpottyDefaultRequest;
 import spotty.common.response.SpottyResponse;
 import spotty.common.session.Session;
 
@@ -63,7 +78,7 @@ public final class SessionManager implements Closeable {
                 final Iterator<Map.Entry<UUID, Session>> iterator = sessions.entrySet().iterator();
                 while (iterator.hasNext()) {
                     final Session session = iterator.next().getValue();
-                    if (session.expires().isBefore(now)) {
+                    if (now.isAfter(session.expires())) {
                         iterator.remove();
                     }
                 }
@@ -79,7 +94,7 @@ public final class SessionManager implements Closeable {
         close();
     }
 
-    public void register(SpottyInnerRequest request, SpottyResponse response) {
+    public void register(SpottyDefaultRequest request, SpottyResponse response) {
         if (disabled) {
             return;
         }
@@ -138,11 +153,15 @@ public final class SessionManager implements Closeable {
         }
     }
 
-    public static class Builder {
+    public static final class Builder {
         private int sessionCheckTickDelay = DEFAULT_TICK;
         private TimeUnit timeUnit = DEFAULT_TIME_UNIT;
         private long defaultSessionTtl = 0;
         private long defaultSessionCookieTtl = 0;
+
+        private Builder() {
+
+        }
 
         public Builder sessionCheckTickDelay(int sessionCheckTickDelay, TimeUnit timeUnit) {
             this.sessionCheckTickDelay = sessionCheckTickDelay;

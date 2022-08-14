@@ -17,12 +17,11 @@ import spotty.common.utils.IOUtils
 import static org.apache.http.impl.conn.DefaultSchemePortResolver.INSTANCE
 
 class HttpClient implements Closeable {
-    private def LOCALHOST
+    private final HttpHost LOCALHOST
+    private final CloseableHttpClient client
 
-    private CloseableHttpClient client
-
-    HttpClient(int port) {
-        LOCALHOST = new HttpHost("localhost", port)
+    HttpClient(String host, int port) {
+        LOCALHOST = new HttpHost(host, port)
         client = HttpClientBuilder.create()
             .setRoutePlanner(routePlanner())
             .build()
@@ -71,8 +70,9 @@ class HttpClient implements Closeable {
             HttpRoute determineRoute(
                 final HttpHost host,
                 final HttpRequest request,
-                final HttpContext context) throws HttpException {
-                HttpHost target = host == null ? LOCALHOST : host
+                final HttpContext context
+            ) throws HttpException {
+                final HttpHost target = host == null ? LOCALHOST : host
                 return super.determineRoute(target, request, context)
             }
         }

@@ -1,11 +1,26 @@
+/*
+ * Copyright 2022 - Alex Danilenko
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package spotty.server.connection;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spotty.common.annotation.VisibleForTesting;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyStreamException;
-import spotty.common.request.SpottyInnerRequest;
+import spotty.common.request.SpottyDefaultRequest;
 import spotty.common.request.params.QueryParams;
 import spotty.common.response.ResponseWriter;
 import spotty.common.response.SpottyResponse;
@@ -72,7 +87,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     public final long id = ID_GENERATOR.incrementAndGet();
 
     @VisibleForTesting
-    final SpottyInnerRequest request = new SpottyInnerRequest();
+    final SpottyDefaultRequest request = new SpottyDefaultRequest();
 
     @VisibleForTesting
     final SpottyResponse response = new SpottyResponse();
@@ -435,13 +450,15 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     private boolean responseWriteCompleted() {
         checkStateIs(RESPONSE_WRITE_COMPLETED);
 
-        if (response.headers().hasAndEqual(CONNECTION, CLOSE.code)) {
-            close();
-            return false;
+        try {
+            if (response.headers().hasAndEqual(CONNECTION, CLOSE.code)) {
+                close();
+                return false;
+            }
+        } finally {
+            resetResponse();
+            request.reset();
         }
-
-        resetResponse();
-        request.reset();
 
         changeState(READY_TO_READ);
 

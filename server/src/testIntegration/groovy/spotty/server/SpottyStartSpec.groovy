@@ -3,12 +3,14 @@ package spotty.server
 import spock.lang.Specification
 import spotty.Spotty
 
+import static spotty.utils.PortGenerator.nextPort
+
 class SpottyStartSpec extends Specification {
 
     private Spotty server
 
     def setup() {
-        server = new Spotty(3333)
+        server = new Spotty(nextPort())
     }
 
     def cleanup() {

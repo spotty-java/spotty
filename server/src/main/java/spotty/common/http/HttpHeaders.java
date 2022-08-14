@@ -1,8 +1,22 @@
+/*
+ * Copyright 2022 - Alex Danilenko
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package spotty.common.http;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import static spotty.common.validation.Validation.isNull;
@@ -338,7 +352,7 @@ public final class HttpHeaders {
     }
 
     public boolean isEmpty() {
-        return headers.size() == 0;
+        return headers.isEmpty();
     }
 
     public boolean isNotEmpty() {
@@ -379,8 +393,8 @@ public final class HttpHeaders {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        HttpHeaders that = (HttpHeaders) o;
+        final HttpHeaders that = (HttpHeaders) o;
 
-        return Objects.equals(headers, that.headers);
+        return headers.equals(that.headers);
     }
 }

@@ -2,7 +2,6 @@ package spotty.server
 
 import spotty.AppTestContext
 import spotty.Spotty
-import spotty.server.session.SessionManager
 
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.awaitility.Awaitility.await
@@ -13,13 +12,13 @@ class SpottySessionSpec extends AppTestContext {
         SPOTTY.stop()
         SPOTTY.awaitUntilStop()
 
-        var sessionManager = SessionManager.builder()
+        SPOTTY = Spotty.builder()
+            .port(SPOTTY.port())
+            .maxRequestBodySize(8192)
             .sessionCheckTickDelay(1, SECONDS)
             .defaultSessionCookieTtl(1)
             .defaultSessionTtl(1)
             .build()
-
-        SPOTTY = new Spotty(5050, 8192, sessionManager)
 
         SPOTTY.enableSession()
         SPOTTY.start()

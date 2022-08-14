@@ -27,7 +27,7 @@ import java.security.KeyStore;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
@@ -37,6 +37,7 @@ import static spotty.common.utils.ThreadUtils.threadPool;
 import static spotty.common.validation.Validation.isNotBlank;
 import static spotty.common.validation.Validation.notBlank;
 import static spotty.common.validation.Validation.notNull;
+import static spotty.common.validation.Validation.validate;
 import static spotty.server.connection.state.ConnectionState.CLOSED;
 import static spotty.server.connection.state.ConnectionState.DATA_REMAINING;
 import static spotty.server.connection.state.ConnectionState.INITIALIZED;
@@ -53,20 +54,23 @@ public final class Server implements Closeable {
     private volatile boolean started = false;
     private volatile boolean enabledHttps = false;
 
-    private final AtomicLong connections = new AtomicLong();
+    private final AtomicInteger connections = new AtomicInteger();
 
-    private final ReactorWorker reactorWorker = new ReactorWorker();
     private final SocketFactory socketFactory = new SocketFactory();
 
     private final int maxRequestBodySize;
     private final RequestHandler requestHandler;
     private final ExceptionHandlerRegistry exceptionHandlerRegistry;
+    private final ReactorWorker reactorWorker ;
     private final InetSocketAddress socketAddress;
 
-    public Server(int port, int maxRequestBodySize, RequestHandler requestHandler, ExceptionHandlerRegistry exceptionHandlerRegistry) {
+    public Server(int port, int maxRequestBodySize, RequestHandler requestHandler, ExceptionHandlerRegistry exceptionHandlerRegistry, ReactorWorker reactorWorker) {
+        validate(maxRequestBodySize > 0, "maximum request body size must be greater then 0");
+
         this.maxRequestBodySize = maxRequestBodySize;
         this.requestHandler = notNull("requestHandler", requestHandler);
         this.exceptionHandlerRegistry = notNull("exceptionHandlerRegistry", exceptionHandlerRegistry);
+        this.reactorWorker = notNull("reactorWorker", reactorWorker);
         this.socketAddress = new InetSocketAddress(port);
     }
 
@@ -83,8 +87,6 @@ public final class Server implements Closeable {
         notBlank("keyStorePath", keyStorePath);
 
         final char[] keyPassword = keyStorePassword == null ? null : keyStorePassword.toCharArray();
-        final char[] trustPassword = trustStorePassword == null ? null : trustStorePassword.toCharArray();
-
         try {
             // Initialise the keystore
             final KeyStore ks = KeyStore.getInstance("JKS");
@@ -96,21 +98,23 @@ public final class Server implements Closeable {
             final KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
             kmf.init(ks, keyPassword);
 
-            TrustManager[] trustMapper = null;
+            final KeyStore tks;
             if (isNotBlank(trustStorePath)) {
                 // Initialise the keystore
-                final KeyStore tks = KeyStore.getInstance("JKS");
+                tks = KeyStore.getInstance("JKS");
                 try (final InputStream file = new FileInputStream(trustStorePath)) {
+                    final char[] trustPassword = trustStorePassword == null ? null : trustStorePassword.toCharArray();
                     tks.load(file, trustPassword);
                 }
-
-                // Set up the trust manager factory
-                final TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-                tmf.init(tks);
-
-                trustMapper = tmf.getTrustManagers();
+            } else {
+                tks = ks;
             }
 
+            // Set up the trust manager factory
+            final TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+            tmf.init(tks);
+
+            final TrustManager[] trustMapper = tmf.getTrustManagers();
             final SSLContext sslContext = SSLContext.getInstance("SSL");
 
             // Set up the HTTPS context and parameters
@@ -156,6 +160,10 @@ public final class Server implements Closeable {
         return started;
     }
 
+    public int connections() {
+        return connections.get();
+    }
+
     public int port() {
         return socketAddress.getPort();
     }
@@ -186,7 +194,7 @@ public final class Server implements Closeable {
             serverSocket.configureBlocking(false); // Make Server nonBlocking
             serverSocket.register(selector, OP_ACCEPT);
 
-            LOG.info("server has been started on port {}", socketAddress.getPort());
+            LOG.info("server has been started {}", hostUrl());
 
             run();
             started();
@@ -199,7 +207,9 @@ public final class Server implements Closeable {
                     keys.remove();
 
                     if (!key.isValid()) {
-                        key.cancel();
+                        final Connection connection = (Connection) key.attachment();
+                        connection.close();
+
                         continue;
                     }
 
@@ -214,13 +224,13 @@ public final class Server implements Closeable {
                     }
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error("start server error", e);
         } finally {
             close();
 
             stopped();
-            LOG.info("server has been stopped");
+            LOG.info("server has been stopped {}", hostUrl());
         }
     }
 
@@ -271,15 +281,18 @@ public final class Server implements Closeable {
             key.cancel();
         });
 
+        // mark connection ready to ready if it's initialized
         if (connection.is(INITIALIZED)) {
             connection.markReadyToRead();
         }
 
+        // if after initialization (https handshake) socket has not processed data
         if (connection.is(DATA_REMAINING)) {
             connection.handle();
         }
 
-        if (key.isValid() && key.interestOps() == OP_CONNECT) {
+        // if after initialization or more possible after DATA_REMAINING key in OP_CONNECT, change it to ready to read
+        if (key.isValid() && key.interestOps() == OP_CONNECT && connection.isNot(REQUEST_HANDLING)) {
             key.interestOps(OP_READ);
             key.selector().wakeup();
         }

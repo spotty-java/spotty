@@ -4,7 +4,7 @@ package spotty.server.session
 import spock.lang.Specification
 import spotty.common.cookie.Cookie
 import spotty.common.exception.SpottyValidationException
-import spotty.common.request.SpottyInnerRequest
+import spotty.common.request.SpottyDefaultRequest
 import spotty.common.response.SpottyResponse
 
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -17,7 +17,7 @@ class SessionManagerTest extends Specification {
         var manager = SessionManager.builder().build()
         manager.enableSession()
 
-        var request = new SpottyInnerRequest()
+        var request = new SpottyDefaultRequest()
         var response = new SpottyResponse()
 
         when:
@@ -37,7 +37,7 @@ class SessionManagerTest extends Specification {
         given:
         var manager = SessionManager.builder().build()
 
-        var request = new SpottyInnerRequest()
+        var request = new SpottyDefaultRequest()
         var response = new SpottyResponse()
 
         when:
@@ -53,7 +53,7 @@ class SessionManagerTest extends Specification {
         var manager = SessionManager.builder().build()
         manager.enableSession()
 
-        var request = new SpottyInnerRequest()
+        var request = new SpottyDefaultRequest()
         request.cookies([(SPOTTY_SESSION_ID): "wrong id"])
 
         var response = new SpottyResponse()
@@ -76,7 +76,7 @@ class SessionManagerTest extends Specification {
 
         manager.enableSession()
 
-        var request = new SpottyInnerRequest()
+        var request = new SpottyDefaultRequest()
         var response = new SpottyResponse()
 
         when:

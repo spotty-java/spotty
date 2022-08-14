@@ -22,6 +22,8 @@ class SpottyHttpsSpec extends AppTestContext {
         unirest = Unirest.spawnInstance()
         unirest.config()
             .defaultBaseUrl(SPOTTY.hostUrl())
+            .connectTimeout(5000)
+            .socketTimeout(5000)
             .verifySsl(false)
     }
 

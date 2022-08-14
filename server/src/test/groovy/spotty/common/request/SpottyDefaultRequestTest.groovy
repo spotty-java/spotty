@@ -7,9 +7,9 @@ import spotty.common.session.Session
 
 import static spotty.common.http.HttpMethod.GET
 
-class SpottyInnerRequestTest extends Specification {
+class SpottyDefaultRequestTest extends Specification {
 
-    private def request = new SpottyInnerRequest()
+    private def request = new SpottyDefaultRequest()
 
     def setup() {
         request
@@ -32,7 +32,7 @@ class SpottyInnerRequestTest extends Specification {
 
     def "should reset all fields correctly"() {
         given:
-        var emptyRequest = new SpottyInnerRequest()
+        var emptyRequest = new SpottyDefaultRequest()
 
         when:
         request.reset()

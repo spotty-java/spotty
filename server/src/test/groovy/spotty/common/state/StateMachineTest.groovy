@@ -1,6 +1,7 @@
 package spotty.common.state
 
 import spock.lang.Specification
+import spotty.common.exception.SpottyValidationException
 import spotty.common.test.TestState
 
 import java.util.function.Consumer
@@ -86,7 +87,7 @@ class StateMachineTest extends Specification {
 
         then:
         0 * consumer.accept(_)
-        thrown NullPointerException
+        thrown SpottyValidationException
     }
 
     class ClassWithState extends StateMachine<TestState> {
