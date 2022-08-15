@@ -44,4 +44,19 @@ class SpottyStaticFilesSpec extends AppTestContext {
         response.statusLine.statusCode == NOT_FOUND.code
         response.entity.content.text == "file not found /file/not_exist_file.txt"
     }
+
+    def "should enable caching and download file contents"() {
+        given:
+        SPOTTY.staticFiles("/file-cache")
+        SPOTTY.staticFiles("/public", "/public-cache")
+        SPOTTY.staticFilesCache(10, 10)
+
+        when:
+        var response = httpClient.get("/file-cache/test_file.txt")
+        var response2 = httpClient.get("/public-cache/test_public_file.txt")
+
+        then:
+        response == "hello"
+        response2 == "public file"
+    }
 }

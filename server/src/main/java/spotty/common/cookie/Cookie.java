@@ -45,6 +45,10 @@ public final class Cookie {
         this.toString = buildString();
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public String name() {
         return name;
     }
@@ -75,10 +79,6 @@ public final class Cookie {
 
     public boolean httpOnly() {
         return httpOnly;
-    }
-
-    public static Builder builder() {
-        return new Builder();
     }
 
     @Override

@@ -146,7 +146,7 @@ public final class Spotty {
     }
 
     /**
-     * get total server connections count at this moment
+     * get total server connections count at the current time
      *
      * @return connections count
      */
@@ -499,7 +499,7 @@ public final class Spotty {
 
     /**
      * Immediately stops a request within a filter or route with specified status code and body content
-     * NOTE: When using this don't catch exceptions of type {@link SpottyHaltException}, or if catched, re-throw otherwise
+     * NOTE: When using this don't catch exceptions of type {@link SpottyHaltException}, or if caught, re-throw otherwise
      * halt will not work
      *
      * @param status The status code

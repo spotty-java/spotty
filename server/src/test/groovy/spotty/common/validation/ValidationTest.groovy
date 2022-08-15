@@ -27,14 +27,32 @@ class ValidationTest extends Specification {
     }
 
     def "should return error when value is empty"() {
-        given:
-        var value = ""
-
         when:
         Validation.notEmpty("value", value)
 
         then:
         thrown SpottyValidationException
+
+        where:
+        value | _
+        null  | _
+        ""    | _
+    }
+
+    def "should does not throw exception when value is not empty"() {
+        when:
+        Validation.notEmpty("value", value)
+
+        then:
+        noExceptionThrown()
+
+        where:
+        value | _
+        " "   | _
+        "1"   | _
+        "\n"  | _
+        "\r"  | _
+        "\t"  | _
     }
 
     def "should return error when condition is false"() {
