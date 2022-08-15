@@ -96,6 +96,10 @@ public final class Session {
         return (T) data.getOrDefault(key, defaultValue);
     }
 
+    public boolean isEmpty() {
+        return data.isEmpty();
+    }
+
     public Session remove(Object key) {
         data.remove(key);
         return this;
@@ -106,7 +110,7 @@ public final class Session {
         return this;
     }
 
-    public Set<Object> keySet() {
+    public Set<Object> keys() {
         return data.keySet();
     }
 

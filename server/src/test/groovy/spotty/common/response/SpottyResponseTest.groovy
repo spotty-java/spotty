@@ -1,6 +1,7 @@
 package spotty.common.response
 
 import spock.lang.Specification
+import spotty.common.cookie.Cookie
 import spotty.common.exception.SpottyHttpException
 import spotty.common.exception.SpottyValidationException
 
@@ -29,6 +30,7 @@ class SpottyResponseTest extends Specification {
 
         then:
         emptyResponse == response
+        emptyResponse.hashCode() == response.hashCode()
     }
 
     def "should create redirect to same server by default correctly"() {
@@ -83,5 +85,40 @@ class SpottyResponseTest extends Specification {
 
         then:
         thrown SpottyValidationException
+    }
+
+    def "should add cookie"() {
+        given:
+        def response = new SpottyResponse()
+
+        def name = "name"
+        def value = "value"
+        def path = "/"
+        def domain = "localhost"
+        def maxAge = 10
+        def secure = true
+        def httpOnly = true
+
+        def cookies = [
+            Cookie.builder().name(name).value(value).build(),
+            Cookie.builder().name(name).value(value).maxAge(maxAge).build(),
+            Cookie.builder().name(name).value(value).maxAge(maxAge).secure(secure).build(),
+            Cookie.builder().name(name).value(value).maxAge(maxAge).secure(secure).httpOnly(httpOnly).build(),
+            Cookie.builder().path(path).name(name).value(value).maxAge(maxAge).secure(secure).build(),
+            Cookie.builder().path(path).name(name).value(value).maxAge(maxAge).secure(secure).httpOnly(httpOnly).build(),
+            Cookie.builder().domain(domain).path(path).name(name).value(value).maxAge(maxAge).secure(secure).httpOnly(httpOnly).build(),
+        ]
+
+        when:
+        response.cookie(name, value)
+        response.cookie(name, value, maxAge)
+        response.cookie(name, value, maxAge, secure)
+        response.cookie(name, value, maxAge, secure, httpOnly)
+        response.cookie(path, name, value, maxAge, secure)
+        response.cookie(path, name, value, maxAge, secure, httpOnly)
+        response.cookie(domain, path, name, value, maxAge, secure, httpOnly)
+
+        then:
+        response.cookies().containsAll(cookies)
     }
 }

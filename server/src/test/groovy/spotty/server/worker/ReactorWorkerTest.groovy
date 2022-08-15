@@ -14,9 +14,10 @@ class ReactorWorkerTest extends Specification {
 
         when:
         reactorWorker.addTask { runIsTrue = true }
+        await().until { runIsTrue }
+        reactorWorker.close()
 
         then:
-        await().until { runIsTrue }
         runIsTrue
     }
 

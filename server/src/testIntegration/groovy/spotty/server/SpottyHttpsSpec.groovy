@@ -3,6 +3,7 @@ package spotty.server
 import kong.unirest.Unirest
 import kong.unirest.UnirestInstance
 import spock.lang.Ignore
+import spock.lang.Shared
 import spotty.AppTestContext
 
 import java.nio.file.Paths
@@ -13,7 +14,8 @@ import static java.util.stream.Collectors.toList
 @Ignore // FIXME: https fails by timeout on github
 class SpottyHttpsSpec extends AppTestContext {
 
-    private static UnirestInstance unirest
+    @Shared
+    private UnirestInstance unirest
 
     def setupSpec() {
         var keystoreFile = Paths.get("src/testIntegration/resources/selfsigned.jks").toAbsolutePath().toString()

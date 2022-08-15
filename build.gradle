@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'groovy'
     id 'idea'
+    id 'jacoco'
     id 'org.unbroken-dome.test-sets' version '4.0.0'
 }
 
@@ -9,6 +10,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'groovy'
     apply plugin: 'idea'
+    apply plugin: 'jacoco'
     apply plugin: 'org.unbroken-dome.test-sets'
 
     ext {
@@ -49,5 +51,37 @@ subprojects {
         useJUnitPlatform()
     }
 
-    check.dependsOn testIntegration
+    jacocoTestReport {
+        dependsOn(test, testIntegration)
+        executionData(test, testIntegration)
+
+        afterEvaluate {
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: [
+                    "spotty/Spotty*",
+                    "spotty/common/exception/*"
+                ])
+            }))
+        }
+    }
+
+    jacocoTestCoverageVerification {
+        dependsOn jacocoTestReport
+        executionData(test, testIntegration)
+
+        violationRules {
+            rule {
+                limit {
+                    minimum = 0.8
+                }
+
+                excludes = [
+                    'spotty.Spotty',
+                    'spotty.common.exception.*'
+                ]
+            }
+        }
+    }
+
+    check.dependsOn jacocoTestCoverageVerification
 }
