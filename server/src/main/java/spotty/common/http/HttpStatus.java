@@ -405,11 +405,7 @@ public enum HttpStatus {
     NETWORK_AUTHENTICATION_REQUIRED(511, Series.SERVER_ERROR, "Network Authentication Required");
 
 
-    private static final HttpStatus[] VALUES;
-
-    static {
-        VALUES = values();
-    }
+    private static final HttpStatus[] VALUES = values();
 
     public final int code;
     public final Series series;
@@ -504,7 +500,7 @@ public enum HttpStatus {
      * @throws IllegalArgumentException if this enum has no constant for the specified numeric value
      */
     public static HttpStatus valueOf(int statusCode) {
-        HttpStatus status = resolve(statusCode);
+        final HttpStatus status = resolve(statusCode);
         if (status == null) {
             throw new IllegalArgumentException("No matching constant for [" + statusCode + "]");
         }
@@ -533,12 +529,13 @@ public enum HttpStatus {
      * <p>Retrievable via {@link HttpStatus#series}.
      */
     public enum Series {
-
         INFORMATIONAL(1),
         SUCCESSFUL(2),
         REDIRECTION(3),
         CLIENT_ERROR(4),
         SERVER_ERROR(5);
+
+        private static final Series[] VALUES = values();
 
         private final int value;
 
@@ -575,6 +572,7 @@ public enum HttpStatus {
             if (series == null) {
                 throw new IllegalArgumentException("No matching constant for [" + statusCode + "]");
             }
+
             return series;
         }
 
@@ -586,11 +584,12 @@ public enum HttpStatus {
          */
         public static Series resolve(int statusCode) {
             int seriesCode = statusCode / 100;
-            for (Series series : values()) {
+            for (Series series : VALUES) {
                 if (series.value == seriesCode) {
                     return series;
                 }
             }
+
             return null;
         }
     }

@@ -128,7 +128,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
         this.exceptionHandlerRegistry = notNull("exceptionHandlerService", exceptionHandlerRegistry);
         this.maxRequestBodySize = maxRequestBodySize;
 
-        this.readBuffer = ByteBuffer.allocateDirect(bufferSize);
+        this.readBuffer = ByteBuffer.allocate(bufferSize);
 
         this.stateHandlerGraph
             .filter(
@@ -156,9 +156,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
                             }
 
                             // prepare buffer to read
-                            if (readBuffer.position() > 0) {
-                                readBuffer.flip();
-                            }
+                            readBuffer.flip();
 
                             return true;
                         } catch (IOException e) {

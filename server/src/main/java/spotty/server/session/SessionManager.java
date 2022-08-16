@@ -30,10 +30,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static spotty.common.http.HttpHeaders.SPOTTY_SESSION_ID;
 import static spotty.common.utils.ThreadUtils.threadPool;
@@ -68,21 +68,13 @@ public final class SessionManager implements Closeable {
         return new Builder();
     }
 
+    /**
+     * enable session and register session watcher to remove expired
+     */
     public void enableSession() {
         if (disabled) {
             disabled = false;
-
-            executor = Executors.newSingleThreadScheduledExecutor(threadPool("session-checker"));
-            executor.scheduleWithFixedDelay(() -> {
-                final Instant now = Instant.now();
-                final Iterator<Map.Entry<UUID, Session>> iterator = sessions.entrySet().iterator();
-                while (iterator.hasNext()) {
-                    final Session session = iterator.next().getValue();
-                    if (now.isAfter(session.expires())) {
-                        iterator.remove();
-                    }
-                }
-            }, 0, sessionCheckTickDelay, timeUnit);
+            registerSessionWatcher();
         } else {
             LOG.warn("session enabled already");
         }
@@ -112,6 +104,23 @@ public final class SessionManager implements Closeable {
         } catch (Exception e) {
             // ignore
         }
+    }
+
+    /**
+     * session watcher to remove expired ones
+     */
+    private void registerSessionWatcher() {
+        executor = newSingleThreadScheduledExecutor(threadPool("session-checker"));
+        executor.scheduleWithFixedDelay(() -> {
+            final Instant now = Instant.now();
+            final Iterator<Map.Entry<UUID, Session>> iterator = sessions.entrySet().iterator();
+            while (iterator.hasNext()) {
+                final Session session = iterator.next().getValue();
+                if (now.isAfter(session.expires())) {
+                    iterator.remove();
+                }
+            }
+        }, 0, sessionCheckTickDelay, timeUnit);
     }
 
     private Session newSession(SpottyResponse response) {

@@ -31,13 +31,13 @@ class StateHandlerGraphTest extends Specification {
         graph.handleState(READY_TO_WRITE)
 
         then:
-        0 * readyToRead.run()
+        0 * readyToRead.execute()
 
         then:
-        1 * readyToWrite.run()
+        1 * readyToWrite.execute()
 
         then:
-        1 * responseWriteCompleted.run()
+        1 * responseWriteCompleted.execute()
     }
 
     def "should stop execution when action return false in the middle of chain" () {
@@ -57,16 +57,16 @@ class StateHandlerGraphTest extends Specification {
         graph.handleState(READY_TO_READ)
 
         then:
-        1 * readyToRead.run()
+        1 * readyToRead.execute()
 
         then:
-        1 * readyToWrite.run()
+        1 * readyToWrite.execute()
 
         then:
-        1 * responseWriteCompleted.run()
+        1 * responseWriteCompleted.execute()
 
         then:
-        0 * closed.run()
+        0 * closed.execute()
     }
 
     def "should not execute another chain when executing current one" () {
@@ -87,10 +87,10 @@ class StateHandlerGraphTest extends Specification {
         graph.handleState(READY_TO_READ)
 
         then:
-        1 * readyToRead.run()
-        1 * readyToWrite.run()
-        0 * responseWriteCompleted.run()
-        0 * closed.run()
+        1 * readyToRead.execute()
+        1 * readyToWrite.execute()
+        0 * responseWriteCompleted.execute()
+        0 * closed.execute()
     }
 
     def "should execute filter correctly"() {
@@ -113,13 +113,13 @@ class StateHandlerGraphTest extends Specification {
         1 * filter.before()
 
         then:
-        1 * readyToRead.run()
+        1 * readyToRead.execute()
 
         then:
-        1 * readyToWrite.run()
+        1 * readyToWrite.execute()
 
         then:
-        1 * responseWriteCompleted.run()
+        1 * responseWriteCompleted.execute()
 
         then:
         1 * filter.after()
@@ -143,9 +143,9 @@ class StateHandlerGraphTest extends Specification {
 
         then:
         1 * filter.before()
-        0 * readyToRead.run()
-        0 * readyToWrite.run()
-        0 * responseWriteCompleted.run()
+        0 * readyToRead.execute()
+        0 * readyToWrite.execute()
+        0 * responseWriteCompleted.execute()
         0 * filter.after()
     }
 
@@ -170,10 +170,10 @@ class StateHandlerGraphTest extends Specification {
         then:
         0 * filter.before()
         0 * filter.after()
-        0 * readyToRead.run()
-        0 * readyToWrite.run()
-        0 * responseWriteCompleted.run()
-        1 * closed.run()
+        0 * readyToRead.execute()
+        0 * readyToWrite.execute()
+        0 * responseWriteCompleted.execute()
+        1 * closed.execute()
     }
 
     def "should execute graph when trigger 2 head nodes correctly"() {
@@ -194,16 +194,16 @@ class StateHandlerGraphTest extends Specification {
         graph.handleState(READY_TO_READ)
 
         then:
-        2 * readyToRead.run()
-        2 * readyToWrite.run()
-        2 * responseWriteCompleted.run()
-        2 * closed.run()
+        2 * readyToRead.execute()
+        2 * readyToWrite.execute()
+        2 * responseWriteCompleted.execute()
+        2 * closed.execute()
     }
 
     private def action(boolean result) {
         return new Action() {
             @Override
-            boolean run() throws SpottyException {
+            boolean execute() throws SpottyException {
                 return result
             }
         }

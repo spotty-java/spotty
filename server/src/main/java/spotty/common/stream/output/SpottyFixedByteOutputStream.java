@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import static java.lang.Math.min;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * OutputStream with fixed capacity, not thread safe, for single thread use only
@@ -61,7 +62,7 @@ public class SpottyFixedByteOutputStream extends OutputStream {
     }
 
     public void print(String text) {
-        write(text.getBytes());
+        write(text.getBytes(UTF_8));
     }
 
     public void println(String text) {

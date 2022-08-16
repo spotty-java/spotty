@@ -29,6 +29,11 @@ public final class StateHandlerGraph<S extends Enum<S>> {
     private final Map<S, Node> nodes = new HashMap<>();
     private final Map<S, GraphFilter> filters = new HashMap<>();
 
+    /**
+     * find node by state and run chain for given node
+     *
+     * @param state state of object
+     */
     public void handleState(S state) {
         final Node node = nodes.get(state);
         if (node == null) {
@@ -45,10 +50,24 @@ public final class StateHandlerGraph<S extends Enum<S>> {
         }
     }
 
-    public Function<Action, Node> entry(S state, S... states) {
+    /**
+     * create graph entry node
+     *
+     * @param state state of object
+     * @param states states of object
+     * @return function to apply node action
+     */
+    @SafeVarargs
+    public final Function<Action, Node> entry(S state, S... states) {
         return action -> new Node(action, state, states);
     }
 
+    /**
+     * apply filter before and after node action
+     *
+     * @param states states of object
+     * @return function to apply filter for states
+     */
     @SafeVarargs
     public final Function<GraphFilter, StateHandlerGraph<S>> filter(S... states) {
         return filter -> {
@@ -60,10 +79,14 @@ public final class StateHandlerGraph<S extends Enum<S>> {
         };
     }
 
+    /**
+     * graph node
+     */
     public final class Node {
         private final Action action;
         private Node next;
 
+        @SafeVarargs
         private Node(Action action, S state, S... states) {
             this.action = notNull("action", action);
             nodes.put(state, this);
@@ -73,16 +96,23 @@ public final class StateHandlerGraph<S extends Enum<S>> {
             }
         }
 
-        public Function<Action, Node> entry(S state, S... states) {
-            return action -> new Node(action, state, states);
+        @SafeVarargs
+        public final Function<Action, Node> entry(S state, S... states) {
+            return StateHandlerGraph.this.entry(state, states);
         }
 
+        /**
+         * create new graph node and link it to the next of given one
+         *
+         * @param state state of object
+         * @return function to apply node action
+         */
         public Function<Action, Node> node(S state) {
             return action -> next = new Node(action, state);
         }
 
         private void action() {
-            if (this.action.run()) {
+            if (this.action.execute()) {
                 nextAction();
             }
         }
@@ -97,12 +127,12 @@ public final class StateHandlerGraph<S extends Enum<S>> {
 
     @FunctionalInterface
     public interface Action {
-        // if true run next linked action
-        boolean run() throws SpottyException;
+        // if true execute next linked action
+        boolean execute() throws SpottyException;
     }
 
     public interface GraphFilter {
-        // if false then stop execution
+        // if false then stop chain execution
         boolean before();
 
         void after();

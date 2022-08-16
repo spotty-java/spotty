@@ -39,6 +39,9 @@ import static spotty.common.validation.Validation.notBlank;
 import static spotty.common.validation.Validation.notNull;
 import static spotty.server.router.SpottyRouter.DEFAULT_ACCEPT_TYPE;
 
+/**
+ * Main Routing core class
+ */
 @VisibleForTesting
 final class Routable {
     // store handlers by link, so removing from it is also affected this list
@@ -56,17 +59,17 @@ final class Routable {
      */
     final Map<String, Map<HttpMethod, Map<String, RouteEntry>>> routes = new HashMap<>();
 
-    void addRoute(String routePath, HttpMethod method, Route route) {
+    synchronized void addRoute(String routePath, HttpMethod method, Route route) {
         addRoute(routePath, method, DEFAULT_ACCEPT_TYPE, route);
     }
 
-    void addRoute(String routePath, HttpMethod method, String acceptType, Route route) {
+    synchronized void addRoute(String routePath, HttpMethod method, String acceptType, Route route) {
         notNull("method", method);
         notBlank("acceptType", acceptType);
         notNull("route", route);
 
         final String path = notBlank("path is empty", routePath).trim();
-        final RouteEntry routeEntry = RouteEntryCreator.create(path, method, acceptType, route);
+        final RouteEntry routeEntry = RouteEntryFactory.create(path, method, acceptType, route);
 
         final Map<HttpMethod, Map<String, RouteEntry>> routeHandlers = routes.computeIfAbsent(
             routeEntry.pathNormalized(),
@@ -86,19 +89,19 @@ final class Routable {
         routesWithAcceptType.put(acceptType, routeEntry);
     }
 
-    void clearRoutes() {
+    synchronized void clearRoutes() {
         routes.clear();
         sortedList.clear();
     }
 
-    boolean removeRoute(String routePath) {
+    synchronized boolean removeRoute(String routePath) {
         notBlank("routePath", routePath);
 
         final String normalizedPath = normalizePath(routePath);
         return routes.remove(normalizedPath) != null && sortedList.removeByPath(normalizedPath);
     }
 
-    boolean removeRoute(String routePath, HttpMethod method) {
+    synchronized boolean removeRoute(String routePath, HttpMethod method) {
         notBlank("routePath", routePath);
         notNull("method", method);
 
@@ -110,7 +113,7 @@ final class Routable {
         return route.remove(method) != null;
     }
 
-    boolean removeRoute(String routePath, HttpMethod method, String acceptType) {
+    synchronized boolean removeRoute(String routePath, HttpMethod method, String acceptType) {
         notBlank("routePath", routePath);
         notNull("method", method);
         notBlank("acceptType", acceptType);
@@ -167,6 +170,9 @@ final class Routable {
         return emptyMap();
     }
 
+    /**
+     * Sort list by pathNormalized from longest to shortest to search matched route
+     */
     static class SortedList {
         private static final Comparator<Value> FROM_LONGEST_TO_SHORTEST_COMPARATOR =
             (a, b) -> b.pathNormalized.length() - a.pathNormalized.length();

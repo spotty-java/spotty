@@ -244,7 +244,7 @@ public final class Server implements Closeable {
         final Connection connection = new Connection(socket, requestHandler, reactorWorker, exceptionHandlerRegistry, maxRequestBodySize);
         LOG.debug("{} accepted, count={}", connection, connections.incrementAndGet());
 
-        connection.whenStateIs(CLOSED, __ -> {
+        connection.whenStateIs(CLOSED, () -> {
             LOG.debug("{} closed, count={}", connection, connections.decrementAndGet());
         });
 
@@ -263,23 +263,21 @@ public final class Server implements Closeable {
 
         LOG.debug("socket registered {}", connection);
 
-        connection.whenStateIs(READY_TO_WRITE, __ -> {
+        connection.whenStateIs(READY_TO_WRITE, () -> {
             key.interestOps(OP_WRITE);
             key.selector().wakeup();
         });
 
-        connection.whenStateIs(READY_TO_READ, __ -> {
+        connection.whenStateIs(READY_TO_READ, () -> {
             key.interestOps(OP_READ);
             key.selector().wakeup();
         });
 
-        connection.whenStateIs(REQUEST_HANDLING, __ -> {
+        connection.whenStateIs(REQUEST_HANDLING, () -> {
             key.interestOps(OP_CONNECT); // newer connect, make key is waiting ready to write
         });
 
-        connection.whenStateIs(CLOSED, __ -> {
-            key.cancel();
-        });
+        connection.whenStateIs(CLOSED, key::cancel);
 
         // mark connection ready to ready if it's initialized
         if (connection.is(INITIALIZED)) {

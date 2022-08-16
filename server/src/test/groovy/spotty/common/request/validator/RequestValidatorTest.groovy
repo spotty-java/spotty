@@ -5,6 +5,7 @@ import spotty.common.exception.SpottyHttpException
 import spotty.common.request.SpottyDefaultRequest
 import spotty.common.request.WebRequestTestData
 
+import static spotty.Spotty.PROTOCOL_SUPPORT
 import static spotty.common.http.HttpMethod.POST
 import static spotty.common.http.HttpStatus.BAD_REQUEST
 import static spotty.common.validation.Validation.isNotBlank
@@ -76,6 +77,23 @@ class RequestValidatorTest extends Specification implements WebRequestTestData {
         "HTTP/1.1" | "http" | null   | "/"
         "HTTP/1.1" | ""     | POST   | "/"
         ""         | "http" | POST   | "/"
+    }
+
+    def "should fail when protocol does not supported"() {
+        given:
+        var request = new SpottyDefaultRequest()
+            .protocol("HTTP/2.0")
+            .scheme("http")
+            .method(POST)
+            .path("/")
+
+        when:
+        RequestValidator.validate(request)
+
+        then:
+        var e = thrown SpottyHttpException
+        e.status == BAD_REQUEST
+        e.message == "Spotty is supports $PROTOCOL_SUPPORT protocol only"
     }
 
 }

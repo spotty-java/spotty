@@ -26,9 +26,9 @@ import spotty.server.compress.Compressor;
 import spotty.server.router.SpottyRouter;
 import spotty.server.session.SessionManager;
 
-import java.util.Arrays;
 import java.util.Collection;
 
+import static java.util.Arrays.asList;
 import static spotty.common.http.HttpHeaders.ACCEPT;
 import static spotty.common.http.HttpHeaders.CONTENT_ENCODING;
 import static spotty.common.validation.Validation.notNull;
@@ -57,6 +57,7 @@ public final class DefaultRequestHandler implements RequestHandler {
             request.pathParams(routeEntry.parsePathParams(request.path()));
         }
 
+        // if session enabled, should register it for request
         sessionManager.register(request, response);
 
         final Object result;
@@ -79,7 +80,7 @@ public final class DefaultRequestHandler implements RequestHandler {
         if (response.headers().has(CONTENT_ENCODING)) {
             final ContentEncoding contentEncoding = ContentEncoding.of(response.headers().get(CONTENT_ENCODING));
             if (contentEncoding == null) {
-                throw new SpottyException("Spotty supports " + Arrays.asList(ContentEncoding.values()) + " compression");
+                throw new SpottyException("Spotty supports " + asList(ContentEncoding.values()) + " compression");
             }
 
             body = compressor.compress(contentEncoding, body);

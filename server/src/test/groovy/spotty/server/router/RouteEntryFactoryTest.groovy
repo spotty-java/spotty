@@ -7,10 +7,10 @@ import spotty.common.router.route.RouteEntry
 import static spotty.common.http.HttpMethod.GET
 import static spotty.common.utils.RouterUtils.ALL_REPLACEMENT
 import static spotty.common.utils.RouterUtils.PARAM_REPLACEMENT
-import static spotty.server.router.RouteEntryCreator.create
+import static RouteEntryFactory.create
 import static spotty.server.router.SpottyRouter.DEFAULT_ACCEPT_TYPE
 
-class RouteEntryCreatorTest extends Specification {
+class RouteEntryFactoryTest extends Specification {
 
     def "should create route entry correctly"() {
         given:

@@ -5,6 +5,7 @@ import spotty.common.response.SpottyResponse;
 import spotty.common.utils.IOUtils;
 
 import static java.lang.Integer.parseInt;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static spotty.common.http.HttpHeaders.ACCEPT;
 import static spotty.common.http.HttpHeaders.ACCEPT_ENCODING;
 import static spotty.common.http.HttpHeaders.CONNECTION;
@@ -34,7 +35,7 @@ public interface WebRequestTestData {
     String fullRequest = requestHeaders + "\n\n" + requestBody;
 
     default SpottyDefaultRequest aSpottyRequest() {
-        final byte[] content = requestBody.getBytes();
+        final byte[] content = requestBody.getBytes(UTF_8);
         final HttpHeaders headers = this.headers.copy();
 
         final SpottyDefaultRequest request = new SpottyDefaultRequest();
