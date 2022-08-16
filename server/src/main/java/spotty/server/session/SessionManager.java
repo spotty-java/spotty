@@ -139,7 +139,9 @@ public final class SessionManager implements Closeable {
         final UUID sessionId = fromString(rawId);
         return sessions.computeIfAbsent(sessionId, id -> {
             final Session session = new Session(id);
-            session.ttl(defaultSessionTtl);
+            if (defaultSessionTtl > 0) {
+                session.ttl(defaultSessionTtl);
+            }
 
             return session;
         });

@@ -25,12 +25,32 @@ publishing {
             components.java.withVariantsFromConfiguration(configurations.testFixturesRuntimeElements) { skip() }
 
             from components.java
+
+            pom {
+                name = "Spotty"
+                description = "Fast lightweight java web server"
+
+                licenses {
+                    license {
+                        name = "The Apache License, Version 2.0"
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = "lazer-dev"
+                        name = "Alex Danilenko"
+                        email = "alex.danilenko.dev@gmail.com"
+                    }
+                }
+            }
         }
     }
 }
 
 // generate SpottyVersion file
-def spottySrc = "$buildDir/generated/sources/spotty/java/main"
+def spottySrc = "$buildDir/generated/sources/spotty/java"
 sourceSets {
     main {
         java {

@@ -184,7 +184,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
             .node(HEADERS_READY_TO_READ).apply(() -> changeState(READING_HEADERS))
             .node(READING_HEADERS).apply(this::readHeaders)
             .node(PREPARE_HEADERS).apply(this::prepareHeaders)
-            .node(BODY_READY_TO_READ).apply(() -> changeState(READING_BODY))
+            .node(BODY_READY_TO_READ).apply(this::bodyReadyToRead)
             .node(READING_BODY).apply(this::readBody)
             .node(BODY_READY).apply(this::finishBuildRequest)
             .node(REQUEST_READY).apply(this::requestHandling)
@@ -267,6 +267,11 @@ public final class Connection extends StateMachine<ConnectionState> implements C
         return getClass().getSimpleName() + "[id=" + id + "]";
     }
 
+    /**
+     * first step for request, prepare it for next actions
+     *
+     * @return true when state was changed, false - action is not ready
+     */
     private boolean prepareRequest() {
         checkStateIsOneOf(DATA_REMAINING, READY_TO_READ);
 
@@ -287,6 +292,11 @@ public final class Connection extends StateMachine<ConnectionState> implements C
         }
     }
 
+    /**
+     * read first request line, ex: POST / HTTP/1.1
+     *
+     * @return true when state was changed, false - action is not ready
+     */
     private boolean readRequestHeadLine() {
         checkStateIs(READING_REQUEST_HEAD_LINE);
 
@@ -312,6 +322,11 @@ public final class Connection extends StateMachine<ConnectionState> implements C
         return false;
     }
 
+    /**
+     * read headers and parse it
+     *
+     * @return true when state was changed, false - action is not ready
+     */
     private boolean readHeaders() {
         checkStateIs(READING_HEADERS);
 
@@ -340,6 +355,11 @@ public final class Connection extends StateMachine<ConnectionState> implements C
         return false;
     }
 
+    /**
+     *  after read and parse all headers, prepare and validate it to next actions
+     *
+     * @return true when state was changed, false - action is not ready
+     */
     private boolean prepareHeaders() {
         checkStateIs(PREPARE_HEADERS);
 
@@ -364,15 +384,20 @@ public final class Connection extends StateMachine<ConnectionState> implements C
         return changeState(BODY_READY_TO_READ);
     }
 
-    private boolean readBody() {
-        checkStateIs(READING_BODY);
-
-        if (request.contentLength() == 0 && readBuffer.hasRemaining()) {
-            throw new SpottyHttpException(BAD_REQUEST, "invalid request, content-length is 0, but body not empty");
-        }
+    /**
+     * prepare and validate body
+     *
+     * @return true when state was changed, false - action is not ready
+     */
+    private boolean bodyReadyToRead() {
+        checkStateIs(BODY_READY_TO_READ);
 
         if (request.contentLength() > maxRequestBodySize) {
             throw new SpottyHttpException(BAD_REQUEST, "maximum body size is %s bytes, but sent %s", maxRequestBodySize, request.contentLength());
+        }
+
+        if (request.contentLength() == 0 && readBuffer.hasRemaining()) {
+            throw new SpottyHttpException(BAD_REQUEST, "invalid request, content-length is 0, but body not empty");
         }
 
         if (request.contentLength() > body.capacity()) {
@@ -382,6 +407,17 @@ public final class Connection extends StateMachine<ConnectionState> implements C
         if (request.contentLength() >= 0 && body.limit() != request.contentLength()) {
             body.limit(request.contentLength());
         }
+
+        return changeState(READING_BODY);
+    }
+
+    /**
+     * reading body for fixed content-length
+     *
+     * @return true when state was changed, false - action is not ready
+     */
+    private boolean readBody() {
+        checkStateIs(READING_BODY);
 
         if (readBuffer.hasRemaining()) {
             body.writeRemaining(readBuffer);
@@ -398,11 +434,20 @@ public final class Connection extends StateMachine<ConnectionState> implements C
         checkStateIs(BODY_READY);
 
         request.body(body.toByteArray());
-        resetBuilders();
+
+        body.capacity(DEFAULT_BUFFER_SIZE);
+        body.reset();
+
+        line.reset();
 
         return changeState(REQUEST_READY);
     }
 
+    /**
+     * run async request handling
+     *
+     * @return false - stop graph execution, because request handling asynchronously
+     */
     private boolean requestHandling() {
         checkStateIs(REQUEST_READY);
 
@@ -422,6 +467,11 @@ public final class Connection extends StateMachine<ConnectionState> implements C
         changeState(READY_TO_WRITE);
     };
 
+    /**
+     *  preparing response to write to the socket
+     *
+     * @return true when state was changed, false - action is not ready
+     */
     private boolean readyToWrite() {
         checkStateIs(READY_TO_WRITE);
 
@@ -468,13 +518,6 @@ public final class Connection extends StateMachine<ConnectionState> implements C
         }
 
         return false;
-    }
-
-    private void resetBuilders() {
-        body.capacity(DEFAULT_BUFFER_SIZE);
-        body.reset();
-
-        line.reset();
     }
 
     private void resetResponse() {
