@@ -43,9 +43,9 @@ class SpottyDefaultRequestTest extends Specification {
             .session(session)
             .body(body)
             .addHeaders(headers)
-            .host(host)
-            .ip(ip)
-            .port(port)
+            .host { host }
+            .ip { ip }
+            .port { port }
             .attach(attachment)
     }
 

@@ -44,9 +44,7 @@ public final class IOUtils {
     }
 
     public static byte[] toByteArray(InputStream in) {
-        try {
-            final SpottyByteArrayOutputStream out = new SpottyByteArrayOutputStream();
-
+        try (final SpottyByteArrayOutputStream out = new SpottyByteArrayOutputStream()) {
             int read;
             final byte[] data = new byte[2048];
             while ((read = in.read(data)) != -1) {

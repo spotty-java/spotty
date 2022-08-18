@@ -209,6 +209,7 @@ public final class Server implements Closeable {
                     if (!key.isValid()) {
                         final Connection connection = (Connection) key.attachment();
                         connection.close();
+                        key.cancel();
 
                         continue;
                     }

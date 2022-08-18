@@ -13,5 +13,8 @@ public class App {
             response.contentType(request.contentType());
             return request.body();
         });
+
+        spotty.get("/request", (request, response) -> request);
+        spotty.post("/request", (request, response) -> request);
     }
 }
