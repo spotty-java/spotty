@@ -55,10 +55,9 @@ public enum HttpMethod {
      *
      * @param method the method value as a String
      * @return the corresponding {@code HttpMethod}, or {@code null} if not found
-     * @since 4.2.4
      */
     public static HttpMethod resolve(String method) {
-        return (method != null ? MAPPINGS.get(method) : null);
+        return MAPPINGS.get(method);
     }
 
     /**
@@ -66,7 +65,6 @@ public enum HttpMethod {
      *
      * @param method the HTTP method as a String
      * @return {@code true} if it matches, {@code false} otherwise
-     * @since 4.2.4
      */
     public boolean matches(String method) {
         return name().equals(method);

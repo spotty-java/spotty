@@ -102,4 +102,9 @@ public final class QueryParams {
     public int hashCode() {
         return params.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return params.toString();
+    }
 }

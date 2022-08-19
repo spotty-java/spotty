@@ -15,37 +15,46 @@
  */
 package spotty.common.response;
 
+import spotty.common.http.HttpHeaders;
 import spotty.common.stream.output.SpottyByteArrayOutputStream;
 
-import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
-import static spotty.common.http.HttpHeaders.CONTENT_TYPE;
-import static spotty.common.http.HttpHeaders.SET_COOKIE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Single thread use only
  */
 public final class ResponseWriter {
-    private static final String HEADER_SPLITTER = ": ";
+    private static final byte[] HEADER_SPLITTER = ": ".getBytes(UTF_8);
+    private static final byte[] SPACE = " ".getBytes(UTF_8);
+    private static final byte[] CONTENT_LENGTH = HttpHeaders.CONTENT_LENGTH.getBytes(UTF_8);
+    private static final byte[] CONTENT_TYPE = HttpHeaders.CONTENT_TYPE.getBytes(UTF_8);
+    private static final byte[] SET_COOKIE = HttpHeaders.SET_COOKIE.getBytes(UTF_8);
 
     private final SpottyByteArrayOutputStream writer = new SpottyByteArrayOutputStream(2048);
 
     public byte[] write(SpottyResponse response) {
         try {
-            writer.println(response.protocol() + " " + response.status());
-            writer.println(CONTENT_LENGTH + HEADER_SPLITTER + response.contentLength());
+            writer.print(response.protocol().code); writer.write(SPACE); writer.print(response.status().toString());
+            writer.println();
+
+            writer.write(CONTENT_LENGTH); writer.write(HEADER_SPLITTER); writer.print(Integer.toString(response.contentLength()));
+            writer.println();
 
             if (response.contentType() != null) {
-                writer.println(CONTENT_TYPE + HEADER_SPLITTER + response.contentType());
+                writer.write(CONTENT_TYPE); writer.write(HEADER_SPLITTER); writer.print(response.contentType());
+                writer.println();
             }
 
             response.headers()
                 .forEach((name, value) -> {
-                    writer.println(name + HEADER_SPLITTER + value);
+                    writer.print(name); writer.write(HEADER_SPLITTER); writer.print(value);
+                    writer.println();
                 });
 
-            response.cookies
+            response.cookies()
                 .forEach(cookie -> {
-                    writer.println(SET_COOKIE + HEADER_SPLITTER + cookie);
+                    writer.write(SET_COOKIE); writer.write(HEADER_SPLITTER); writer.print(cookie.toString());
+                    writer.println();
                 });
 
             writer.println();

@@ -20,17 +20,76 @@ import static spotty.common.validation.Validation.isNotNull;
 import static spotty.common.validation.Validation.notBlank;
 import static spotty.common.validation.Validation.notNull;
 
+/**
+ * An HTTP cookie (web cookie, browser cookie) is a small piece of data that a server sends to a user's web browser.
+ * The browser may store the cookie and send it back to the same server with later requests.
+ * Typically, an HTTP cookie is used to tell if two requests come from the same browser—keeping a user logged in,
+ * for example. It remembers stateful information for the stateless HTTP protocol.
+ *
+ * Immutable thread safe cookie object
+ */
 public final class Cookie {
+    /**
+     * cookie name
+     */
     private final String name;
+
+    /**
+     * cookie value
+     */
     private final String value;
+
+    /**
+     * Defines the host to which the cookie will be sent.
+     * If omitted, this attribute defaults to the host of the current document URL, not including subdomains.
+     * Contrary to earlier specifications, leading dots in domain names (.example.com) are ignored.
+     * Multiple host/domain values are not allowed, but if a domain is specified, then subdomains are always included.
+     */
     private final String domain;
+
+    /**
+     * Indicates the number of seconds until the cookie expires.
+     * A zero or negative number will expire the cookie immediately.
+     * If both Expires and Max-Age are set, Max-Age has precedence.
+     */
     private final Long maxAge;
+
+    /**
+     * Indicates the path that must exist in the requested URL for the browser to send the Cookie header.
+     * The forward slash (/) character is interpreted as a directory separator,
+     * and subdirectories are matched as well.
+     */
     private final String path;
+
+    /**
+     * <p>The SameSite attribute lets servers specify whether/when cookies are sent with cross-site requests
+     * (where Site is defined by the registrable domain and the scheme: http or https).
+     * This provides some protection against cross-site request forgery attacks (CSRF).
+     * It takes three possible values: Strict, Lax, and None.</p>
+     *
+     * <p>With Strict, the cookie is only sent to the site where it originated.
+     * Lax is similar, except that cookies are sent when the user navigates to the cookie's origin site.
+     * For example, by following a link from an external site.
+     * None specifies that cookies are sent on both originating and cross-site requests,
+     * but only in secure contexts (i.e., if SameSite=None then the Secure attribute must also be set).
+     * If no SameSite attribute is set, the cookie is treated as Lax.</p>
+     */
     private final SameSite sameSite;
+
+    /**
+     * Indicates that the cookie is sent to the server only
+     * when a request is made with the https: scheme (except on localhost), and therefore,
+     * is more resistant to man-in-the-middle attacks.
+     */
     private final boolean secure;
+
+    /**
+     * Use the HttpOnly attribute to prevent access to cookie values via JavaScript.
+     */
     private final boolean httpOnly;
 
     private final String toString;
+    private final int hashCode;
 
     private Cookie(Builder builder) {
         this.name = notBlank("name", builder.name);
@@ -43,6 +102,7 @@ public final class Cookie {
         this.httpOnly = builder.httpOnly;
 
         this.toString = buildString();
+        this.hashCode = toString.hashCode();
     }
 
     public static Builder builder() {
@@ -88,7 +148,7 @@ public final class Cookie {
 
     @Override
     public int hashCode() {
-        return toString.hashCode();
+        return hashCode;
     }
 
     @Override

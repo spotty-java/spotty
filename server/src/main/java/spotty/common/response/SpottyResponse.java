@@ -18,6 +18,7 @@ package spotty.common.response;
 import spotty.common.cookie.Cookie;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.http.HttpHeaders;
+import spotty.common.http.HttpProtocol;
 import spotty.common.http.HttpStatus;
 
 import java.util.ArrayList;
@@ -25,10 +26,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static spotty.common.http.ConnectionValue.CLOSE;
 import static spotty.common.http.HttpHeaders.CONNECTION;
 import static spotty.common.http.HttpHeaders.LOCATION;
+import static spotty.common.http.HttpProtocol.HTTP_1_1;
 import static spotty.common.http.HttpStatus.MOVED_PERMANENTLY;
 import static spotty.common.http.HttpStatus.OK;
 import static spotty.common.validation.Validation.validate;
@@ -36,42 +39,66 @@ import static spotty.common.validation.Validation.validate;
 public final class SpottyResponse {
     private static final String DEFAULT_CONTENT_TYPE = "text/plain";
 
-    private final String protocol = "HTTP/1.1";
+    private final HttpProtocol protocol = HTTP_1_1;
 
     private HttpStatus status = OK;
     private String contentType = DEFAULT_CONTENT_TYPE;
     private byte[] body;
 
-    List<Cookie> cookies = emptyList();
+    private List<Cookie> cookies = emptyList();
 
     private final HttpHeaders headers = new HttpHeaders();
 
-    public String protocol() {
+    public HttpProtocol protocol() {
         return protocol;
     }
 
+    /**
+     * @return http status
+     */
     public HttpStatus status() {
         return status;
     }
 
+    /**
+     * Sets HTTP status for response
+     *
+     * @param status http status
+     * @return Response object
+     */
     public SpottyResponse status(HttpStatus status) {
         this.status = status;
         return this;
     }
 
+    /**
+     * @return content-type
+     */
     public String contentType() {
         return contentType;
     }
 
+    /**
+     * Sets http content-type for response
+     *
+     * @param contentType http content-type
+     * @return Response object
+     */
     public SpottyResponse contentType(String contentType) {
         this.contentType = contentType;
         return this;
     }
 
+    /**
+     * @return body as bytes array
+     */
     public byte[] body() {
         return body;
     }
 
+    /**
+     * @return body as string
+     */
     public String bodyAsString() {
         if (body == null) {
             return "";
@@ -80,43 +107,89 @@ public final class SpottyResponse {
         return new String(body);
     }
 
+    /**
+     * Sets body
+     *
+     * @param body string content
+     * @return Response object
+     */
     public SpottyResponse body(String body) {
-        return body(body == null ? null : body.getBytes());
+        return body(body == null ? null : body.getBytes(UTF_8));
     }
 
+    /**
+     * Sets body
+     *
+     * @param body bytes array
+     * @return Response object
+     */
     public SpottyResponse body(byte[] body) {
         this.body = body;
         return this;
     }
 
+    /**
+     * @return content-length
+     */
     public int contentLength() {
         return body == null ? 0 : body.length;
     }
 
+    /**
+     * @return all http headers
+     */
     public HttpHeaders headers() {
         return headers;
     }
 
+    /**
+     * Add header to response
+     *
+     * @param name  name of header
+     * @param value value of header
+     * @return Response object
+     */
     public SpottyResponse addHeader(String name, String value) {
         this.headers.add(name, value);
         return this;
     }
 
+    /**
+     * Add headers to response
+     *
+     * @param headers all headers to add
+     * @return Response object
+     */
     public SpottyResponse addHeaders(HttpHeaders headers) {
         this.headers.add(headers);
         return this;
     }
 
+    /**
+     * Replace all headers to given
+     *
+     * @param headers headers replacement
+     * @return Response object
+     */
     public SpottyResponse replaceHeaders(HttpHeaders headers) {
         this.headers.clear();
         this.headers.add(headers);
         return this;
     }
 
+    /**
+     * @return all cookies
+     */
     public List<Cookie> cookies() {
         return cookies;
     }
 
+    /**
+     * Add cookie to response
+     *
+     * @param cookie object to add
+     * @return Response object
+     */
     public SpottyResponse addCookie(Cookie cookie) {
         final List<Cookie> emptyCookies = emptyList();
         if (this.cookies == emptyCookies) {
@@ -127,6 +200,13 @@ public final class SpottyResponse {
         return this;
     }
 
+    /**
+     * Adds not persistent cookie to the response.
+     * Can be invoked multiple times to insert more than one cookie.
+     *
+     * @param name  name of the cookie
+     * @param value value of the cookie
+     */
     public SpottyResponse cookie(String name, String value) {
         return addCookie(Cookie.builder()
             .name(name)
@@ -134,6 +214,14 @@ public final class SpottyResponse {
             .build());
     }
 
+    /**
+     * Adds not persistent cookie to the response.
+     * Can be invoked multiple times to insert more than one cookie.
+     *
+     * @param name   name of the cookie
+     * @param value  value of the cookie
+     * @param maxAge max age of the cookie in seconds (zero - deletes the cookie)
+     */
     public SpottyResponse cookie(String name, String value, int maxAge) {
         return addCookie(Cookie.builder()
             .name(name)
@@ -142,6 +230,15 @@ public final class SpottyResponse {
             .build());
     }
 
+    /**
+     * Adds not persistent cookie to the response.
+     * Can be invoked multiple times to insert more than one cookie.
+     *
+     * @param name    name of the cookie
+     * @param value   value of the cookie
+     * @param maxAge  max age of the cookie in seconds (zero - deletes the cookie)
+     * @param secured if true : cookie will be secured
+     */
     public SpottyResponse cookie(String name, String value, int maxAge, boolean secured) {
         return addCookie(Cookie.builder()
             .name(name)
@@ -151,6 +248,16 @@ public final class SpottyResponse {
             .build());
     }
 
+    /**
+     * Adds not persistent cookie to the response.
+     * Can be invoked multiple times to insert more than one cookie.
+     *
+     * @param name     name of the cookie
+     * @param value    value of the cookie
+     * @param maxAge   max age of the cookie in seconds (zero - deletes the cookie)
+     * @param secured  if true : cookie will be secured
+     * @param httpOnly if true: cookie will be marked as http only
+     */
     public SpottyResponse cookie(String name, String value, int maxAge, boolean secured, boolean httpOnly) {
         return addCookie(Cookie.builder()
             .name(name)
@@ -161,6 +268,16 @@ public final class SpottyResponse {
             .build());
     }
 
+    /**
+     * Adds not persistent cookie to the response.
+     * Can be invoked multiple times to insert more than one cookie.
+     *
+     * @param path    path of the cookie
+     * @param name    name of the cookie
+     * @param value   value of the cookie
+     * @param maxAge  max age of the cookie in seconds (zero - deletes the cookie)
+     * @param secured if true : cookie will be secured
+     */
     public SpottyResponse cookie(String path, String name, String value, int maxAge, boolean secured) {
         return addCookie(Cookie.builder()
             .name(name)
@@ -171,6 +288,17 @@ public final class SpottyResponse {
             .build());
     }
 
+    /**
+     * Adds not persistent cookie to the response.
+     * Can be invoked multiple times to insert more than one cookie.
+     *
+     * @param path     path of the cookie
+     * @param name     name of the cookie
+     * @param value    value of the cookie
+     * @param maxAge   max age of the cookie in seconds (zero - deletes the cookie)
+     * @param secured  if true : cookie will be secured
+     * @param httpOnly if true: cookie will be marked as http only
+     */
     public SpottyResponse cookie(String path, String name, String value, int maxAge, boolean secured, boolean httpOnly) {
         return addCookie(Cookie.builder()
             .name(name)
@@ -182,6 +310,18 @@ public final class SpottyResponse {
             .build());
     }
 
+    /**
+     * Adds not persistent cookie to the response.
+     * Can be invoked multiple times to insert more than one cookie.
+     *
+     * @param domain   domain of the cookie
+     * @param path     path of the cookie
+     * @param name     name of the cookie
+     * @param value    value of the cookie
+     * @param maxAge   max age of the cookie in seconds (zero - deletes the cookie)
+     * @param secured  if true : cookie will be secured
+     * @param httpOnly if true: cookie will be marked as http only
+     */
     public SpottyResponse cookie(String domain, String path, String name, String value, int maxAge, boolean secured, boolean httpOnly) {
         return addCookie(Cookie.builder()
             .name(name)
@@ -194,10 +334,21 @@ public final class SpottyResponse {
             .build());
     }
 
+    /**
+     * Removes the cookie.
+     *
+     * @param name name of the cookie
+     */
     public SpottyResponse removeCookie(String name) {
         return removeCookie(null, name);
     }
 
+    /**
+     * Removes the cookie.
+     *
+     * @param path path of the cookie
+     * @param name name of the cookie
+     */
     public SpottyResponse removeCookie(String path, String name) {
         return addCookie(
             Cookie.builder()
@@ -208,19 +359,30 @@ public final class SpottyResponse {
         );
     }
 
-    public void redirect(String path) {
-        redirect(path, MOVED_PERMANENTLY);
+    /**
+     * Trigger a browser redirect
+     *
+     * @param location where to redirect permanently
+     */
+    public void redirect(String location) {
+        redirect(location, MOVED_PERMANENTLY);
     }
 
-    public void redirect(String path, HttpStatus status) {
+    /**
+     * Trigger a browser redirect with specific http 3XX status code.
+     *
+     * @param location where to redirect
+     * @param status   the http status code
+     */
+    public void redirect(String location, HttpStatus status) {
         validate(status.is3xxRedirection(), "redirection statuses allowed only");
 
         this.status = status;
-        headers.add(LOCATION, path);
+        headers.add(LOCATION, location);
 
         // if path starts from "http" more likely it means that
         // client will be redirected to different server, so we can close the connection
-        if (path.startsWith("http")) {
+        if (location.startsWith("http")) {
             headers.add(CONNECTION, CLOSE.code);
         }
 
@@ -228,6 +390,9 @@ public final class SpottyResponse {
         throw new SpottyHttpException(status);
     }
 
+    /**
+     * reset to empty response
+     */
     public void reset() {
         status = OK;
         contentType = DEFAULT_CONTENT_TYPE;
@@ -240,7 +405,7 @@ public final class SpottyResponse {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SpottyResponse that = (SpottyResponse) o;
+        final SpottyResponse that = (SpottyResponse) o;
 
         return Objects.equals(protocol, that.protocol)
             && status == that.status

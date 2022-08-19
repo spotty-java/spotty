@@ -18,8 +18,10 @@ package spotty.server.connection;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyStreamException;
+import spotty.common.http.HttpProtocol;
 import spotty.common.request.SpottyDefaultRequest;
 import spotty.common.request.params.QueryParams;
 import spotty.common.response.ResponseWriter;
@@ -46,8 +48,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.util.stream.Collectors.joining;
 import static spotty.common.http.ConnectionValue.CLOSE;
 import static spotty.common.http.HttpHeaders.CONNECTION;
 import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
@@ -59,6 +64,7 @@ import static spotty.common.utils.HeaderUtils.parseContentLength;
 import static spotty.common.utils.HeaderUtils.parseCookies;
 import static spotty.common.utils.HeaderUtils.parseHttpMethod;
 import static spotty.common.utils.HeaderUtils.parseUri;
+import static spotty.common.utils.Memoized.lazy;
 import static spotty.common.validation.Validation.notNull;
 import static spotty.server.connection.state.ConnectionState.BODY_READY;
 import static spotty.server.connection.state.ConnectionState.BODY_READY_TO_READ;
@@ -98,7 +104,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
 
     private final StateHandlerGraph<ConnectionState> stateHandlerGraph = new StateHandlerGraph<>();
 
-    private final SpottySocket socket;
+    private SpottySocket socket;
     private final ReactorWorker reactorWorker;
     private final ExceptionHandlerRegistry exceptionHandlerRegistry;
     private final int maxRequestBodySize;
@@ -128,7 +134,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
         this.exceptionHandlerRegistry = notNull("exceptionHandlerService", exceptionHandlerRegistry);
         this.maxRequestBodySize = maxRequestBodySize;
 
-        this.readBuffer = ByteBuffer.allocateDirect(bufferSize);
+        this.readBuffer = ByteBuffer.allocate(bufferSize);
 
         this.stateHandlerGraph
             .filter(
@@ -156,9 +162,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
                             }
 
                             // prepare buffer to read
-                            if (readBuffer.position() > 0) {
-                                readBuffer.flip();
-                            }
+                            readBuffer.flip();
 
                             return true;
                         } catch (IOException e) {
@@ -275,22 +279,54 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     private boolean prepareRequest() {
         checkStateIsOneOf(DATA_REMAINING, READY_TO_READ);
 
+        request.host(getSocketHost);
+        request.ip(getSocketIP);
+        request.port(getSocketPort);
+
+        return changeState(READING_REQUEST_HEAD_LINE);
+    }
+
+    /**
+     * read socket host is expensive operation, for optimization use supplier to calculate it as lazy pattern.
+     * Store host supplier as class variable to not spawn objects each time
+     */
+    private final Supplier<String> getSocketHost = lazy(() -> {
         try {
             final InetSocketAddress remoteAddress = (InetSocketAddress) socket.getRemoteAddress();
-            request
-                .host(remoteAddress.getHostName())
-                .ip(remoteAddress.getAddress().getHostAddress())
-                .port(remoteAddress.getPort())
-            ;
 
-            return changeState(READING_REQUEST_HEAD_LINE);
+            return remoteAddress.getHostName();
         } catch (IOException e) {
-            LOG.error("read socket error", e);
-            close();
-
-            return false;
+            throw new SpottyException("read socket host error", e);
         }
-    }
+    });
+
+    /**
+     * read socket ip is expensive operation, for optimization use supplier to calculate it as lazy pattern.
+     * Store ip supplier as class variable to not spawn objects each time
+     */
+    private final Supplier<String> getSocketIP = lazy(() -> {
+        try {
+            final InetSocketAddress remoteAddress = (InetSocketAddress) socket.getRemoteAddress();
+
+            return remoteAddress.getAddress().getHostAddress();
+        } catch (IOException e) {
+            throw new SpottyException("read socket ip error", e);
+        }
+    });
+
+    /**
+     * read socket port is expensive operation, for optimization use supplier to calculate it as lazy pattern.
+     * Store port supplier as class variable to not spawn objects each time
+     */
+    private final IntSupplier getSocketPort = lazy(() -> {
+        try {
+            final InetSocketAddress remoteAddress = (InetSocketAddress) socket.getRemoteAddress();
+
+            return remoteAddress.getPort();
+        } catch (IOException e) {
+            throw new SpottyException("read socket port error", e);
+        }
+    });
 
     /**
      * read first request line, ex: POST / HTTP/1.1
@@ -356,7 +392,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     }
 
     /**
-     *  after read and parse all headers, prepare and validate it to next actions
+     * after read and parse all headers, prepare and validate it to next actions
      *
      * @return true when state was changed, false - action is not ready
      */
@@ -468,7 +504,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     };
 
     /**
-     *  preparing response to write to the socket
+     * preparing response to write to the socket
      *
      * @return true when state was changed, false - action is not ready
      */
@@ -533,6 +569,15 @@ public final class Connection extends StateMachine<ConnectionState> implements C
             throw new SpottyHttpException(BAD_REQUEST, "invalid request head line: %s", line);
         }
 
+        final HttpProtocol protocol = HttpProtocol.of(method[2]);
+        if (protocol == null) {
+            throw new SpottyHttpException(
+                BAD_REQUEST,
+                "Spotty is supports %s protocols only",
+                HttpProtocol.VALUES.stream().map(p -> p.code).collect(joining(", "))
+            );
+        }
+
         final String scheme = method[2].split("/")[0].toLowerCase();
         final URI uri = parseUri(method[1]);
 
@@ -541,7 +586,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
             .method(parseHttpMethod(method[0]))
             .path(uri.getPath())
             .queryParams(QueryParams.parse(uri.getQuery()))
-            .protocol(method[2])
+            .protocol(protocol)
         ;
     }
 

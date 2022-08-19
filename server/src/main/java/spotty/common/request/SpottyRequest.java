@@ -17,52 +17,125 @@ package spotty.common.request;
 
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
+import spotty.common.http.HttpProtocol;
 import spotty.common.session.Session;
 
 import java.util.Map;
 import java.util.Set;
 
 public interface SpottyRequest {
-    String protocol();
+    /**
+     * @return request protocol
+     */
+    HttpProtocol protocol();
 
+    /**
+     * @return request scheme (http)
+     */
     String scheme();
 
+    /**
+     * @return request HTTP method
+     */
     HttpMethod method();
 
+    /**
+     * @return request path
+     */
     String path();
 
+    /**
+     * @return request content-length
+     */
     int contentLength();
 
+    /**
+     * @return request content-type
+     */
     String contentType();
 
+    /**
+     * @return host of client
+     */
     String host();
 
+    /**
+     * @return ip of client
+     */
     String ip();
 
+    /**
+     * @return port of client
+     */
     int port();
 
+    /**
+     * @return map of all request cookies
+     */
     Map<String, String> cookies();
 
+    /**
+     * @return request http headers
+     */
     HttpHeaders headers();
 
+    /**
+     * map containing all route params
+     *
+     * @return request path params
+     */
     Map<String, String> params();
 
+    /**
+     * Returns the value of the provided route pattern parameter.
+     * Example: parameter 'name' from the following pattern: (get '/hello/:name')
+     *
+     * @param name param name
+     * @return null if the given param is null or not found
+     */
     String param(String name);
 
+    /**
+     * @return all request query parameters
+     */
     Map<String, Set<String>> queryParamsMap();
 
+    /**
+     * @return all query param names
+     */
     Set<String> queryParams();
 
+    /**
+     * @return query param values
+     */
     Set<String> queryParams(String name);
 
+    /**
+     * @param name query param name
+     * @return query param value
+     */
     String queryParam(String name);
 
+    /**
+     * set an attachment object (can be fetched in filters/routes later in the chain)
+     */
     void attach(Object attachment);
 
+    /**
+     * @return attachment object
+     */
     Object attachment();
 
+    /**
+     * Returns the current session associated with this request, or null if session disabled
+     *
+     * @return the session associated with this request or <code>null</code> if session disabled
+     */
     Session session();
 
+    /**
+     * @return request body as bytes
+     */
     byte[] body();
 
 }

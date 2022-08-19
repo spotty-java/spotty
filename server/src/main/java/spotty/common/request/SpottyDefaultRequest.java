@@ -17,6 +17,7 @@ package spotty.common.request;
 
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
+import spotty.common.http.HttpProtocol;
 import spotty.common.request.params.PathParams;
 import spotty.common.request.params.QueryParams;
 import spotty.common.session.Session;
@@ -25,13 +26,15 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 import static java.util.Collections.emptyMap;
 import static spotty.common.validation.Validation.notBlank;
 import static spotty.common.validation.Validation.notNull;
 
 public final class SpottyDefaultRequest implements SpottyRequest {
-    private String protocol;
+    private HttpProtocol protocol;
     private String scheme;
     private HttpMethod method;
     private String path;
@@ -39,9 +42,9 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     private PathParams pathParams = PathParams.EMPTY;
     private int contentLength;
     private String contentType;
-    private String host;
-    private String ip;
-    private int port;
+    private Supplier<String> host;
+    private Supplier<String> ip;
+    private IntSupplier port;
     private Map<String, String> cookies = emptyMap();
     private Session session;
     private byte[] body;
@@ -50,12 +53,12 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     private final HttpHeaders headers = new HttpHeaders();
 
     @Override
-    public String protocol() {
+    public HttpProtocol protocol() {
         return protocol;
     }
 
-    public SpottyDefaultRequest protocol(String protocol) {
-        this.protocol = notBlank("protocol", protocol);
+    public SpottyDefaultRequest protocol(HttpProtocol protocol) {
+        this.protocol = notNull("protocol", protocol);
         return this;
     }
 
@@ -111,30 +114,30 @@ public final class SpottyDefaultRequest implements SpottyRequest {
 
     @Override
     public String host() {
-        return host;
+        return host.get();
     }
 
-    public SpottyDefaultRequest host(String host) {
-        this.host = notBlank("host", host);
+    public SpottyDefaultRequest host(Supplier<String> host) {
+        this.host = notNull("host", host);
         return this;
     }
 
     @Override
     public String ip() {
-        return ip;
+        return ip.get();
     }
 
-    public SpottyDefaultRequest ip(String ip) {
-        this.ip = notBlank("ip", ip);
+    public SpottyDefaultRequest ip(Supplier<String> ip) {
+        this.ip = notNull("ip", ip);
         return this;
     }
 
     @Override
     public int port() {
-        return port;
+        return port.getAsInt();
     }
 
-    public SpottyDefaultRequest port(int port) {
+    public SpottyDefaultRequest port(IntSupplier port) {
         this.port = port;
         return this;
     }
@@ -254,7 +257,7 @@ public final class SpottyDefaultRequest implements SpottyRequest {
         contentType = null;
         host = null;
         ip = null;
-        port = 0;
+        port = null;
         body = null;
         headers.clear();
         cookies = emptyMap();
@@ -262,10 +265,39 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     }
 
     @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[\n" +
+            "protocol=" + protocol + '\n' +
+            "method=" + method + '\n' +
+            "path=" + path + '\n' +
+            "queryParams=" + queryParams + '\n' +
+            "pathParams=" + pathParams + '\n' +
+            "contentLength=" + contentLength + '\n' +
+            "contentType=" + contentType + '\n' +
+            "host=" + (host == null ? "" : host.get()) + '\n' +
+            "ip=" + (ip == null ? "" : ip.get()) + '\n' +
+            "port=" + (port == null ? "" : port.getAsInt()) + '\n' +
+            "cookies=" + cookies + '\n' +
+            "session=" + session + '\n' +
+            "body=" + new String(body) + '\n' +
+            "attachment=" + attachment + '\n' +
+            "headers={\n" + headers + "\n}\n" +
+            "]";
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SpottyDefaultRequest that = (SpottyDefaultRequest) o;
+
+        final String host = this.host == null ? null : this.host.get();
+        final String ip = this.ip == null ? null : this.ip.get();
+        final int port = this.port == null ? 0 : this.port.getAsInt();
+
+        final String thatHost = this.host == null ? null : this.host.get();
+        final String thatIp = this.ip == null ? null : this.ip.get();
+        final int thatPort = this.port == null ? 0 : this.port.getAsInt();
 
         return contentLength == that.contentLength
             && Objects.equals(protocol, that.protocol)
@@ -275,9 +307,9 @@ public final class SpottyDefaultRequest implements SpottyRequest {
             && Objects.equals(pathParams, that.pathParams)
             && Objects.equals(path, that.path)
             && Objects.equals(contentType, that.contentType)
-            && Objects.equals(host, that.host)
-            && Objects.equals(ip, that.ip)
-            && port == that.port
+            && Objects.equals(host, thatHost)
+            && Objects.equals(ip, thatIp)
+            && port == thatPort
             && Arrays.equals(body, that.body)
             && Objects.equals(headers, that.headers)
             && Objects.equals(cookies, that.cookies)
@@ -286,6 +318,10 @@ public final class SpottyDefaultRequest implements SpottyRequest {
 
     @Override
     public int hashCode() {
+        final String host = this.host == null ? null : this.host.get();
+        final String ip = this.ip == null ? null : this.ip.get();
+        final int port = this.port == null ? 0 : this.port.getAsInt();
+
         int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, host, ip, port, headers, cookies, session);
         result = 31 * result + Arrays.hashCode(body);
         return result;

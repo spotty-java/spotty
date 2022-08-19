@@ -5,6 +5,7 @@ import spotty.common.response.SpottyResponse;
 import spotty.common.utils.IOUtils;
 
 import static java.lang.Integer.parseInt;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static spotty.common.http.HttpHeaders.ACCEPT;
 import static spotty.common.http.HttpHeaders.ACCEPT_ENCODING;
 import static spotty.common.http.HttpHeaders.CONNECTION;
@@ -14,6 +15,7 @@ import static spotty.common.http.HttpHeaders.COOKIE;
 import static spotty.common.http.HttpHeaders.HOST;
 import static spotty.common.http.HttpHeaders.USER_AGENT;
 import static spotty.common.http.HttpMethod.POST;
+import static spotty.common.http.HttpProtocol.HTTP_1_1;
 import static spotty.common.utils.HeaderUtils.parseCookies;
 
 public interface WebRequestTestData {
@@ -34,18 +36,18 @@ public interface WebRequestTestData {
     String fullRequest = requestHeaders + "\n\n" + requestBody;
 
     default SpottyDefaultRequest aSpottyRequest() {
-        final byte[] content = requestBody.getBytes();
+        final byte[] content = requestBody.getBytes(UTF_8);
         final HttpHeaders headers = this.headers.copy();
 
         final SpottyDefaultRequest request = new SpottyDefaultRequest();
         return request
-            .protocol("HTTP/1.1")
+            .protocol(HTTP_1_1)
             .scheme("http")
             .method(POST)
             .path("/")
-            .host("localhost")
-            .ip("127.0.0.1")
-            .port(3333)
+            .host(() -> "localhost")
+            .ip(() -> "127.0.0.1")
+            .port(() -> 3333)
             .contentLength(parseInt(headers.remove(CONTENT_LENGTH)))
             .contentType(headers.remove(CONTENT_TYPE))
             .cookies(parseCookies(headers.remove(COOKIE)))

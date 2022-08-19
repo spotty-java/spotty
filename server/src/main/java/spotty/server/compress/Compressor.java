@@ -17,8 +17,8 @@ package spotty.server.compress;
 
 import spotty.common.exception.SpottyException;
 import spotty.common.http.ContentEncoding;
+import spotty.common.stream.output.SpottyByteArrayOutputStream;
 
-import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPOutputStream;
@@ -30,7 +30,7 @@ public final class Compressor {
     public byte[] compress(ContentEncoding encoding, byte[] body) throws Exception {
         notNull("encoding", encoding);
 
-        final ByteArrayOutputStream out = new ByteArrayOutputStream(body.length);
+        final SpottyByteArrayOutputStream out = new SpottyByteArrayOutputStream(body.length);
         final OutputStream compressor;
         switch (encoding) {
             case GZIP:

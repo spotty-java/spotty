@@ -226,7 +226,7 @@ public final class Spotty {
     }
 
     /**
-     * Maps an array of filters to be executed before any matching routes
+     * Maps an array of filters to be executed before any matching routes by path
      *
      * @param pathTemplate  the route path
      * @param filter        the filter
@@ -237,7 +237,7 @@ public final class Spotty {
     }
 
     /**
-     * Maps an array of filters to be executed after any matching routes
+     * Maps an array of filters to be executed after any matching routes by path
      *
      * @param pathTemplate  the route path
      * @param filter        the filter
@@ -248,7 +248,7 @@ public final class Spotty {
     }
 
     /**
-     * Maps an array of filters to be executed before any matching routes
+     * Maps an array of filters to be executed before any matching routes by path and http method
      *
      * @param pathTemplate  the route path
      * @param method        the route HTTP METHOD
@@ -260,7 +260,7 @@ public final class Spotty {
     }
 
     /**
-     * Maps an array of filters to be executed after any matching routes
+     * Maps an array of filters to be executed after any matching routes by path and http method
      *
      * @param pathTemplate  the route path
      * @param method        the route HTTP METHOD
@@ -272,7 +272,7 @@ public final class Spotty {
     }
 
     /**
-     * Maps an array of filters to be executed before any matching routes
+     * Maps an array of filters to be executed before any matching routes by path, http method and accept-type
      *
      * @param pathTemplate  the route path
      * @param method        the route HTTP METHOD
@@ -285,7 +285,7 @@ public final class Spotty {
     }
 
     /**
-     * Maps an array of filters to be executed after any matching routes
+     * Maps an array of filters to be executed after any matching routes by path, http method and accept-type
      *
      * @param pathTemplate  the route path
      * @param method        the route HTTP METHOD
@@ -524,7 +524,7 @@ public final class Spotty {
      * @return              true if this is a matching route which has been previously routed
      * @throws SpottyValidationException if pathTemplate is null or blank
      */
-    public boolean removeRoute(String pathTemplate) {
+    public boolean removeRoute(String pathTemplate) throws SpottyValidationException {
         return router.removeRoute(pathTemplate);
     }
 
@@ -538,7 +538,7 @@ public final class Spotty {
      * @return              true if this is a matching route which has been previously routed
      * @throws SpottyValidationException if pathTemplate or method is null or blank
      */
-    public boolean removeRoute(String pathTemplate, HttpMethod method) {
+    public boolean removeRoute(String pathTemplate, HttpMethod method) throws SpottyValidationException {
         return router.removeRoute(pathTemplate, method);
     }
 
@@ -553,7 +553,7 @@ public final class Spotty {
      * @return              true if this is a matching route which has been previously routed
      * @throws SpottyValidationException if pathTemplate, acceptType or method is null or blank
      */
-    public boolean removeRoute(String pathTemplate, String acceptType, HttpMethod method) {
+    public boolean removeRoute(String pathTemplate, String acceptType, HttpMethod method) throws SpottyValidationException {
         return router.removeRoute(pathTemplate, acceptType, method);
     }
 

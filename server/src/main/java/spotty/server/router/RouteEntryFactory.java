@@ -27,7 +27,7 @@ import static spotty.common.validation.Validation.notBlank;
 import static spotty.common.validation.Validation.notNull;
 
 @VisibleForTesting
-final class RouteEntryCreator {
+final class RouteEntryFactory {
 
     static RouteEntry create(String pathTemplate, HttpMethod httpMethod, String acceptType, Route route) {
         notNull("pathTemplate", pathTemplate);

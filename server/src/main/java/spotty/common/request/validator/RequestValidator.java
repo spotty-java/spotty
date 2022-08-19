@@ -33,16 +33,16 @@ public final class RequestValidator {
             throw new SpottyHttpException(BAD_REQUEST, "request is empty");
         }
 
+        if (request.protocol() == null) {
+            throw new SpottyHttpException(BAD_REQUEST, "protocol is empty");
+        }
+
         if (request.contentLength() < 0) {
             throw new SpottyHttpException(BAD_REQUEST, "invalid " + CONTENT_LENGTH);
         }
 
         if (request.contentType() == null) {
             LOG.debug("empty " + CONTENT_TYPE);
-        }
-
-        if (isBlank(request.protocol())) {
-            throw new SpottyHttpException(BAD_REQUEST, "protocol is empty");
         }
 
         if (isBlank(request.scheme())) {

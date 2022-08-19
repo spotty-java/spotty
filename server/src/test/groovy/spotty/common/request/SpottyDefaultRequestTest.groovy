@@ -7,12 +7,13 @@ import spotty.common.request.params.QueryParams
 import spotty.common.session.Session
 
 import static spotty.common.http.HttpMethod.GET
+import static spotty.common.http.HttpProtocol.HTTP_1_1
 
 class SpottyDefaultRequestTest extends Specification {
 
     private def request = new SpottyDefaultRequest()
 
-    private def protocol = "HTTP/1.1"
+    private def protocol = HTTP_1_1
     private def scheme = "http"
     private def method = GET
     private def path = "/hello"
@@ -43,9 +44,9 @@ class SpottyDefaultRequestTest extends Specification {
             .session(session)
             .body(body)
             .addHeaders(headers)
-            .host(host)
-            .ip(ip)
-            .port(port)
+            .host { host }
+            .ip { ip }
+            .port { port }
             .attach(attachment)
     }
 

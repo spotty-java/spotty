@@ -58,4 +58,9 @@ public final class PathParams {
     public int hashCode() {
         return params.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return params.toString();
+    }
 }

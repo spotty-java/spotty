@@ -20,8 +20,8 @@ class RawHttpClient implements Closeable {
     private var readBuffer = ByteBuffer.allocate(1024)
     private SocketChannel channel
 
-    RawHttpClient(int port) {
-        this.channel = SocketChannel.open(new InetSocketAddress("localhost", port))
+    RawHttpClient(String host, int port) {
+        this.channel = SocketChannel.open(new InetSocketAddress(host, port))
         channel.configureBlocking(false)
     }
 

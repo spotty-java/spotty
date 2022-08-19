@@ -19,14 +19,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import static java.util.Collections.emptyList;
 import static spotty.common.validation.Validation.notNull;
 import static spotty.common.validation.Validation.validate;
 
 public abstract class StateMachine<S extends Enum<S>> {
-    private final Map<S, List<Consumer<S>>> subscribers = new HashMap<>();
+    private final Map<S, List<Runnable>> subscribers = new HashMap<>();
 
     private volatile S state;
 
@@ -54,7 +53,7 @@ public abstract class StateMachine<S extends Enum<S>> {
         validate(is(from1) || is(from2), "%s state must be %s or %s, but is %s", getClass().getSimpleName(), from1, from2, state);
     }
 
-    public void whenStateIs(S state, Consumer<S> subscriber) {
+    public void whenStateIs(S state, Runnable subscriber) {
         subscribers.computeIfAbsent(state, __ -> new ArrayList<>())
             .add(subscriber);
     }
@@ -63,11 +62,10 @@ public abstract class StateMachine<S extends Enum<S>> {
         notNull("newState", newState);
 
         if (state != newState) {
-            final S prevState = state;
             state = newState;
 
-            final List<Consumer<S>> stateSubscribers = subscribers.getOrDefault(newState, emptyList());
-            stateSubscribers.forEach(s -> s.accept(prevState));
+            subscribers.getOrDefault(newState, emptyList())
+                .forEach(Runnable::run);
 
             return true;
         }

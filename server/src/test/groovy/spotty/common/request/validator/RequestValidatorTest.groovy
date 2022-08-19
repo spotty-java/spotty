@@ -6,6 +6,8 @@ import spotty.common.request.SpottyDefaultRequest
 import spotty.common.request.WebRequestTestData
 
 import static spotty.common.http.HttpMethod.POST
+import static spotty.common.http.HttpProtocol.HTTP_1_0
+import static spotty.common.http.HttpProtocol.HTTP_1_1
 import static spotty.common.http.HttpStatus.BAD_REQUEST
 import static spotty.common.validation.Validation.isNotBlank
 import static spotty.common.validation.Validation.isNotNull
@@ -47,7 +49,7 @@ class RequestValidatorTest extends Specification implements WebRequestTestData {
     def "should fail when protocol #protocol, scheme #scheme, method #method or path #path is empty"() {
         given:
         var request = new SpottyDefaultRequest()
-        if (isNotBlank(protocol)) {
+        if (isNotNull(protocol)) {
             request.protocol(protocol)
         }
 
@@ -71,11 +73,11 @@ class RequestValidatorTest extends Specification implements WebRequestTestData {
         e.status == BAD_REQUEST
 
         where:
-        protocol   | scheme | method | path
-        "HTTP/1.1" | "http" | POST   | null
-        "HTTP/1.1" | "http" | null   | "/"
-        "HTTP/1.1" | ""     | POST   | "/"
-        ""         | "http" | POST   | "/"
+        protocol | scheme | method | path
+        HTTP_1_0 | "http" | POST   | null
+        HTTP_1_1 | "http" | null   | "/"
+        HTTP_1_1 | ""     | POST   | "/"
+        null     | "http" | POST   | "/"
     }
 
 }

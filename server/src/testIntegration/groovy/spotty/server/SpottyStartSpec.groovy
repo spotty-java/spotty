@@ -14,9 +14,7 @@ class SpottyStartSpec extends Specification {
     }
 
     def cleanup() {
-        server.awaitUntilStart()
         server.stop()
-        server.awaitUntilStop()
     }
 
     def "should not wait until started"() {

@@ -20,17 +20,17 @@ dependencies {
     implementation "com.sparkjava:spark-core:2.9.4"
     implementation "org.apache.tika:tika-core:$apacheTika"
 
-    implementation 'us.abstracta.jmeter:jmeter-java-dsl:0.64.2'
-    components {
-        withModule("org.apache.jmeter:ApacheJMeter_core", JmeterRule)
-        withModule("org.apache.jmeter:ApacheJMeter_java", JmeterRule)
-        withModule("org.apache.jmeter:ApacheJMeter", JmeterRule)
-        withModule("org.apache.jmeter:ApacheJMeter_http", JmeterRule)
-        withModule("org.apache.jmeter:ApacheJMeter_functions", JmeterRule)
-        withModule("org.apache.jmeter:ApacheJMeter_components", JmeterRule)
-        withModule("org.apache.jmeter:ApacheJMeter_config", JmeterRule)
-        withModule("org.apache.jmeter:jorphan", JmeterRule)
-    }
+//    implementation 'us.abstracta.jmeter:jmeter-java-dsl:0.64.2'
+//    components {
+//        withModule("org.apache.jmeter:ApacheJMeter_core", JmeterRule)
+//        withModule("org.apache.jmeter:ApacheJMeter_java", JmeterRule)
+//        withModule("org.apache.jmeter:ApacheJMeter", JmeterRule)
+//        withModule("org.apache.jmeter:ApacheJMeter_http", JmeterRule)
+//        withModule("org.apache.jmeter:ApacheJMeter_functions", JmeterRule)
+//        withModule("org.apache.jmeter:ApacheJMeter_components", JmeterRule)
+//        withModule("org.apache.jmeter:ApacheJMeter_config", JmeterRule)
+//        withModule("org.apache.jmeter:jorphan", JmeterRule)
+//    }
 
     compileOnly "org.projectlombok:lombok:1.18.24"
     annotationProcessor "org.projectlombok:lombok:1.18.24"

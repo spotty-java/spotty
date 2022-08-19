@@ -17,10 +17,10 @@ class StateMachineTest extends Specification {
         given:
         var obj = new ClassWithState()
 
-        Consumer<TestState> readyToRead = Mock()
-        Consumer<TestState> readyToWrite = Mock()
-        Consumer<TestState> responseWriteCompleted = Mock()
-        Consumer<TestState> closed = Mock()
+        var Runnable readyToRead = Mock()
+        var Runnable readyToWrite = Mock()
+        var Runnable responseWriteCompleted = Mock()
+        var Runnable closed = Mock()
 
         obj.whenStateIs(READY_TO_READ, readyToRead)
         obj.whenStateIs(READY_TO_WRITE, readyToWrite)
@@ -34,18 +34,18 @@ class StateMachineTest extends Specification {
         obj.changeState(CLOSED)
 
         then:
-        1 * readyToRead.accept(RESPONSE_WRITE_COMPLETED)
-        1 * readyToWrite.accept(READY_TO_READ)
-        1 * responseWriteCompleted.accept(READY_TO_WRITE)
-        1 * closed.accept(READY_TO_READ)
+        1 * readyToRead.run()
+        1 * readyToWrite.run()
+        1 * responseWriteCompleted.run()
+        1 * closed.run()
     }
 
     def "should trigger even once for duplicated change state"() {
         given:
         var obj = new ClassWithState()
-        Consumer<TestState> consumer = Mock()
+        var Runnable subscriber = Mock()
 
-        obj.whenStateIs(READY_TO_WRITE, consumer)
+        obj.whenStateIs(READY_TO_WRITE, subscriber)
 
         when:
         obj.changeState(RESPONSE_WRITE_COMPLETED)
@@ -53,17 +53,17 @@ class StateMachineTest extends Specification {
         obj.changeState(READY_TO_WRITE)
 
         then:
-        1 * consumer.accept(RESPONSE_WRITE_COMPLETED)
+        1 * subscriber.run()
     }
 
     def "should trigger a few consumers for same event"() {
         given:
         var obj = new ClassWithState()
-        Consumer<TestState> consumer = Mock()
-        Consumer<TestState> consumer2 = Mock()
+        var Runnable subscriber = Mock()
+        var Runnable subscriber2 = Mock()
 
-        obj.whenStateIs(READY_TO_WRITE, consumer)
-        obj.whenStateIs(READY_TO_WRITE, consumer2)
+        obj.whenStateIs(READY_TO_WRITE, subscriber)
+        obj.whenStateIs(READY_TO_WRITE, subscriber2)
 
         when:
         obj.changeState(RESPONSE_WRITE_COMPLETED)
@@ -71,22 +71,22 @@ class StateMachineTest extends Specification {
         obj.changeState(READY_TO_WRITE)
 
         then:
-        1 * consumer.accept(RESPONSE_WRITE_COMPLETED)
-        1 * consumer2.accept(RESPONSE_WRITE_COMPLETED)
+        1 * subscriber.run()
+        1 * subscriber2.run()
     }
 
     def "should throw an error when state is null"() {
         given:
         var obj = new ClassWithState()
-        Consumer<TestState> consumer = Mock()
+        var Runnable subscriber = Mock()
 
-        obj.whenStateIs(READY_TO_WRITE, consumer)
+        obj.whenStateIs(READY_TO_WRITE, subscriber)
 
         when:
         obj.changeState(null)
 
         then:
-        0 * consumer.accept(_)
+        0 * subscriber.run()
         thrown SpottyValidationException
     }
 
