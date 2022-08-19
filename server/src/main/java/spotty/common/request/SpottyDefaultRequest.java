@@ -17,6 +17,7 @@ package spotty.common.request;
 
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
+import spotty.common.http.HttpProtocol;
 import spotty.common.request.params.PathParams;
 import spotty.common.request.params.QueryParams;
 import spotty.common.session.Session;
@@ -33,7 +34,7 @@ import static spotty.common.validation.Validation.notBlank;
 import static spotty.common.validation.Validation.notNull;
 
 public final class SpottyDefaultRequest implements SpottyRequest {
-    private String protocol;
+    private HttpProtocol protocol;
     private String scheme;
     private HttpMethod method;
     private String path;
@@ -52,12 +53,12 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     private final HttpHeaders headers = new HttpHeaders();
 
     @Override
-    public String protocol() {
+    public HttpProtocol protocol() {
         return protocol;
     }
 
-    public SpottyDefaultRequest protocol(String protocol) {
-        this.protocol = notBlank("protocol", protocol);
+    public SpottyDefaultRequest protocol(HttpProtocol protocol) {
+        this.protocol = notNull("protocol", protocol);
         return this;
     }
 

@@ -34,7 +34,7 @@ public final class ResponseWriter {
 
     public byte[] write(SpottyResponse response) {
         try {
-            writer.print(response.protocol()); writer.write(SPACE); writer.print(response.status().toString());
+            writer.print(response.protocol().code); writer.write(SPACE); writer.print(response.status().toString());
             writer.println();
 
             writer.write(CONTENT_LENGTH); writer.write(HEADER_SPLITTER); writer.print(Integer.toString(response.contentLength()));

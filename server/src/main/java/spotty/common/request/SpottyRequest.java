@@ -17,6 +17,7 @@ package spotty.common.request;
 
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpMethod;
+import spotty.common.http.HttpProtocol;
 import spotty.common.session.Session;
 
 import java.util.Map;
@@ -26,7 +27,7 @@ public interface SpottyRequest {
     /**
      * @return request protocol
      */
-    String protocol();
+    HttpProtocol protocol();
 
     /**
      * @return request scheme (http)

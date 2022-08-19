@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.request.SpottyRequest;
 
-import static spotty.Spotty.PROTOCOL_SUPPORT;
 import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
 import static spotty.common.http.HttpHeaders.CONTENT_TYPE;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
@@ -34,8 +33,8 @@ public final class RequestValidator {
             throw new SpottyHttpException(BAD_REQUEST, "request is empty");
         }
 
-        if (!PROTOCOL_SUPPORT.equals(request.protocol())) {
-            throw new SpottyHttpException(BAD_REQUEST, "Spotty is supports %s protocol only", PROTOCOL_SUPPORT);
+        if (request.protocol() == null) {
+            throw new SpottyHttpException(BAD_REQUEST, "protocol is empty");
         }
 
         if (request.contentLength() < 0) {

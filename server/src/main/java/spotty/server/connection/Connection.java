@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyStreamException;
+import spotty.common.http.HttpProtocol;
 import spotty.common.request.SpottyDefaultRequest;
 import spotty.common.request.params.QueryParams;
 import spotty.common.response.ResponseWriter;
@@ -51,6 +52,7 @@ import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.util.stream.Collectors.joining;
 import static spotty.common.http.ConnectionValue.CLOSE;
 import static spotty.common.http.HttpHeaders.CONNECTION;
 import static spotty.common.http.HttpHeaders.CONTENT_LENGTH;
@@ -567,6 +569,15 @@ public final class Connection extends StateMachine<ConnectionState> implements C
             throw new SpottyHttpException(BAD_REQUEST, "invalid request head line: %s", line);
         }
 
+        final HttpProtocol protocol = HttpProtocol.of(method[2]);
+        if (protocol == null) {
+            throw new SpottyHttpException(
+                BAD_REQUEST,
+                "Spotty is supports %s protocols only",
+                HttpProtocol.VALUES.stream().map(p -> p.code).collect(joining(", "))
+            );
+        }
+
         final String scheme = method[2].split("/")[0].toLowerCase();
         final URI uri = parseUri(method[1]);
 
@@ -575,7 +586,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
             .method(parseHttpMethod(method[0]))
             .path(uri.getPath())
             .queryParams(QueryParams.parse(uri.getQuery()))
-            .protocol(method[2])
+            .protocol(protocol)
         ;
     }
 

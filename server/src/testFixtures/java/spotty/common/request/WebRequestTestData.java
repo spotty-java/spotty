@@ -15,6 +15,7 @@ import static spotty.common.http.HttpHeaders.COOKIE;
 import static spotty.common.http.HttpHeaders.HOST;
 import static spotty.common.http.HttpHeaders.USER_AGENT;
 import static spotty.common.http.HttpMethod.POST;
+import static spotty.common.http.HttpProtocol.HTTP_1_1;
 import static spotty.common.utils.HeaderUtils.parseCookies;
 
 public interface WebRequestTestData {
@@ -40,7 +41,7 @@ public interface WebRequestTestData {
 
         final SpottyDefaultRequest request = new SpottyDefaultRequest();
         return request
-            .protocol("HTTP/1.1")
+            .protocol(HTTP_1_1)
             .scheme("http")
             .method(POST)
             .path("/")

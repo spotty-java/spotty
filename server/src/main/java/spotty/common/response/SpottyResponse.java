@@ -18,6 +18,7 @@ package spotty.common.response;
 import spotty.common.cookie.Cookie;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.http.HttpHeaders;
+import spotty.common.http.HttpProtocol;
 import spotty.common.http.HttpStatus;
 
 import java.util.ArrayList;
@@ -27,10 +28,10 @@ import java.util.Objects;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
-import static spotty.Spotty.PROTOCOL_SUPPORT;
 import static spotty.common.http.ConnectionValue.CLOSE;
 import static spotty.common.http.HttpHeaders.CONNECTION;
 import static spotty.common.http.HttpHeaders.LOCATION;
+import static spotty.common.http.HttpProtocol.HTTP_1_1;
 import static spotty.common.http.HttpStatus.MOVED_PERMANENTLY;
 import static spotty.common.http.HttpStatus.OK;
 import static spotty.common.validation.Validation.validate;
@@ -38,7 +39,7 @@ import static spotty.common.validation.Validation.validate;
 public final class SpottyResponse {
     private static final String DEFAULT_CONTENT_TYPE = "text/plain";
 
-    private final String protocol = PROTOCOL_SUPPORT;
+    private final HttpProtocol protocol = HTTP_1_1;
 
     private HttpStatus status = OK;
     private String contentType = DEFAULT_CONTENT_TYPE;
@@ -48,7 +49,7 @@ public final class SpottyResponse {
 
     private final HttpHeaders headers = new HttpHeaders();
 
-    public String protocol() {
+    public HttpProtocol protocol() {
         return protocol;
     }
 

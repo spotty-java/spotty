@@ -57,8 +57,6 @@ public final class Spotty {
     private static final int DEFAULT_MAX_REQUEST_BODY_SIZE = 10 * 1024 * 1024; // 10Mb
     private static final int DEFAULT_REACTOR_WORKERS = 24;
 
-    public static final String PROTOCOL_SUPPORT = "HTTP/1.1";
-
     private final SessionManager sessionManager;
 
     private final SpottyRouter router = new SpottyRouter();
