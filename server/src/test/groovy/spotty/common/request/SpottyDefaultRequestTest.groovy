@@ -23,7 +23,7 @@ class SpottyDefaultRequestTest extends Specification {
     private def contentType = "application/json"
     private def cookies = [SSID: "some id"]
     private def session = new Session().put("name", "spotty")
-    private def body = "hello".getBytes()
+    private def body = "hello"
     private def headers = new HttpHeaders().add("header_name", "value")
     private def host = "localhost"
     private def ip = "0.0.0.0"
@@ -37,12 +37,12 @@ class SpottyDefaultRequestTest extends Specification {
             .method(method)
             .path(path)
             .queryParams(queryParams)
-            .pathParams(pathParams)
+            .pathParamsObject(pathParams)
             .contentLength(contentLength)
             .contentType(contentType)
             .cookies(cookies)
             .session(session)
-            .body(body)
+            .body(body.getBytes())
             .addHeaders(headers)
             .host { host }
             .ip { ip }
@@ -77,14 +77,15 @@ class SpottyDefaultRequestTest extends Specification {
         request.queryParams() == queryParams.params()
         request.queryParamsObject() == queryParams
         request.queryParamsMap() == queryParams.paramsMap()
-        request.pathParams() == pathParams
-        request.param("key") == "value"
-        request.params() == pathParams.params()
+        request.pathParamsObject() == pathParams
+        request.pathParam("key") == "value"
+        request.pathParams() == pathParams.params()
         request.contentLength() == contentLength
         request.contentType() == contentType
         request.cookies() == cookies
         request.session() == session
-        request.body() == body
+        request.body() == body.getBytes()
+        request.bodyAsString() == body
         request.headers() == headers
         request.host() == host
         request.ip() == ip

@@ -84,7 +84,7 @@ public interface SpottyRequest {
      *
      * @return request path params
      */
-    Map<String, String> params();
+    Map<String, String> pathParams();
 
     /**
      * Returns the value of the provided route pattern parameter.
@@ -93,7 +93,7 @@ public interface SpottyRequest {
      * @param name param name
      * @return null if the given param is null or not found
      */
-    String param(String name);
+    String pathParam(String name);
 
     /**
      * @return all request query parameters
@@ -137,5 +137,10 @@ public interface SpottyRequest {
      * @return request body as bytes
      */
     byte[] body();
+
+    /**
+     * @return request body as string
+     */
+    String bodyAsString();
 
 }

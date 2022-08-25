@@ -54,7 +54,7 @@ public final class DefaultRequestHandler implements RequestHandler {
         );
 
         if (routeEntry.hasPathParamKeys()) {
-            request.pathParams(routeEntry.parsePathParams(request.path()));
+            request.pathParamsObject(routeEntry.parsePathParams(request.path()));
         }
 
         // if session enabled, should register it for request
