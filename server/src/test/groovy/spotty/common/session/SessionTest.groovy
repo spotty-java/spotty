@@ -217,7 +217,7 @@ class SessionTest extends Specification {
         then:
         session.get("name") == "spotty"
         session.get("email") == null
-        !session.has("email")
+        session.hasNot("email")
     }
 
     def "should clear all keys"() {

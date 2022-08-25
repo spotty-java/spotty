@@ -118,10 +118,9 @@ public final class Spotty {
     }
 
     /**
-     * Set the connection to be secure, using the specified keystore and
-     * truststore. This has to be called before any route mapping is done. You
-     * have to supply a keystore file, truststore file is optional (keystore
-     * will be reused).
+     * Set the connection to be secure, using the specified keystore and truststore.
+     * You have to supply a keystore file,
+     * truststore file is optional (keystore will be reused).
      *
      * @param keyStorePath       The keystore file location as string
      * @param keyStorePassword   the password for the keystore, leave null if no password
@@ -209,20 +208,18 @@ public final class Spotty {
      * Maps an array of filters to be executed before any routes
      *
      * @param filter  the filter
-     * @param filters the filters
      */
-    public void before(Filter filter, Filter... filters) {
-        router.before(filter, filters);
+    public void before(Filter filter) {
+        router.before(filter);
     }
 
     /**
      * Maps an array of filters to be executed after any routes
      *
      * @param filter  the filter
-     * @param filters the filters
      */
-    public void after(Filter filter, Filter... filters) {
-        router.after(filter, filters);
+    public void after(Filter filter) {
+        router.after(filter);
     }
 
     /**
@@ -230,10 +227,9 @@ public final class Spotty {
      *
      * @param pathTemplate  the route path
      * @param filter        the filter
-     * @param filters       the filters
      */
-    public void before(String pathTemplate, Filter filter, Filter... filters) {
-        router.before(pathTemplate, filter, filters);
+    public void before(String pathTemplate, Filter filter) {
+        router.before(pathTemplate, filter);
     }
 
     /**
@@ -241,10 +237,9 @@ public final class Spotty {
      *
      * @param pathTemplate  the route path
      * @param filter        the filter
-     * @param filters       the filters
      */
-    public void after(String pathTemplate, Filter filter, Filter... filters) {
-        router.after(pathTemplate, filter, filters);
+    public void after(String pathTemplate, Filter filter) {
+        router.after(pathTemplate, filter);
     }
 
     /**
@@ -253,10 +248,9 @@ public final class Spotty {
      * @param pathTemplate  the route path
      * @param method        the route HTTP METHOD
      * @param filter        the filter
-     * @param filters       the filters
      */
-    public void before(String pathTemplate, HttpMethod method, Filter filter, Filter... filters) {
-        router.before(pathTemplate, method, filter, filters);
+    public void before(String pathTemplate, HttpMethod method, Filter filter) {
+        router.before(pathTemplate, method, filter);
     }
 
     /**
@@ -265,10 +259,9 @@ public final class Spotty {
      * @param pathTemplate  the route path
      * @param method        the route HTTP METHOD
      * @param filter        the filter
-     * @param filters       the filters
      */
-    public void after(String pathTemplate, HttpMethod method, Filter filter, Filter... filters) {
-        router.after(pathTemplate, method, filter, filters);
+    public void after(String pathTemplate, HttpMethod method, Filter filter) {
+        router.after(pathTemplate, method, filter);
     }
 
     /**
@@ -278,10 +271,9 @@ public final class Spotty {
      * @param method        the route HTTP METHOD
      * @param acceptType    the route Accept-Type
      * @param filter        the filter
-     * @param filters       the filters
      */
-    public void before(String pathTemplate, HttpMethod method, String acceptType, Filter filter, Filter... filters) {
-        router.before(pathTemplate, method, acceptType, filter, filters);
+    public void before(String pathTemplate, HttpMethod method, String acceptType, Filter filter) {
+        router.before(pathTemplate, method, acceptType, filter);
     }
 
     /**
@@ -291,10 +283,9 @@ public final class Spotty {
      * @param method        the route HTTP METHOD
      * @param acceptType    the route Accept-Type
      * @param filter        the filter
-     * @param filters       the filters
      */
-    public void after(String pathTemplate, HttpMethod method, String acceptType, Filter filter, Filter... filters) {
-        router.after(pathTemplate, method, acceptType, filter, filters);
+    public void after(String pathTemplate, HttpMethod method, String acceptType, Filter filter) {
+        router.after(pathTemplate, method, acceptType, filter);
     }
 
     /**
