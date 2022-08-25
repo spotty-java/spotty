@@ -168,21 +168,20 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     }
 
     @Override
-    public Map<String, String> params() {
+    public Map<String, String> pathParams() {
         return pathParams.params();
     }
 
     @Override
-    public String param(String name) {
+    public String pathParam(String name) {
         return pathParams.param(name);
     }
 
-
-    public PathParams pathParams() {
+    public PathParams pathParamsObject() {
         return pathParams;
     }
 
-    public SpottyDefaultRequest pathParams(PathParams pathParams) {
+    public SpottyDefaultRequest pathParamsObject(PathParams pathParams) {
         this.pathParams = notNull("pathParams", pathParams);
         return this;
     }
@@ -239,6 +238,11 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     @Override
     public byte[] body() {
         return body;
+    }
+
+    @Override
+    public String bodyAsString() {
+        return new String(body);
     }
 
     public SpottyDefaultRequest body(byte[] body) {

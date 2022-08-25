@@ -34,7 +34,7 @@ class SpottyRouterSpec extends AppTestContext implements WebRequestTestData {
     def "should respond with path params correctly"() {
         given:
         SPOTTY.get("/hello/:name/:last_name", { req, res ->
-            "hello ${req.param("name")} ${req.param("last_name")}"
+            "hello ${req.pathParam("name")} ${req.pathParam("last_name")}"
         })
 
         when:
