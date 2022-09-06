@@ -1,21 +1,29 @@
 # Spotty Web Server
-
 Spotty is a fast, lightweight java web server with a simple API and rich functionality.
 
 ### Why Spotty?
-Common java web servers has simple architecture, each connection is serving separate thread.
+Common java web servers have simple architecture. Each connection to the server is managed as a separate thread.
 <p align="center">
   <img src="assets/common-server.png" />
 </p>
 
-For example if you start server with 10 threads then your server can handle 10 connections concurrently and 11th connection
-will wait when some thread will be free. This is works fine and simple, but what if you need serve 1000 or 5000 connections concurrently?
-Can you start server with 5000 threads? Yes if your machine is powerful enough, but the more threads does not mens
-that it will work efficient and for each thread JVM allocate RAM for stack. So this is not a good way to scale.
-With Spotty one server can handle a lot of connections without creating thread per connection that saves a lot of resources.
-Spotty uses java nio nonblocking socket channel, that accept connections in spotty main thread and switching between connections like
-one CPU between threads to read/write request/response, when request is ready to handle, Spotty send it to the queue that Reactor (threads pool) will handle it.
-So each request will be handled in separate thread, but Spotty does not create thread per connection.
+For example, if you start a server with 10 threads then your server can handle 10 connections concurrently, 
+and the 11th connection will wait when some thread will be free.
+
+This is simple and works fine, but what if you need to serve 1000 or 5000 connections concurrently? 
+Can you start a server with 5000 threads? Yes, if your machine is powerful enough. 
+But more threads does not mean that it will work efficiently, 
+and for each thread JVM allocates RAM to the stack. So, this is not a good way to scale. 
+With Spotty, one server can handle a lot of connections without creating one thread per connection 
+and that saves a lot of resources.
+
+Spotty uses the Java NIO non-blocking socket channel, 
+which accept connections in Spotty's main thread and switches between connections to read/write requests 
+and responses. This is similar to one CPU that can switch context between threads.
+
+When a request is ready to handle, Spotty sends it to the queue, and Reactor (threads pool) will handle it. 
+So each request will be handled in a separate Reactor thread, 
+but Spotty does not create one thread per connection.
 <p align="center">
   <img src="assets/spotty-server.png" />
 </p>
@@ -372,26 +380,26 @@ spotty.staticFiles("/public");
 ```
 For example, this file will be available in the path `http://localhost:4000/public/image.jpeg`
 
-If you want store files in a child directory, for example `resource/images`
+To store files in a child directory, for example `resource/images`
 ```java
 spotty.staticFiles("/images", "/public");
 ```
 
-If your files located in external directory you can register it
+If your files are located in an external directory, you can register the directory
 ```java
 spotty.externalStaticFiles("/absolute/path/to/directory", "/public");
 ```
 
 ### Files cache
-To prevent reading files from disk every time, you can enable cache
+To prevent reading files from disk every time, you can enable the cache
 ```java
-// cacheTtl - cache time to live in seconds
-// cacheSize - maximum elements in cache
+// cacheTtl - cache time-to-live in seconds
+// cacheSize - maximum number of elements in the cache
 spotty.staticFilesCache(long cacheTtl, long cacheSize);
 ```
 
 ## GZIP, DEFLATE
-You can gzip or deflate your responses simply add header to response object
+You can gzip or deflate your responses by simply adding a header to the response object
 ```java
 // gzip all GET /hello responses
 spotty.get("/hello", (request, response) -> {
@@ -407,7 +415,7 @@ spotty.after((request, response) -> {
 ```
 
 ## Server settings
-To start server on custom port:
+To start the server on a custom port:
 ```java
 int port = ...;
 final Spotty spotty = new Spotty(port);
@@ -418,14 +426,14 @@ With Spotty builder you can create a server instance with more advanced settings
 final Spotty spotty = Spotty.builder()
     .port(int port) // server port
     .maxRequestBodySize(int maxRequestBodySize) // maximum request body size in bytes that server can accept, 10Mb by default
-    
-    // when session is expired it must be removed from memory,
-    // to do it Spotty has watcher that checks every 10 seconds (by default) if session is expired and ready to remove
-    // to customize this you can use this builder function
+
+    // when the session is expired it must be removed from memory
+    // to do this, Spotty has a watcher that checks every 10 seconds (by default) if the session is expired and is ready to be removed
+    // to customise this you can use this builder function
     .sessionCheckTickDelay(int sessionCheckTickDelay, TimeUnit timeUnit)
     
-    .defaultSessionTtl(long defaultSessionTtl) // set default session ttl (1 day by default)
-    .defaultSessionCookieTtl(long defaultSessionCookieTtl) // set default SSID cookie ttl (Spotty session id cookie)
-    .reactorWorkers(int reactorWorkers) // number threads that handles queue of requests
+    .defaultSessionTtl(long defaultSessionTtl) // set default session time-to-live (1 day by default)
+    .defaultSessionCookieTtl(long defaultSessionCookieTtl) // set default SSID cookie time-to-live (Spotty session id cookie)
+    .reactorWorkers(int reactorWorkers) // number of threads that handles the queue of requests (24 by default)
     .build();
 ```
