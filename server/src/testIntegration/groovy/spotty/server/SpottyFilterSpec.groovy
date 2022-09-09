@@ -16,7 +16,8 @@ class SpottyFilterSpec extends AppTestContext {
         given:
         var Filter filter1 = Mock(Filter.class)
         var Filter filter2 = Mock(Filter.class)
-        SPOTTY.before(filter1, filter2)
+        SPOTTY.before(filter1)
+        SPOTTY.before(filter2)
 
         SPOTTY.get("/", { req, res -> "/" })
         SPOTTY.get("/hello", { req, res -> "hello" })
@@ -40,7 +41,8 @@ class SpottyFilterSpec extends AppTestContext {
 
         var Filter filter1 = Mock(Filter.class)
         var Filter filter2 = Mock(Filter.class)
-        SPOTTY.after(filter1, filter2)
+        SPOTTY.after(filter1)
+        SPOTTY.after(filter2)
 
         when:
         httpClient.get("/")
@@ -130,8 +132,10 @@ class SpottyFilterSpec extends AppTestContext {
         var Filter after1 = Mock(Filter.class)
         var Filter after2 = Mock(Filter.class)
 
-        SPOTTY.after("/hello", after1, after2)
-        SPOTTY.before("/hello", before1, before2)
+        SPOTTY.after("/hello", after1)
+        SPOTTY.after("/hello", after2)
+        SPOTTY.before("/hello", before1)
+        SPOTTY.before("/hello", before2)
 
         SPOTTY.get("/hello", { req, res -> "" })
 

@@ -199,8 +199,9 @@ public final class Server implements Closeable {
             run();
             started();
 
-            while (running && !Thread.currentThread().isInterrupted()) {
-                selector.select();
+            final Thread currentThread = Thread.currentThread();
+            while (running && !currentThread.isInterrupted()) {
+                selector.select(1000);
                 final Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
                 while (keys.hasNext()) {
                     final SelectionKey key = keys.next();

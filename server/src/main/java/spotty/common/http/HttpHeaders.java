@@ -312,32 +312,87 @@ public final class HttpHeaders {
         this.headers.putAll(headers.headers);
     }
 
+    /**
+     * add header
+     *
+     * @param name header name
+     * @param value header value
+     * @return this instance of headers
+     */
     public HttpHeaders add(String name, String value) {
         headers.put(name, value);
         return this;
     }
 
+    /**
+     * add a bunch of headers
+     *
+     * @param headers bunch of headers
+     * @return this instance of headers
+     */
     public HttpHeaders add(HttpHeaders headers) {
         this.headers.putAll(headers.headers);
         return this;
     }
 
+    /**
+     * add a bunch of headers
+     *
+     * @param headers bunch of headers
+     * @return this instance of headers
+     */
+    public HttpHeaders add(Map<String, String> headers) {
+        this.headers.putAll(headers);
+        return this;
+    }
+
+    /**
+     * Returns the header by specified name, or {@code null} if no header for the name.
+     *
+     * @param name header name
+     * @return header value or {@code null} if no header for the name
+     */
     public String get(String name) {
         return headers.get(name);
     }
 
+    /**
+     * remove header by name
+     *
+     * @param name header name
+     * @return the previous header value associated with <tt>name</tt>, or
+     *         <tt>null</tt> if there was no header for given <tt>name</tt>.
+     */
     public String remove(String name) {
         return headers.remove(name);
     }
 
+    /**
+     * Returns <tt>true</tt> if this HttpHeaders contains a header for the specified name.
+     *
+     * @param name header name
+     * @return <tt>true</tt> if this HttpHeaders contains a header for the specified name.
+     */
     public boolean has(String name) {
         return headers.containsKey(name);
     }
 
+    /**
+     * Returns <tt>false</tt> if this HttpHeaders contains no header for the specified name.
+     *
+     * @param name header name
+     * @return <tt>true</tt> if this HttpHeaders contains no header for the specified name.
+     */
     public boolean hasNot(String name) {
         return !headers.containsKey(name);
     }
 
+    /**
+     * Returns <tt>true</tt> if this HttpHeaders contains a header for the specified name and header value is equal with given.
+     *
+     * @param name header name
+     * @return <tt>true</tt> if this HttpHeaders contains a header for the specified name and header value is equal with given.
+     */
     public boolean hasAndEqual(String name, String value) {
         final String header = headers.get(name);
         if (isNull(header)) {
@@ -347,26 +402,55 @@ public final class HttpHeaders {
         return header.equals(value);
     }
 
+    /**
+     * Returns the number of headers in this HttpHeaders
+     *
+     * @return the number of headers in this HttpHeaders
+     */
     public int size() {
         return headers.size();
     }
 
+    /**
+     * Returns <tt>true</tt> if this HttpHeaders contains no headers.
+     *
+     * @return <tt>true</tt> if this HttpHeaders contains no headers
+     */
     public boolean isEmpty() {
         return headers.isEmpty();
     }
 
+    /**
+     * Returns <tt>true</tt> if this HttpHeaders contains headers.
+     *
+     * @return <tt>true</tt> if this HttpHeaders contains headers
+     */
     public boolean isNotEmpty() {
         return headers.size() > 0;
     }
 
-    public void forEach(BiConsumer<String, String> consumer) {
-        headers.forEach(consumer);
+    /**
+     * Performs the given action for each header until all entries
+     * have been processed or the action throws an exception.
+     *
+     * @param action The action to be performed for each header
+     */
+    public void forEach(BiConsumer<String, String> action) {
+        headers.forEach(action);
     }
 
+    /**
+     * remove all headers
+     */
     public void clear() {
         headers.clear();
     }
 
+    /**
+     * Returns copy of this HttpHeaders
+     *
+     * @return copy HttpHeaders
+     */
     public HttpHeaders copy() {
         return new HttpHeaders(this);
     }

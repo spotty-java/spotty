@@ -24,6 +24,7 @@ import spotty.common.http.HttpStatus;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -34,6 +35,7 @@ import static spotty.common.http.HttpHeaders.LOCATION;
 import static spotty.common.http.HttpProtocol.HTTP_1_1;
 import static spotty.common.http.HttpStatus.MOVED_PERMANENTLY;
 import static spotty.common.http.HttpStatus.OK;
+import static spotty.common.validation.Validation.notNull;
 import static spotty.common.validation.Validation.validate;
 
 public final class SpottyResponse {
@@ -166,6 +168,17 @@ public final class SpottyResponse {
     }
 
     /**
+     * Add headers to response
+     *
+     * @param headers all headers to add
+     * @return Response object
+     */
+    public SpottyResponse addHeaders(Map<String, String> headers) {
+        this.headers.add(headers);
+        return this;
+    }
+
+    /**
      * Replace all headers to given
      *
      * @param headers headers replacement
@@ -190,7 +203,7 @@ public final class SpottyResponse {
      * @param cookie object to add
      * @return Response object
      */
-    public SpottyResponse addCookie(Cookie cookie) {
+    public SpottyResponse cookie(Cookie cookie) {
         final List<Cookie> emptyCookies = emptyList();
         if (this.cookies == emptyCookies) {
             this.cookies = new ArrayList<>();
@@ -208,7 +221,7 @@ public final class SpottyResponse {
      * @param value value of the cookie
      */
     public SpottyResponse cookie(String name, String value) {
-        return addCookie(Cookie.builder()
+        return cookie(Cookie.builder()
             .name(name)
             .value(value)
             .build());
@@ -223,7 +236,7 @@ public final class SpottyResponse {
      * @param maxAge max age of the cookie in seconds (zero - deletes the cookie)
      */
     public SpottyResponse cookie(String name, String value, int maxAge) {
-        return addCookie(Cookie.builder()
+        return cookie(Cookie.builder()
             .name(name)
             .value(value)
             .maxAge(maxAge)
@@ -240,7 +253,7 @@ public final class SpottyResponse {
      * @param secured if true : cookie will be secured
      */
     public SpottyResponse cookie(String name, String value, int maxAge, boolean secured) {
-        return addCookie(Cookie.builder()
+        return cookie(Cookie.builder()
             .name(name)
             .value(value)
             .maxAge(maxAge)
@@ -259,7 +272,7 @@ public final class SpottyResponse {
      * @param httpOnly if true: cookie will be marked as http only
      */
     public SpottyResponse cookie(String name, String value, int maxAge, boolean secured, boolean httpOnly) {
-        return addCookie(Cookie.builder()
+        return cookie(Cookie.builder()
             .name(name)
             .value(value)
             .maxAge(maxAge)
@@ -279,7 +292,7 @@ public final class SpottyResponse {
      * @param secured if true : cookie will be secured
      */
     public SpottyResponse cookie(String path, String name, String value, int maxAge, boolean secured) {
-        return addCookie(Cookie.builder()
+        return cookie(Cookie.builder()
             .name(name)
             .value(value)
             .path(path)
@@ -300,7 +313,7 @@ public final class SpottyResponse {
      * @param httpOnly if true: cookie will be marked as http only
      */
     public SpottyResponse cookie(String path, String name, String value, int maxAge, boolean secured, boolean httpOnly) {
-        return addCookie(Cookie.builder()
+        return cookie(Cookie.builder()
             .name(name)
             .value(value)
             .path(path)
@@ -323,7 +336,7 @@ public final class SpottyResponse {
      * @param httpOnly if true: cookie will be marked as http only
      */
     public SpottyResponse cookie(String domain, String path, String name, String value, int maxAge, boolean secured, boolean httpOnly) {
-        return addCookie(Cookie.builder()
+        return cookie(Cookie.builder()
             .name(name)
             .value(value)
             .domain(domain)
@@ -350,7 +363,7 @@ public final class SpottyResponse {
      * @param name name of the cookie
      */
     public SpottyResponse removeCookie(String path, String name) {
-        return addCookie(
+        return cookie(
             Cookie.builder()
                 .name(name)
                 .path(path)
@@ -375,6 +388,7 @@ public final class SpottyResponse {
      * @param status   the http status code
      */
     public void redirect(String location, HttpStatus status) {
+        notNull("status", status);
         validate(status.is3xxRedirection(), "redirection statuses allowed only");
 
         this.status = status;

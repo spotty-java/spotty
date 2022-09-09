@@ -171,7 +171,21 @@ final class Routable {
     }
 
     /**
-     * Sort list by pathNormalized from longest to shortest to search matched route
+     * <p>This class sorts the path list of routes by pathNormalized from longest to shortest (of path length).
+     * Upon receiving the request, the server will start searching in sequence
+     * from the longest path to the shortest path.</p>
+     *
+     * <p>Why sort from longest to shortest routes?</p>
+     *
+     * Take for example two routes:
+     * <ul>
+     *     <li>/user/*</li>
+     *     <li>/user/:id/password/reset</li>
+     * </ul>
+     *
+     * <p>If the server searches from shortest to longest instead,
+     * in this example it would take the request and match for any path (user/*),
+     * instead of the correct path (user/:id/password/reset).</p>
      */
     static class SortedList {
         private static final Comparator<Value> FROM_LONGEST_TO_SHORTEST_COMPARATOR =

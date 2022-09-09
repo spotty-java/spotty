@@ -70,11 +70,11 @@ public final class SpottyRouter {
      *     });
      * }
      * </pre>
-     *
+     * <p>
      * Multiple path() calls can be nested.
      *
-     * @param pathTemplate  the path to prefix routes with
-     * @param group         group of routes (can also contain path() calls)
+     * @param pathTemplate the path to prefix routes with
+     * @param group        group of routes (can also contain path() calls)
      */
     public void path(String pathTemplate, RouteGroup group) {
         pathPrefixStack.addLast(pathTemplate);
@@ -85,122 +85,112 @@ public final class SpottyRouter {
     /**
      * Maps an array of filters to be executed before any routes
      *
-     * @param filter  the filter
-     * @param filters the filters
+     * @param filter the filter
      */
-    public void before(Filter filter, Filter... filters) {
-        before("*", filter, filters);
+    public void before(Filter filter) {
+        before("*", filter);
     }
 
     /**
      * Maps an array of filters to be executed after any routes
      *
-     * @param filter  the filter
-     * @param filters the filters
+     * @param filter the filter
      */
-    public void after(Filter filter, Filter... filters) {
-        after("*", filter, filters);
+    public void after(Filter filter) {
+        after("*", filter);
     }
 
     /**
      * Maps an array of filters to be executed before any matching routes by path
      *
-     * @param pathTemplate  the route path
-     * @param filter        the filter
-     * @param filters       the filters
+     * @param pathTemplate the route path
+     * @param filter       the filter
      */
-    public void before(String pathTemplate, Filter filter, Filter... filters) {
-        before(pathTemplate, null, filter, filters);
+    public void before(String pathTemplate, Filter filter) {
+        before(pathTemplate, null, filter);
     }
 
     /**
      * Maps an array of filters to be executed after any matching routes by path
      *
-     * @param pathTemplate  the route path
-     * @param filter        the filter
-     * @param filters       the filters
+     * @param pathTemplate the route path
+     * @param filter       the filter
      */
-    public void after(String pathTemplate, Filter filter, Filter... filters) {
-        after(pathTemplate, null, filter, filters);
+    public void after(String pathTemplate, Filter filter) {
+        after(pathTemplate, null, filter);
     }
 
     /**
      * Maps an array of filters to be executed before any matching routes by path and http method
      *
-     * @param pathTemplate  the route path
-     * @param method        the route HTTP METHOD
-     * @param filter        the filter
-     * @param filters       the filters
+     * @param pathTemplate the route path
+     * @param method       the route HTTP METHOD
+     * @param filter       the filter
      */
-    public void before(String pathTemplate, HttpMethod method, Filter filter, Filter... filters) {
-        before(pathTemplate, method, null, filter, filters);
+    public void before(String pathTemplate, HttpMethod method, Filter filter) {
+        before(pathTemplate, method, null, filter);
     }
 
     /**
      * Maps an array of filters to be executed after any matching routes by path and http method
      *
-     * @param pathTemplate  the route path
-     * @param method        the route HTTP METHOD
-     * @param filter        the filter
-     * @param filters       the filters
+     * @param pathTemplate the route path
+     * @param method       the route HTTP METHOD
+     * @param filter       the filter
      */
-    public void after(String pathTemplate, HttpMethod method, Filter filter, Filter... filters) {
-        after(pathTemplate, method, null, filter, filters);
+    public void after(String pathTemplate, HttpMethod method, Filter filter) {
+        after(pathTemplate, method, null, filter);
     }
 
     /**
      * Maps an array of filters to be executed before any matching routes by path, http method and accept-type
      *
-     * @param pathTemplate  the route path
-     * @param method        the route HTTP METHOD
-     * @param acceptType    the route Accept-Type
-     * @param filter        the filter
-     * @param filters       the filters
+     * @param pathTemplate the route path
+     * @param method       the route HTTP METHOD
+     * @param acceptType   the route Accept-Type
+     * @param filter       the filter
      */
-    public void before(String pathTemplate, HttpMethod method, String acceptType, Filter filter, Filter... filters) {
-        final List<Filter> filterList = asList(filter, filters);
+    public void before(String pathTemplate, HttpMethod method, String acceptType, Filter filter) {
         final Pattern matcher = compileMatcher(pathWithPrefix(pathTemplate)).matcher;
 
-        addFiltersToRoute(
+        addFilterToRoute(
             matcher,
             method,
             acceptType,
-            filterList,
-            RouteEntry::addBeforeFilters
+            filter,
+            RouteEntry::addBeforeFilter
         );
 
-        beforeFilters.add(new FilterContainer(matcher, method, acceptType, filterList));
+        beforeFilters.add(new FilterContainer(matcher, method, acceptType, filter));
     }
 
     /**
      * Maps an array of filters to be executed after any matching routes by path, http method and accept-type
      *
-     * @param pathTemplate  the route path
-     * @param method        the route HTTP METHOD
-     * @param acceptType    the route Accept-Type
-     * @param filter        the filter
-     * @param filters       the filters
+     * @param pathTemplate the route path
+     * @param method       the route HTTP METHOD
+     * @param acceptType   the route Accept-Type
+     * @param filter       the filter
      */
-    public void after(String pathTemplate, HttpMethod method, String acceptType, Filter filter, Filter... filters) {
-        final List<Filter> filterList = asList(filter, filters);
+    public void after(String pathTemplate, HttpMethod method, String acceptType, Filter filter) {
         final Pattern matcher = compileMatcher(pathWithPrefix(pathTemplate)).matcher;
 
-        addFiltersToRoute(
+        addFilterToRoute(
             matcher,
             method,
             acceptType,
-            filterList,
-            RouteEntry::addAfterFilters
+            filter,
+            RouteEntry::addAfterFilter
         );
 
-        afterFilters.add(new FilterContainer(matcher, method, acceptType, filterList));
+        afterFilters.add(new FilterContainer(matcher, method, acceptType, filter));
     }
 
     /**
      * Map the route for HTTP GET requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void get(String pathTemplate, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), GET, route);
@@ -211,7 +201,7 @@ public final class SpottyRouter {
      * Map the route for HTTP POST requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void post(String pathTemplate, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), POST, route);
@@ -222,7 +212,7 @@ public final class SpottyRouter {
      * Map the route for HTTP PUT requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void put(String pathTemplate, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), PUT, route);
@@ -233,7 +223,7 @@ public final class SpottyRouter {
      * Map the route for HTTP PATCH requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void patch(String pathTemplate, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), PATCH, route);
@@ -244,7 +234,7 @@ public final class SpottyRouter {
      * Map the route for HTTP DELETE requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void delete(String pathTemplate, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), DELETE, route);
@@ -255,7 +245,7 @@ public final class SpottyRouter {
      * Map the route for HTTP HEAD requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void head(String pathTemplate, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), HEAD, route);
@@ -266,7 +256,7 @@ public final class SpottyRouter {
      * Map the route for HTTP TRACE requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void trace(String pathTemplate, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), TRACE, route);
@@ -277,7 +267,7 @@ public final class SpottyRouter {
      * Map the route for HTTP CONNECT requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void connect(String pathTemplate, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), CONNECT, route);
@@ -288,7 +278,7 @@ public final class SpottyRouter {
      * Map the route for HTTP OPTIONS requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void options(String pathTemplate, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), OPTIONS, route);
@@ -299,8 +289,8 @@ public final class SpottyRouter {
      * Map the route for HTTP GET requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void get(String pathTemplate, String acceptType, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), GET, acceptType, route);
@@ -311,8 +301,8 @@ public final class SpottyRouter {
      * Map the route for HTTP POST requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void post(String pathTemplate, String acceptType, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), POST, acceptType, route);
@@ -323,8 +313,8 @@ public final class SpottyRouter {
      * Map the route for HTTP PUT requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void put(String pathTemplate, String acceptType, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), PUT, acceptType, route);
@@ -335,8 +325,8 @@ public final class SpottyRouter {
      * Map the route for HTTP PATCH requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void patch(String pathTemplate, String acceptType, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), PATCH, acceptType, route);
@@ -347,8 +337,8 @@ public final class SpottyRouter {
      * Map the route for HTTP DELETE requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void delete(String pathTemplate, String acceptType, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), DELETE, acceptType, route);
@@ -359,8 +349,8 @@ public final class SpottyRouter {
      * Map the route for HTTP HEAD requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void head(String pathTemplate, String acceptType, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), HEAD, acceptType, route);
@@ -371,8 +361,8 @@ public final class SpottyRouter {
      * Map the route for HTTP TRACE requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void trace(String pathTemplate, String acceptType, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), TRACE, acceptType, route);
@@ -383,8 +373,8 @@ public final class SpottyRouter {
      * Map the route for HTTP CONNECT requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void connect(String pathTemplate, String acceptType, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), CONNECT, acceptType, route);
@@ -395,8 +385,8 @@ public final class SpottyRouter {
      * Map the route for HTTP OPTIONS requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void options(String pathTemplate, String acceptType, Route route) {
         routable.addRoute(pathWithPrefix(pathTemplate), OPTIONS, acceptType, route);
@@ -407,7 +397,7 @@ public final class SpottyRouter {
      * Find route by path and http method
      *
      * @param rawPath route path
-     * @param method route http method
+     * @param method  route http method
      * @return RouteEntry
      * @throws SpottyHttpException if route not found
      */
@@ -418,8 +408,8 @@ public final class SpottyRouter {
     /**
      * Find route by path, http method and accept-type
      *
-     * @param rawPath route path
-     * @param method route http method
+     * @param rawPath    route path
+     * @param method     route http method
      * @param acceptType route accept-type
      * @return RouteEntry
      * @throws SpottyHttpException if route not found
@@ -439,8 +429,8 @@ public final class SpottyRouter {
      * Remove a particular route from the collection of those that have been previously routed.
      * Search for previously established routes using the given path and unmaps any matches that are found.
      *
-     * @param pathTemplate  the route path
-     * @return              true if this is a matching route which has been previously routed
+     * @param pathTemplate the route path
+     * @return true if this is a matching route which has been previously routed
      * @throws SpottyValidationException if pathTemplate is null or blank
      */
     public boolean removeRoute(String pathTemplate) throws SpottyValidationException {
@@ -452,9 +442,9 @@ public final class SpottyRouter {
      * Search for previously established routes using the given path and HTTP method, unmaps any
      * matches that are found.
      *
-     * @param pathTemplate  the route path
-     * @param method        the route HTTP METHOD
-     * @return              true if this is a matching route which has been previously routed
+     * @param pathTemplate the route path
+     * @param method       the route HTTP METHOD
+     * @return true if this is a matching route which has been previously routed
      * @throws SpottyValidationException if pathTemplate or method is null or blank
      */
     public boolean removeRoute(String pathTemplate, HttpMethod method) throws SpottyValidationException {
@@ -466,10 +456,10 @@ public final class SpottyRouter {
      * Search for previously established routes using the given path, acceptType and HTTP method, unmaps any
      * matches that are found.
      *
-     * @param pathTemplate  the route path
-     * @param acceptType    the route accept-type
-     * @param method        the route HTTP METHOD
-     * @return              true if this is a matching route which has been previously routed
+     * @param pathTemplate the route path
+     * @param acceptType   the route accept-type
+     * @param method       the route HTTP METHOD
+     * @return true if this is a matching route which has been previously routed
      * @throws SpottyValidationException if pathTemplate, acceptType or method is null or blank
      */
     public boolean removeRoute(String pathTemplate, String acceptType, HttpMethod method) throws SpottyValidationException {
@@ -479,27 +469,27 @@ public final class SpottyRouter {
     // register filters after route added,
     private void registerAllMatchedFilters() {
         beforeFilters.forEach(container -> {
-            addFiltersToRoute(
+            addFilterToRoute(
                 container.matcher,
                 container.method,
                 container.acceptType,
-                container.filters,
-                RouteEntry::addBeforeFilters
+                container.filter,
+                RouteEntry::addBeforeFilter
             );
         });
 
         afterFilters.forEach(container -> {
-            addFiltersToRoute(
+            addFilterToRoute(
                 container.matcher,
                 container.method,
                 container.acceptType,
-                container.filters,
-                RouteEntry::addAfterFilters
+                container.filter,
+                RouteEntry::addAfterFilter
             );
         });
     }
 
-    private void addFiltersToRoute(Pattern matcher, HttpMethod method, String acceptType, List<Filter> filters, BiConsumer<RouteEntry, List<Filter>> adder) {
+    private void addFilterToRoute(Pattern matcher, HttpMethod method, String acceptType, Filter filter, BiConsumer<RouteEntry, Filter> adder) {
         routable.sortedList.forEachRouteIf(
             route -> {
                 if (!matcher.matcher(route.pathNormalized()).matches()) {
@@ -516,7 +506,7 @@ public final class SpottyRouter {
 
                 return acceptType.equals(route.acceptType());
             },
-            route -> adder.accept(route, filters)
+            route -> adder.accept(route, filter)
         );
     }
 
@@ -533,13 +523,13 @@ public final class SpottyRouter {
         final Pattern matcher;
         final HttpMethod method;
         final String acceptType;
-        final List<Filter> filters;
+        final Filter filter;
 
-        private FilterContainer(Pattern matcher, HttpMethod method, String acceptType, List<Filter> filters) {
+        private FilterContainer(Pattern matcher, HttpMethod method, String acceptType, Filter filter) {
             this.matcher = matcher;
             this.method = method;
             this.acceptType = acceptType;
-            this.filters = filters;
+            this.filter = filter;
         }
     }
 

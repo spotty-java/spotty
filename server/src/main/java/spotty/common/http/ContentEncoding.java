@@ -15,14 +15,22 @@
  */
 package spotty.common.http;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum ContentEncoding {
     GZIP, DEFLATE;
 
+    private static final Map<String, ContentEncoding> MAPPING = new HashMap<>();
+
+    static {
+        MAPPING.put("gzip", GZIP);
+        MAPPING.put("GZIP", GZIP);
+        MAPPING.put("deflate", DEFLATE);
+        MAPPING.put("DEFLATE", DEFLATE);
+    }
+
     public static ContentEncoding of(String name) {
-        try {
-            return valueOf(name.toUpperCase());
-        } catch (Exception e) {
-            return null;
-        }
+        return MAPPING.get(name);
     }
 }

@@ -45,6 +45,7 @@ public final class SessionManager implements Closeable {
 
     private static final int DEFAULT_TICK = 10;
     private static final TimeUnit DEFAULT_TIME_UNIT = SECONDS;
+    private static final long DEFAULT_SESSION_TTL = 60 * 60 * 24; // 1 Day
 
     @VisibleForTesting
     final Map<UUID, Session> sessions = new ConcurrentHashMap<>();
@@ -110,7 +111,7 @@ public final class SessionManager implements Closeable {
      * session watcher to remove expired ones
      */
     private void registerSessionWatcher() {
-        executor = newSingleThreadScheduledExecutor(threadPool("session-checker"));
+        executor = newSingleThreadScheduledExecutor(threadPool("session-watcher"));
         executor.scheduleWithFixedDelay(() -> {
             final Instant now = Instant.now();
             final Iterator<Map.Entry<UUID, Session>> iterator = sessions.entrySet().iterator();
@@ -125,9 +126,7 @@ public final class SessionManager implements Closeable {
 
     private Session newSession(SpottyResponse response) {
         final Session session = new Session();
-        if (defaultSessionTtl > 0) {
-            session.ttl(defaultSessionTtl);
-        }
+        session.ttl(defaultSessionTtl);
 
         sessions.put(session.id, session);
 
@@ -139,7 +138,7 @@ public final class SessionManager implements Closeable {
             cookie.maxAge(defaultSessionCookieTtl);
         }
 
-        response.addCookie(cookie.build());
+        response.cookie(cookie.build());
 
         return session;
     }
@@ -148,9 +147,7 @@ public final class SessionManager implements Closeable {
         final UUID sessionId = fromString(rawId);
         return sessions.computeIfAbsent(sessionId, id -> {
             final Session session = new Session(id);
-            if (defaultSessionTtl > 0) {
-                session.ttl(defaultSessionTtl);
-            }
+            session.ttl(defaultSessionTtl);
 
             return session;
         });
@@ -167,7 +164,7 @@ public final class SessionManager implements Closeable {
     public static final class Builder {
         private int sessionCheckTickDelay = DEFAULT_TICK;
         private TimeUnit timeUnit = DEFAULT_TIME_UNIT;
-        private long defaultSessionTtl = 0;
+        private long defaultSessionTtl = DEFAULT_SESSION_TTL;
         private long defaultSessionCookieTtl = 0;
 
         private Builder() {

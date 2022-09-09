@@ -242,6 +242,10 @@ public final class SpottyDefaultRequest implements SpottyRequest {
 
     @Override
     public String bodyAsString() {
+        if (body == null) {
+            return "";
+        }
+
         return new String(body);
     }
 

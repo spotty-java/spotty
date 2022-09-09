@@ -132,12 +132,12 @@ public final class RouteEntry {
         return beforeFilters;
     }
 
-    public RouteEntry addBeforeFilters(Collection<Filter> beforeFilters) {
+    public RouteEntry addBeforeFilter(Filter filter) {
         if (this.beforeFilters == EMPTY_SET) {
             this.beforeFilters = new LinkedHashSet<>();
         }
 
-        this.beforeFilters.addAll(beforeFilters);
+        this.beforeFilters.add(filter);
         return this;
     }
 
@@ -145,12 +145,12 @@ public final class RouteEntry {
         return afterFilters;
     }
 
-    public RouteEntry addAfterFilters(Collection<Filter> afterFilters) {
+    public RouteEntry addAfterFilter(Filter filter) {
         if (this.afterFilters == EMPTY_SET) {
             this.afterFilters = new LinkedHashSet<>();
         }
 
-        this.afterFilters.addAll(afterFilters);
+        this.afterFilters.add(filter);
         return this;
     }
 
