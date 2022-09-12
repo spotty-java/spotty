@@ -263,7 +263,7 @@ public final class SSLSocket implements SpottySocket {
                     myNetBuffer = enlargePacketBuffer(myNetBuffer);
                     break;
                 case BUFFER_UNDERFLOW:
-                    throw new SSLException("Buffer underflow occured after a wrap. I don't think we should ever get here.");
+                    throw new SSLException("Buffer underflow occurred after a wrap.");
                 case CLOSED:
                     close();
                     break;

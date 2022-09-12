@@ -18,6 +18,16 @@ java {
 }
 
 publishing {
+    repositories {
+        maven {
+            url "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            credentials {
+                username = System.getenv("MAVEN_REPOSITORY_USERNAME")
+                password = System.getenv("MAVEN_REPOSITORY_PASSWORD")
+            }
+        }
+    }
+
     publications {
         mavenJava(MavenPublication) {
             // disable publish test fixtures
