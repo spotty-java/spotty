@@ -42,7 +42,7 @@ maven dependency
 gradle dependency
 ```groovy
 dependencies {
-    implementation "spotty:server:1.0.0"
+    implementation "com.spotty-server:core:1.0.0"
 }
 ```
 
