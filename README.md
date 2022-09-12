@@ -33,8 +33,8 @@ but Spotty does not create one thread per connection.
 maven dependency
 ```xml
 <dependency>
-  <groupId>spotty</groupId>
-  <artifactId>server</artifactId>
+  <groupId>com.spotty-server</groupId>
+  <artifactId>core</artifactId>
   <version>1.0.0</version>
 </dependency>
 ```

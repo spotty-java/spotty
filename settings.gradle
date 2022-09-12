@@ -4,7 +4,6 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'spotty'
+rootProject.name = 'spotty-server'
 
-include 'server'
-include 'play-ground'
+include 'core'
