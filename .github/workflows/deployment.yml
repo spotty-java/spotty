@@ -2,7 +2,7 @@ name: Deploy to Maven Central Repository
 
 on:
   push:
-    branches: [ 'releases-*' ]
+    branches: [ 'release-*' ]
 
 env:
   MAVEN_REPOSITORY_USERNAME: ${{ secrets.MAVEN_REPOSITORY_USERNAME }}
