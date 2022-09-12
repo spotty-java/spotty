@@ -29,6 +29,7 @@ publishing {
             pom {
                 name = "Spotty"
                 description = "Fast lightweight java web server"
+                url = "https://github.com/spotty-java/spotty"
 
                 licenses {
                     license {
@@ -43,6 +44,12 @@ publishing {
                         name = "Alex Danilenko"
                         email = "alex.danilenko.dev@gmail.com"
                     }
+                }
+
+                scm {
+                    connection = 'scm:git:git://github.com/spotty-java/spotty.git'
+                    developerConnection = 'scm:git:ssh://github.com/spotty-java/spotty.git'
+                    url = 'https://github.com/spotty-java/spotty'
                 }
             }
         }
