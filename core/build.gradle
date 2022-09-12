@@ -1,4 +1,5 @@
 plugins {
+    id 'signing'
     id 'maven-publish'
     id 'java-test-fixtures'
 }
@@ -15,6 +16,7 @@ dependencies {
 java {
     // create jar with sources to publish it
     withSourcesJar()
+    withJavadocJar()
 }
 
 publishing {
@@ -64,6 +66,16 @@ publishing {
             }
         }
     }
+}
+
+signing {
+    def signingKey = System.getenv("MAVEN_GPG_KEY")
+    def signingKeyId = System.getenv("MAVEN_GPG_KEY_ID")
+    def signingPassword = System.getenv("MAVEN_GPG_KEY_PASSWORD")
+
+    useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+
+    sign publishing.publications.mavenJava
 }
 
 // generate SpottyVersion file
