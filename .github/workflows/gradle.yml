@@ -2,6 +2,7 @@ name: Java CI with Gradle
 
 on:
   pull_request:
+    branches-ignore: [ 'release-*' ]
   push:
     branches: [ master ]
 
@@ -30,19 +31,3 @@ jobs:
           name: test-report
           path: server/build/reports
           retention-days: 1
-
-  check_version:
-    if: false # disabled for now
-#    if: ${{ github.ref_name != 'master' }}
-    needs: build
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3 # checkout current branch
-      - uses: actions/checkout@v3 # checkout master
-        with:
-          ref: master
-          path: master-branch
-      - name: check version install npm modules
-        run: cd ./.github/scripts/check_version && npm install
-      - name: check version
-        run: node ./.github/scripts/check_version/main.js
