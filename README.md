@@ -1,4 +1,4 @@
-# Spotty Web Server
+# Spotty Java Web Server
 Spotty is a fast, lightweight java web server with a simple API and rich functionality.
 
 ### Why Spotty?
