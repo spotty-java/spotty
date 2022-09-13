@@ -16,7 +16,6 @@ dependencies {
 java {
     // create jar with sources to publish it
     withSourcesJar()
-    withJavadocJar()
 }
 
 publishing {
