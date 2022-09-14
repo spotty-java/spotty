@@ -15,17 +15,33 @@
  */
 package spotty.server.worker;
 
+import com.google.common.annotations.VisibleForTesting;
+import spotty.common.exception.SpottyException;
+
 import java.io.Closeable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.Executors.newFixedThreadPool;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static spotty.common.utils.ThreadUtils.threadPool;
+import static spotty.common.validation.Validation.notNull;
 
 public final class ReactorWorker implements Closeable {
-    private final ExecutorService reactorPool;
+    private final ThreadPoolExecutor reactorPool;
 
-    public ReactorWorker(int workers) {
-        reactorPool = newFixedThreadPool(workers, threadPool("spotty-worker"));
+    public ReactorWorker(int minWorkers, int maxWorkers, long keepAliveTime, TimeUnit timeUnit) {
+        reactorPool = new ThreadPoolExecutor(
+            minWorkers,
+            maxWorkers,
+            keepAliveTime,
+            notNull("timeUnit", timeUnit),
+            new LinkedBlockingQueue<>(100),
+            threadPool("spotty-reactor"),
+            new RejectedHandler()
+        );
     }
 
     public void addTask(Runnable task) {
@@ -39,6 +55,33 @@ public final class ReactorWorker implements Closeable {
         } catch (Exception e) {
             // ignore
         }
+    }
+
+    @VisibleForTesting
+    ThreadPoolExecutor reactorPool() {
+        return reactorPool;
+    }
+
+    /**
+     * When the reactor pool rejects a task due to insufficient space in the queue,
+     * this handler inserts the specified element into the reactor pool queue
+     * and waits for space to become available if needed.
+     */
+    private static class RejectedHandler implements RejectedExecutionHandler {
+
+        private final ExecutorService rejectedHandlerExecutor = newSingleThreadExecutor();
+
+        @Override
+        public void rejectedExecution(Runnable task, ThreadPoolExecutor executor) {
+            rejectedHandlerExecutor.execute(() -> {
+                try {
+                    executor.getQueue().put(task);
+                } catch (Exception e) {
+                    throw new SpottyException(e);
+                }
+            });
+        }
+
     }
 
 }

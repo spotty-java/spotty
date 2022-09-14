@@ -287,7 +287,7 @@ public final class SpottyDefaultRequest implements SpottyRequest {
             "port=" + (port == null ? "" : port.getAsInt()) + '\n' +
             "cookies=" + cookies + '\n' +
             "session=" + session + '\n' +
-            "body=" + new String(body) + '\n' +
+            "body=" + (body == null ? "" : new String(body)) + '\n' +
             "attachment=" + attachment + '\n' +
             "headers={\n" + headers + "\n}\n" +
             "]";

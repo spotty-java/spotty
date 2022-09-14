@@ -13,6 +13,7 @@ import spotty.server.registry.exception.ExceptionHandlerRegistry
 import spotty.server.worker.ReactorWorker
 import stub.SocketChannelStub
 
+import static java.util.concurrent.TimeUnit.SECONDS
 import static org.awaitility.Awaitility.await
 import static spotty.common.http.ConnectionValue.CLOSE
 import static spotty.common.http.HttpHeaders.CONNECTION
@@ -30,7 +31,7 @@ class ConnectionTest extends Specification implements WebRequestTestData {
     private def socketFactory = new SocketFactory()
     private def responseWriter = new ResponseWriter()
     private def exceptionService = new ExceptionHandlerRegistry()
-    private def reactorWorker = new ReactorWorker(1)
+    private def reactorWorker = new ReactorWorker(1, 1, 10, SECONDS)
     private def maxBodyLimit = 10 * 1024 * 1024 // 10Mb
 
     def setup() {

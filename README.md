@@ -337,7 +337,7 @@ spotty.before("/api/user/file/*", POST, "application/pdf", (request, response) -
 });
 ```
 
-`After filters` evaluate after each request even if in `before filter` or route there was an exception. 
+`After filters` execute your code after each request, even if there was an exception in `before filter`, or in the `route` handling this request. 
 Same as for `before filter`, you can optionally pass a route template path, http method and content-type to restrict the filter for the matched path, http method and content-type.
 ```java
 // attach the Instant object to the request to save the start timestamp of the beginning of the request
@@ -432,8 +432,17 @@ final Spotty spotty = Spotty.builder()
     // to customise this you can use this builder function
     .sessionCheckTickDelay(int sessionCheckTickDelay, TimeUnit timeUnit)
     
-    .defaultSessionTtl(long defaultSessionTtl) // set default session time-to-live (1 day by default)
-    .defaultSessionCookieTtl(long defaultSessionCookieTtl) // set default SSID cookie time-to-live (Spotty session id cookie)
-    .reactorWorkers(int reactorWorkers) // number of threads that handles the queue of requests (24 by default)
+    .defaultSessionTtl(long defaultSessionTtl) // set default session time-to-live in seconds (1 day by default)
+    .defaultSessionCookieTtl(long defaultSessionCookieTtl) // set default SSID cookie time-to-live in seconds (Spotty session id cookie)
+    
+    .reactorMinWorkers(int reactorMinWorkers) // minimum number of threads that can handle the queue of requests, even if they are idle (24 by default)
+    .reactorMaxWorkers(int reactorMaxWorkers) // maximum number of threads that can handle the queue of requests (200 by default)
+
+    // when the number of threads > reactorMinWorkers,
+    // this parameter controls the maximum time that excess idle workers
+    // workers will wait for new tasks before terminating (300 by default)
+    .reactorKeepAliveTime(long reactorKeepAliveTime)
+    
+    .reactorTimeUnit(TimeUnit reactorTimeUnit) // the time unit for the reactorKeepAliveTime argument (SECONDS by default)
     .build();
 ```

@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static spotty.common.http.HttpHeaders.DATE;
 import static spotty.common.http.HttpHeaders.SERVER;
 import static spotty.common.http.HttpStatus.BAD_REQUEST;
@@ -55,7 +56,10 @@ public final class Spotty {
     private static final String SPOTTY_VERSION = "Spotty v" + VERSION;
     private static final int DEFAULT_PORT = 4000;
     private static final int DEFAULT_MAX_REQUEST_BODY_SIZE = 10 * 1024 * 1024; // 10Mb
-    private static final int DEFAULT_REACTOR_WORKERS = 24;
+    private static final int DEFAULT_REACTOR_MIN_WORKERS = 24;
+    private static final int DEFAULT_REACTOR_MAX_WORKERS = 200;
+    private static final int DEFAULT_REACTOR_KEEP_ALIVE_TIME = 300;
+    private static final TimeUnit DEFAULT_REACTOR_TIME_UNIT = SECONDS;
 
     private final SessionManager sessionManager;
 
@@ -81,7 +85,12 @@ public final class Spotty {
             builder.maxRequestBodySize,
             new DefaultRequestHandler(router, new Compressor(), sessionManager),
             exceptionHandlerRegistry,
-            new ReactorWorker(builder.reactorWorkers)
+            new ReactorWorker(
+                builder.reactorMinWorkers,
+                builder.reactorMaxWorkers,
+                builder.reactorKeepAliveTime,
+                builder.reactorTimeUnit
+            )
         );
     }
 
@@ -197,8 +206,8 @@ public final class Spotty {
      *
      * Multiple path() calls can be nested.
      *
-     * @param pathTemplate  the path to prefix routes with
-     * @param group         group of routes (can also contain path() calls)
+     * @param pathTemplate the path to prefix routes with
+     * @param group        group of routes (can also contain path() calls)
      */
     public void path(String pathTemplate, RouteGroup group) {
         router.path(pathTemplate, group);
@@ -207,7 +216,7 @@ public final class Spotty {
     /**
      * Maps an array of filters to be executed before any routes
      *
-     * @param filter  the filter
+     * @param filter the filter
      */
     public void before(Filter filter) {
         router.before(filter);
@@ -216,7 +225,7 @@ public final class Spotty {
     /**
      * Maps an array of filters to be executed after any routes
      *
-     * @param filter  the filter
+     * @param filter the filter
      */
     public void after(Filter filter) {
         router.after(filter);
@@ -225,8 +234,8 @@ public final class Spotty {
     /**
      * Maps an array of filters to be executed before any matching routes by path
      *
-     * @param pathTemplate  the route path
-     * @param filter        the filter
+     * @param pathTemplate the route path
+     * @param filter       the filter
      */
     public void before(String pathTemplate, Filter filter) {
         router.before(pathTemplate, filter);
@@ -235,8 +244,8 @@ public final class Spotty {
     /**
      * Maps an array of filters to be executed after any matching routes by path
      *
-     * @param pathTemplate  the route path
-     * @param filter        the filter
+     * @param pathTemplate the route path
+     * @param filter       the filter
      */
     public void after(String pathTemplate, Filter filter) {
         router.after(pathTemplate, filter);
@@ -245,9 +254,9 @@ public final class Spotty {
     /**
      * Maps an array of filters to be executed before any matching routes by path and http method
      *
-     * @param pathTemplate  the route path
-     * @param method        the route HTTP METHOD
-     * @param filter        the filter
+     * @param pathTemplate the route path
+     * @param method       the route HTTP METHOD
+     * @param filter       the filter
      */
     public void before(String pathTemplate, HttpMethod method, Filter filter) {
         router.before(pathTemplate, method, filter);
@@ -256,9 +265,9 @@ public final class Spotty {
     /**
      * Maps an array of filters to be executed after any matching routes by path and http method
      *
-     * @param pathTemplate  the route path
-     * @param method        the route HTTP METHOD
-     * @param filter        the filter
+     * @param pathTemplate the route path
+     * @param method       the route HTTP METHOD
+     * @param filter       the filter
      */
     public void after(String pathTemplate, HttpMethod method, Filter filter) {
         router.after(pathTemplate, method, filter);
@@ -267,10 +276,10 @@ public final class Spotty {
     /**
      * Maps an array of filters to be executed before any matching routes by path, http method and accept-type
      *
-     * @param pathTemplate  the route path
-     * @param method        the route HTTP METHOD
-     * @param acceptType    the route Accept-Type
-     * @param filter        the filter
+     * @param pathTemplate the route path
+     * @param method       the route HTTP METHOD
+     * @param acceptType   the route Accept-Type
+     * @param filter       the filter
      */
     public void before(String pathTemplate, HttpMethod method, String acceptType, Filter filter) {
         router.before(pathTemplate, method, acceptType, filter);
@@ -279,10 +288,10 @@ public final class Spotty {
     /**
      * Maps an array of filters to be executed after any matching routes by path, http method and accept-type
      *
-     * @param pathTemplate  the route path
-     * @param method        the route HTTP METHOD
-     * @param acceptType    the route Accept-Type
-     * @param filter        the filter
+     * @param pathTemplate the route path
+     * @param method       the route HTTP METHOD
+     * @param acceptType   the route Accept-Type
+     * @param filter       the filter
      */
     public void after(String pathTemplate, HttpMethod method, String acceptType, Filter filter) {
         router.after(pathTemplate, method, acceptType, filter);
@@ -292,7 +301,7 @@ public final class Spotty {
      * Map the route for HTTP GET requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void get(String pathTemplate, Route route) {
         router.get(pathTemplate, route);
@@ -302,7 +311,7 @@ public final class Spotty {
      * Map the route for HTTP POST requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void post(String pathTemplate, Route route) {
         router.post(pathTemplate, route);
@@ -312,7 +321,7 @@ public final class Spotty {
      * Map the route for HTTP PUT requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void put(String pathTemplate, Route route) {
         router.put(pathTemplate, route);
@@ -322,7 +331,7 @@ public final class Spotty {
      * Map the route for HTTP PATCH requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void patch(String pathTemplate, Route route) {
         router.patch(pathTemplate, route);
@@ -332,7 +341,7 @@ public final class Spotty {
      * Map the route for HTTP DELETE requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void delete(String pathTemplate, Route route) {
         router.delete(pathTemplate, route);
@@ -342,7 +351,7 @@ public final class Spotty {
      * Map the route for HTTP HEAD requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void head(String pathTemplate, Route route) {
         router.head(pathTemplate, route);
@@ -352,7 +361,7 @@ public final class Spotty {
      * Map the route for HTTP TRACE requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void trace(String pathTemplate, Route route) {
         router.trace(pathTemplate, route);
@@ -362,7 +371,7 @@ public final class Spotty {
      * Map the route for HTTP CONNECT requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void connect(String pathTemplate, Route route) {
         router.connect(pathTemplate, route);
@@ -372,7 +381,7 @@ public final class Spotty {
      * Map the route for HTTP OPTIONS requests
      *
      * @param pathTemplate the route path
-     * @param route the route handler
+     * @param route        the route handler
      */
     public void options(String pathTemplate, Route route) {
         router.options(pathTemplate, route);
@@ -382,8 +391,8 @@ public final class Spotty {
      * Map the route for HTTP GET requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void get(String pathTemplate, String acceptType, Route route) {
         router.get(pathTemplate, acceptType, route);
@@ -393,8 +402,8 @@ public final class Spotty {
      * Map the route for HTTP POST requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void post(String pathTemplate, String acceptType, Route route) {
         router.post(pathTemplate, acceptType, route);
@@ -404,8 +413,8 @@ public final class Spotty {
      * Map the route for HTTP PUT requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void put(String pathTemplate, String acceptType, Route route) {
         router.put(pathTemplate, acceptType, route);
@@ -415,8 +424,8 @@ public final class Spotty {
      * Map the route for HTTP PATCH requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void patch(String pathTemplate, String acceptType, Route route) {
         router.patch(pathTemplate, acceptType, route);
@@ -426,8 +435,8 @@ public final class Spotty {
      * Map the route for HTTP DELETE requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void delete(String pathTemplate, String acceptType, Route route) {
         router.delete(pathTemplate, acceptType, route);
@@ -437,8 +446,8 @@ public final class Spotty {
      * Map the route for HTTP HEAD requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void head(String pathTemplate, String acceptType, Route route) {
         router.head(pathTemplate, acceptType, route);
@@ -448,8 +457,8 @@ public final class Spotty {
      * Map the route for HTTP TRACE requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void trace(String pathTemplate, String acceptType, Route route) {
         router.trace(pathTemplate, acceptType, route);
@@ -459,8 +468,8 @@ public final class Spotty {
      * Map the route for HTTP CONNECT requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void connect(String pathTemplate, String acceptType, Route route) {
         router.connect(pathTemplate, acceptType, route);
@@ -470,8 +479,8 @@ public final class Spotty {
      * Map the route for HTTP OPTIONS requests
      *
      * @param pathTemplate the route path
-     * @param acceptType the accept-type that route bind to
-     * @param route the route handler
+     * @param acceptType   the accept-type that route bind to
+     * @param route        the route handler
      */
     public void options(String pathTemplate, String acceptType, Route route) {
         router.options(pathTemplate, acceptType, route);
@@ -511,8 +520,8 @@ public final class Spotty {
      * Remove a particular route from the collection of those that have been previously routed.
      * Search for previously established routes using the given path and unmaps any matches that are found.
      *
-     * @param pathTemplate  the route path
-     * @return              true if this is a matching route which has been previously routed
+     * @param pathTemplate the route path
+     * @return true if this is a matching route which has been previously routed
      * @throws SpottyValidationException if pathTemplate is null or blank
      */
     public boolean removeRoute(String pathTemplate) throws SpottyValidationException {
@@ -524,9 +533,9 @@ public final class Spotty {
      * Search for previously established routes using the given path and HTTP method, unmaps any
      * matches that are found.
      *
-     * @param pathTemplate  the route path
-     * @param method        the route HTTP METHOD
-     * @return              true if this is a matching route which has been previously routed
+     * @param pathTemplate the route path
+     * @param method       the route HTTP METHOD
+     * @return true if this is a matching route which has been previously routed
      * @throws SpottyValidationException if pathTemplate or method is null or blank
      */
     public boolean removeRoute(String pathTemplate, HttpMethod method) throws SpottyValidationException {
@@ -538,10 +547,10 @@ public final class Spotty {
      * Search for previously established routes using the given path, acceptType and HTTP method, unmaps any
      * matches that are found.
      *
-     * @param pathTemplate  the route path
-     * @param acceptType    the route accept-type
-     * @param method        the route HTTP METHOD
-     * @return              true if this is a matching route which has been previously routed
+     * @param pathTemplate the route path
+     * @param acceptType   the route accept-type
+     * @param method       the route HTTP METHOD
+     * @return true if this is a matching route which has been previously routed
      * @throws SpottyValidationException if pathTemplate, acceptType or method is null or blank
      */
     public boolean removeRoute(String pathTemplate, String acceptType, HttpMethod method) throws SpottyValidationException {
@@ -551,9 +560,9 @@ public final class Spotty {
     /**
      * register exception handler to handle any exceptions that can happen during requests
      *
-     * @param exceptionClass exception class type
+     * @param exceptionClass   exception class type
      * @param exceptionHandler exception handler
-     * @param <T> class type of registered exception
+     * @param <T>              class type of registered exception
      */
     public <T extends Exception> void exception(Class<T> exceptionClass, ExceptionHandler<T> exceptionHandler) {
         exceptionHandlerRegistry.register(exceptionClass, exceptionHandler);
@@ -580,7 +589,7 @@ public final class Spotty {
     /**
      * enable static files for resource child directory with route path
      *
-     * @param filesDir path to files in resources directory
+     * @param filesDir     path to files in resources directory
      * @param templatePath route path
      */
     public void staticFiles(String filesDir, String templatePath) {
@@ -590,7 +599,7 @@ public final class Spotty {
     /**
      * enable static files for directory with route path
      *
-     * @param filesDir directory path to files
+     * @param filesDir     directory path to files
      * @param templatePath route path
      */
     public void externalStaticFiles(String filesDir, String templatePath) {
@@ -600,7 +609,7 @@ public final class Spotty {
     /**
      * enable files cache to not load it each time from disk
      *
-     * @param cacheTtl cache time to live in seconds
+     * @param cacheTtl  cache time to live in seconds
      * @param cacheSize maximum elements in cache
      */
     public void staticFilesCache(long cacheTtl, long cacheSize) {
@@ -650,39 +659,113 @@ public final class Spotty {
         private int port = DEFAULT_PORT;
         private int maxRequestBodySize = DEFAULT_MAX_REQUEST_BODY_SIZE;
         private final SessionManager.Builder sessionManagerBuilder = SessionManager.builder();
-        private int reactorWorkers = DEFAULT_REACTOR_WORKERS;
+        private int reactorMinWorkers = DEFAULT_REACTOR_MIN_WORKERS;
+        private int reactorMaxWorkers = DEFAULT_REACTOR_MAX_WORKERS;
+        private long reactorKeepAliveTime = DEFAULT_REACTOR_KEEP_ALIVE_TIME;
+        private TimeUnit reactorTimeUnit = DEFAULT_REACTOR_TIME_UNIT;
 
         private Builder() {
 
         }
 
+        /**
+         * @param port server port
+         * @return Builder
+         */
         public Builder port(int port) {
             this.port = port;
             return this;
         }
 
+        /**
+         * @param maxRequestBodySize maximum request body size in bytes that server can accept
+         * @return Builder
+         */
         public Builder maxRequestBodySize(int maxRequestBodySize) {
             this.maxRequestBodySize = maxRequestBodySize;
             return this;
         }
 
+        /**
+         * when the session is expired it must be removed from memory
+         * to do this, Spotty has a watcher that checks every 10 seconds (by default)
+         * if the session is expired and is ready to be removed
+         * to customise this you can use this builder function
+         *
+         * @param sessionCheckTickDelay time for one tick
+         * @param timeUnit              time unit
+         * @return Builder
+         */
         public Builder sessionCheckTickDelay(int sessionCheckTickDelay, TimeUnit timeUnit) {
             sessionManagerBuilder.sessionCheckTickDelay(sessionCheckTickDelay, timeUnit);
             return this;
         }
 
+        /**
+         * set default session time-to-live in seconds
+         *
+         * @param defaultSessionTtl time-to-live in seconds
+         * @return Builder
+         */
         public Builder defaultSessionTtl(long defaultSessionTtl) {
             sessionManagerBuilder.defaultSessionTtl(defaultSessionTtl);
             return this;
         }
 
+        /**
+         * set default SSID cookie time-to-live in seconds
+         *
+         * @param defaultSessionCookieTtl time-to-live in seconds
+         * @return Builder
+         */
         public Builder defaultSessionCookieTtl(long defaultSessionCookieTtl) {
             sessionManagerBuilder.defaultSessionCookieTtl(defaultSessionCookieTtl);
             return this;
         }
 
-        public Builder reactorWorkers(int reactorWorkers) {
-            this.reactorWorkers = reactorWorkers;
+        /**
+         * minimum number of threads that handles the queue of requests even if they are idle
+         *
+         * @param reactorMinWorkers minimum number of threads
+         * @return Builder
+         */
+        public Builder reactorMinWorkers(int reactorMinWorkers) {
+            this.reactorMinWorkers = reactorMinWorkers;
+            return this;
+        }
+
+        /**
+         * maximum number of threads that handles the queue of requests
+         *
+         * @param reactorMaxWorkers maximum number of threads
+         * @return Builder
+         */
+        public Builder reactorMaxWorkers(int reactorMaxWorkers) {
+            this.reactorMaxWorkers = reactorMaxWorkers;
+            return this;
+        }
+
+        /**
+         * when the number of threads is greater than the minimum,
+         * this is the maximum time that excess idle workers
+         * will wait for new tasks before terminating
+         *
+         * @param reactorKeepAliveTime keep alive time
+         * @return Builder
+         */
+        public Builder reactorKeepAliveTime(long reactorKeepAliveTime) {
+            this.reactorKeepAliveTime = reactorKeepAliveTime;
+            return this;
+        }
+
+        /**
+         * the time unit for the reactorKeepAliveTime argument
+         *
+         * @param reactorTimeUnit time unit
+         * @return Builder
+         */
+        public Builder reactorTimeUnit(TimeUnit reactorTimeUnit) {
+            this.reactorTimeUnit = reactorTimeUnit;
             return this;
         }
 
