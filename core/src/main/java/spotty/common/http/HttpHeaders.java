@@ -391,6 +391,7 @@ public final class HttpHeaders {
      * Returns <tt>true</tt> if this HttpHeaders contains a header for the specified name and header value is equal with given.
      *
      * @param name header name
+     * @param value header value
      * @return <tt>true</tt> if this HttpHeaders contains a header for the specified name and header value is equal with given.
      */
     public boolean hasAndEqual(String name, String value) {

@@ -219,6 +219,7 @@ public final class SpottyResponse {
      *
      * @param name  name of the cookie
      * @param value value of the cookie
+     * @return Response object
      */
     public SpottyResponse cookie(String name, String value) {
         return cookie(Cookie.builder()
@@ -234,6 +235,7 @@ public final class SpottyResponse {
      * @param name   name of the cookie
      * @param value  value of the cookie
      * @param maxAge max age of the cookie in seconds (zero - deletes the cookie)
+     * @return Response object
      */
     public SpottyResponse cookie(String name, String value, int maxAge) {
         return cookie(Cookie.builder()
@@ -251,6 +253,7 @@ public final class SpottyResponse {
      * @param value   value of the cookie
      * @param maxAge  max age of the cookie in seconds (zero - deletes the cookie)
      * @param secured if true : cookie will be secured
+     * @return Response object
      */
     public SpottyResponse cookie(String name, String value, int maxAge, boolean secured) {
         return cookie(Cookie.builder()
@@ -270,6 +273,7 @@ public final class SpottyResponse {
      * @param maxAge   max age of the cookie in seconds (zero - deletes the cookie)
      * @param secured  if true : cookie will be secured
      * @param httpOnly if true: cookie will be marked as http only
+     * @return Response object
      */
     public SpottyResponse cookie(String name, String value, int maxAge, boolean secured, boolean httpOnly) {
         return cookie(Cookie.builder()
@@ -290,6 +294,7 @@ public final class SpottyResponse {
      * @param value   value of the cookie
      * @param maxAge  max age of the cookie in seconds (zero - deletes the cookie)
      * @param secured if true : cookie will be secured
+     * @return Response object
      */
     public SpottyResponse cookie(String path, String name, String value, int maxAge, boolean secured) {
         return cookie(Cookie.builder()
@@ -311,6 +316,7 @@ public final class SpottyResponse {
      * @param maxAge   max age of the cookie in seconds (zero - deletes the cookie)
      * @param secured  if true : cookie will be secured
      * @param httpOnly if true: cookie will be marked as http only
+     * @return Response object
      */
     public SpottyResponse cookie(String path, String name, String value, int maxAge, boolean secured, boolean httpOnly) {
         return cookie(Cookie.builder()
@@ -334,6 +340,7 @@ public final class SpottyResponse {
      * @param maxAge   max age of the cookie in seconds (zero - deletes the cookie)
      * @param secured  if true : cookie will be secured
      * @param httpOnly if true: cookie will be marked as http only
+     * @return Response object
      */
     public SpottyResponse cookie(String domain, String path, String name, String value, int maxAge, boolean secured, boolean httpOnly) {
         return cookie(Cookie.builder()
@@ -351,6 +358,7 @@ public final class SpottyResponse {
      * Removes the cookie.
      *
      * @param name name of the cookie
+     * @return Response object
      */
     public SpottyResponse removeCookie(String name) {
         return removeCookie(null, name);
@@ -361,6 +369,7 @@ public final class SpottyResponse {
      *
      * @param path path of the cookie
      * @param name name of the cookie
+     * @return Response object
      */
     public SpottyResponse removeCookie(String path, String name) {
         return cookie(

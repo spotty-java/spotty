@@ -106,6 +106,7 @@ public interface SpottyRequest {
     Set<String> queryParams();
 
     /**
+     * @param name query param name
      * @return query param values
      */
     Set<String> queryParams(String name);
@@ -118,6 +119,7 @@ public interface SpottyRequest {
 
     /**
      * set an attachment object (can be fetched in filters/routes later in the chain)
+     * @param attachment attachment object
      */
     void attach(Object attachment);
 

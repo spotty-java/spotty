@@ -223,7 +223,6 @@ public enum HttpStatus {
     PRECONDITION_FAILED(412, Series.CLIENT_ERROR, "Precondition Failed"),
     /**
      * {@code 413 Payload Too Large}.
-     * @since 4.1
      * @see <a href="https://tools.ietf.org/html/rfc7231#section-6.5.11">
      *     HTTP/1.1: Semantics and Content, section 6.5.11</a>
      */
@@ -238,7 +237,6 @@ public enum HttpStatus {
     REQUEST_ENTITY_TOO_LARGE(413, Series.CLIENT_ERROR, "Request Entity Too Large"),
     /**
      * {@code 414 URI Too Long}.
-     * @since 4.1
      * @see <a href="https://tools.ietf.org/html/rfc7231#section-6.5.12">
      *     HTTP/1.1: Semantics and Content, section 6.5.12</a>
      */
@@ -310,7 +308,6 @@ public enum HttpStatus {
     FAILED_DEPENDENCY(424, Series.CLIENT_ERROR, "Failed Dependency"),
     /**
      * {@code 425 Too Early}.
-     * @since 5.2
      * @see <a href="https://tools.ietf.org/html/rfc8470">RFC 8470</a>
      */
     TOO_EARLY(425, Series.CLIENT_ERROR, "Too Early"),
@@ -338,7 +335,6 @@ public enum HttpStatus {
      * {@code 451 Unavailable For Legal Reasons}.
      * @see <a href="https://tools.ietf.org/html/draft-ietf-httpbis-legally-restricted-status-04">
      * An HTTP Status Code to Report Legal Obstacles</a>
-     * @since 4.3
      */
     UNAVAILABLE_FOR_LEGAL_REASONS(451, Series.CLIENT_ERROR, "Unavailable For Legal Reasons"),
 
@@ -421,8 +417,8 @@ public enum HttpStatus {
      * Whether this status code is in the HTTP series
      * {@link spotty.common.http.HttpStatus.Series#INFORMATIONAL}.
      * <p>This is a shortcut for checking the value of {@link #series}.
-     * @since 4.0
      * @see #series
+     * @return true if series informational
      */
     public boolean is1xxInformational() {
         return (series == Series.INFORMATIONAL);
@@ -432,8 +428,8 @@ public enum HttpStatus {
      * Whether this status code is in the HTTP series
      * {@link spotty.common.http.HttpStatus.Series#SUCCESSFUL}.
      * <p>This is a shortcut for checking the value of {@link #series}.
-     * @since 4.0
      * @see #series
+     * @return true if series successful
      */
     public boolean is2xxSuccessful() {
         return (series == Series.SUCCESSFUL);
@@ -443,8 +439,8 @@ public enum HttpStatus {
      * Whether this status code is in the HTTP series
      * {@link spotty.common.http.HttpStatus.Series#REDIRECTION}.
      * <p>This is a shortcut for checking the value of {@link #series}.
-     * @since 4.0
      * @see #series
+     * @return true if series redirection
      */
     public boolean is3xxRedirection() {
         return (series == Series.REDIRECTION);
@@ -454,8 +450,8 @@ public enum HttpStatus {
      * Whether this status code is in the HTTP series
      * {@link spotty.common.http.HttpStatus.Series#CLIENT_ERROR}.
      * <p>This is a shortcut for checking the value of {@link #series}.
-     * @since 4.0
      * @see #series
+     * @return true if series related to client errors
      */
     public boolean is4xxClientError() {
         return (series == Series.CLIENT_ERROR);
@@ -465,8 +461,8 @@ public enum HttpStatus {
      * Whether this status code is in the HTTP series
      * {@link spotty.common.http.HttpStatus.Series#SERVER_ERROR}.
      * <p>This is a shortcut for checking the value of {@link #series}.
-     * @since 4.0
      * @see #series
+     * @return true if series related to server errors
      */
     public boolean is5xxServerError() {
         return (series == Series.SERVER_ERROR);
@@ -477,9 +473,9 @@ public enum HttpStatus {
      * {@link spotty.common.http.HttpStatus.Series#CLIENT_ERROR} or
      * {@link spotty.common.http.HttpStatus.Series#SERVER_ERROR}.
      * <p>This is a shortcut for checking the value of {@link #series}.
-     * @since 5.0
      * @see #is4xxClientError()
      * @see #is5xxServerError()
+     * @return true if status related to 4xx or 5xx errors
      */
     public boolean isError() {
         return (is4xxClientError() || is5xxServerError());
@@ -511,7 +507,6 @@ public enum HttpStatus {
      * Resolve the given status code to an {@code HttpStatus}, if possible.
      * @param statusCode the HTTP status code (potentially non-standard)
      * @return the corresponding {@code HttpStatus}, or {@code null} if not found
-     * @since 5.0
      */
     public static HttpStatus resolve(int statusCode) {
         // Use cached VALUES instead of values() to prevent array allocation.
@@ -545,6 +540,7 @@ public enum HttpStatus {
 
         /**
          * Return the integer value of this status series. Ranges from 1 to 5.
+         * @return series value
          */
         public int value() {
             return this.value;
@@ -580,7 +576,6 @@ public enum HttpStatus {
          * Resolve the given status code to an {@code HttpStatus.Series}, if possible.
          * @param statusCode the HTTP status code (potentially non-standard)
          * @return the corresponding {@code Series}, or {@code null} if not found
-         * @since 5.1.3
          */
         public static Series resolve(int statusCode) {
             int seriesCode = statusCode / 100;
