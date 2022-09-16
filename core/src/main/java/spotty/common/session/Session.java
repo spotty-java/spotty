@@ -112,6 +112,7 @@ public final class Session {
      *
      * @param key    key with which the specified value is to be associated
      * @param mapper the function to compute a value
+     * @param <T> return type
      * @return the current (existing or computed) value associated with
      * the specified key, or null if the computed value is null
      */
@@ -131,6 +132,7 @@ public final class Session {
      *
      * @param key    key with which the specified value is to be associated
      * @param mapper the function to compute a value
+     * @param <T> return type
      * @return the current (existing or computed) value associated with
      * the specified key, or null if the computed value is null
      */
@@ -152,6 +154,7 @@ public final class Session {
      *
      * @param key    key with which the specified value is to be associated
      * @param mapper the function to compute a value
+     * @param <T> return type
      * @return the new value associated with the specified key, or null if none
      */
     @SuppressWarnings("all")
@@ -174,6 +177,7 @@ public final class Session {
      * Returns the value by specified key, or {@code null} if no value for the key.
      *
      * @param key the key whose associated value is to be returned
+     * @param <T> return type
      * @return the value to which the specified key is mapped, or
      * {@code null} if this session contains no mapping for the key
      */
@@ -188,6 +192,7 @@ public final class Session {
      *
      * @param key          the key whose associated value is to be returned
      * @param defaultValue the default mapping of the key
+     * @param <T> return type
      * @return the value to which the specified key is mapped, or
      * {@code defaultValue} if this map contains no mapping for the key
      */
@@ -197,7 +202,7 @@ public final class Session {
     }
 
     /**
-     * Returns the number of data in this session
+     * @return Returns the number of data in this session
      */
     public int size() {
         return data.size();
