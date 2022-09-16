@@ -1,11 +1,11 @@
 name: Deploy to Maven Central Repository
 
 on:
-  pull_request:
-    branches: [ 'release-*' ]
+  workflow_dispatch:
 
 jobs:
   check_version:
+    needs: build
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3 # checkout current branch
