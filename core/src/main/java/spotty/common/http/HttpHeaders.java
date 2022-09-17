@@ -315,7 +315,7 @@ public final class HttpHeaders {
     /**
      * add header
      *
-     * @param name header name
+     * @param name  header name
      * @param value header value
      * @return this instance of headers
      */
@@ -360,39 +360,39 @@ public final class HttpHeaders {
      * remove header by name
      *
      * @param name header name
-     * @return the previous header value associated with <tt>name</tt>, or
-     *         <tt>null</tt> if there was no header for given <tt>name</tt>.
+     * @return the previous header value associated with name, or
+     * null if there was no header for given name.
      */
     public String remove(String name) {
         return headers.remove(name);
     }
 
     /**
-     * Returns <tt>true</tt> if this HttpHeaders contains a header for the specified name.
+     * Returns true if this HttpHeaders contains a header for the specified name.
      *
      * @param name header name
-     * @return <tt>true</tt> if this HttpHeaders contains a header for the specified name.
+     * @return true if this HttpHeaders contains a header for the specified name.
      */
     public boolean has(String name) {
         return headers.containsKey(name);
     }
 
     /**
-     * Returns <tt>false</tt> if this HttpHeaders contains no header for the specified name.
+     * Returns false if this HttpHeaders contains no header for the specified name.
      *
      * @param name header name
-     * @return <tt>true</tt> if this HttpHeaders contains no header for the specified name.
+     * @return true if this HttpHeaders contains no header for the specified name.
      */
     public boolean hasNot(String name) {
         return !headers.containsKey(name);
     }
 
     /**
-     * Returns <tt>true</tt> if this HttpHeaders contains a header for the specified name and header value is equal with given.
+     * Returns true if this HttpHeaders contains a header for the specified name and header value is equal with given.
      *
-     * @param name header name
+     * @param name  header name
      * @param value header value
-     * @return <tt>true</tt> if this HttpHeaders contains a header for the specified name and header value is equal with given.
+     * @return true if this HttpHeaders contains a header for the specified name and header value is equal with given.
      */
     public boolean hasAndEqual(String name, String value) {
         final String header = headers.get(name);
@@ -413,18 +413,18 @@ public final class HttpHeaders {
     }
 
     /**
-     * Returns <tt>true</tt> if this HttpHeaders contains no headers.
+     * Returns true if this HttpHeaders contains no headers.
      *
-     * @return <tt>true</tt> if this HttpHeaders contains no headers
+     * @return true if this HttpHeaders contains no headers
      */
     public boolean isEmpty() {
         return headers.isEmpty();
     }
 
     /**
-     * Returns <tt>true</tt> if this HttpHeaders contains headers.
+     * Returns true if this HttpHeaders contains headers.
      *
-     * @return <tt>true</tt> if this HttpHeaders contains headers
+     * @return true if this HttpHeaders contains headers
      */
     public boolean isNotEmpty() {
         return headers.size() > 0;

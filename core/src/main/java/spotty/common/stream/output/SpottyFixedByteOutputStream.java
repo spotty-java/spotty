@@ -97,7 +97,15 @@ public class SpottyFixedByteOutputStream extends OutputStream {
         return size == limit;
     }
 
+    public byte[] sourceData() {
+        return data;
+    }
+
     public byte[] toByteArray() {
+        if (size == data.length) {
+            return data;
+        }
+
         return Arrays.copyOf(data, size);
     }
 
@@ -115,7 +123,7 @@ public class SpottyFixedByteOutputStream extends OutputStream {
         }
 
         if (data.length != capacity) {
-            byte[] d = new byte[capacity];
+            final byte[] d = new byte[capacity];
             this.size = min(size, capacity);
 
             if (size > 0) {

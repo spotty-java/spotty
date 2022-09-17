@@ -2,12 +2,13 @@ package spotty.common.response
 
 import spock.lang.Specification
 import spotty.common.request.WebRequestTestData
+import spotty.common.stream.output.SpottyByteArrayOutputStream
 
-class ResponseWriterTest extends Specification implements WebRequestTestData {
+class ResponseHeadersWriterTest extends Specification implements WebRequestTestData {
 
     def "should write response correctly"() {
         given:
-        var responseWriter = new ResponseWriter()
+        var data = new SpottyByteArrayOutputStream()
         var content = "hello".getBytes()
         var request = aSpottyRequest()
             .contentLength(content.length)
@@ -18,11 +19,10 @@ class ResponseWriterTest extends Specification implements WebRequestTestData {
             .cookie("title", "title")
 
         when:
-        var data = responseWriter.write(response)
-        var responseString = new String(data)
+        ResponseHeadersWriter.write(data, response)
 
         then:
-        responseString == expectedResponse
+        data.toString() == expectedResponse
     }
 
     def expectedResponse = """
@@ -31,8 +31,6 @@ class ResponseWriterTest extends Specification implements WebRequestTestData {
             content-type: text/plain
             set-cookie: name=name
             set-cookie: title=title
-
-            hello
-        """.stripIndent(true).trim()
+        """.stripIndent(true).trim() + "\n\n"
 
 }

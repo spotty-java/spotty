@@ -260,6 +260,7 @@ public final class Server implements Closeable {
     private void registerConnection(Connection connection, Selector selector) {
         final SelectionKey key = connection.register(selector);
         if (key == null) {
+            connection.close();
             return;
         }
 

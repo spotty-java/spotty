@@ -24,7 +24,7 @@ import spotty.common.exception.SpottyStreamException;
 import spotty.common.http.HttpProtocol;
 import spotty.common.request.SpottyDefaultRequest;
 import spotty.common.request.params.QueryParams;
-import spotty.common.response.ResponseWriter;
+import spotty.common.response.ResponseHeadersWriter;
 import spotty.common.response.SpottyResponse;
 import spotty.common.state.StateHandlerGraph;
 import spotty.common.state.StateHandlerGraph.GraphFilter;
@@ -81,7 +81,8 @@ import static spotty.server.connection.state.ConnectionState.READY_TO_WRITE;
 import static spotty.server.connection.state.ConnectionState.REQUEST_HANDLING;
 import static spotty.server.connection.state.ConnectionState.REQUEST_READY;
 import static spotty.server.connection.state.ConnectionState.RESPONSE_WRITE_COMPLETED;
-import static spotty.server.connection.state.ConnectionState.RESPONSE_WRITING;
+import static spotty.server.connection.state.ConnectionState.RESPONSE_WRITING_BODY;
+import static spotty.server.connection.state.ConnectionState.RESPONSE_WRITING_HEADERS;
 
 public final class Connection extends StateMachine<ConnectionState> implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(Connection.class);
@@ -98,7 +99,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     @VisibleForTesting
     final SpottyResponse response = new SpottyResponse();
 
-    private final ResponseWriter responseWriter = new ResponseWriter();
+    private final SpottyByteArrayOutputStream responseHeadersBuffer = new SpottyByteArrayOutputStream(DEFAULT_BUFFER_SIZE);
     private final SpottyByteArrayOutputStream line = new SpottyByteArrayOutputStream(DEFAULT_LINE_SIZE);
     private final SpottyFixedByteOutputStream body = new SpottyFixedByteOutputStream(DEFAULT_BUFFER_SIZE);
 
@@ -110,7 +111,9 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     private final int maxRequestBodySize;
     private ByteBuffer readBuffer;
     private RequestHandler requestHandler;
-    private ByteBuffer writeBuffer;
+
+    private ByteBuffer headersByteBuffer;
+    private ByteBuffer bodyByteBuffer;
 
     public Connection(SpottySocket socket,
                       RequestHandler requestHandler,
@@ -194,18 +197,14 @@ public final class Connection extends StateMachine<ConnectionState> implements C
             .node(REQUEST_READY).apply(this::requestHandling)
 
             .entry(READY_TO_WRITE).apply(this::readyToWrite)
-            .node(RESPONSE_WRITING).apply(this::writeResponse)
+            .node(RESPONSE_WRITING_HEADERS).apply(this::writeResponseHeaders)
+            .node(RESPONSE_WRITING_BODY).apply(this::writeResponseBody)
             .node(RESPONSE_WRITE_COMPLETED).apply(this::responseWriteCompleted)
         ;
     }
 
     public SelectionKey register(Selector selector) {
-        final SelectionKey key = exceptionHandler(() -> socket.register(selector, OP_CONNECT, this));
-        if (key == null) {
-            close();
-        }
-
-        return key;
+        return exceptionHandler(() -> socket.register(selector, OP_CONNECT, this));
     }
 
     public void markDataRemaining() {
@@ -500,6 +499,7 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     private final Runnable handlerRequest = () -> {
         exceptionHandler(actionExceptionHandler);
 
+        request.reset();
         changeState(READY_TO_WRITE);
     };
 
@@ -511,22 +511,58 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     private boolean readyToWrite() {
         checkStateIs(READY_TO_WRITE);
 
-        final byte[] data = responseWriter.write(response);
-        this.writeBuffer = ByteBuffer.wrap(data);
+        ResponseHeadersWriter.write(responseHeadersBuffer, response);
+        if (headersByteBuffer == null || headersByteBuffer.capacity() != responseHeadersBuffer.capacity()) {
+            // wrap by link, changing byte[] is affecting writeHeadersBuffer
+            headersByteBuffer = ByteBuffer.wrap(
+                responseHeadersBuffer.sourceData(),
+                0,
+                responseHeadersBuffer.size()
+            );
+        } else {
+            headersByteBuffer
+                .position(0)
+                .limit(responseHeadersBuffer.size())
+            ;
+        }
 
-        return changeState(RESPONSE_WRITING);
+        if (response.body() != null) {
+            this.bodyByteBuffer = ByteBuffer.wrap(response.body());
+        }
+
+        return changeState(RESPONSE_WRITING_HEADERS);
     }
 
-    private boolean writeResponse() throws SpottyHttpException {
-        checkStateIs(RESPONSE_WRITING);
+    private boolean writeResponseHeaders() {
+        checkStateIs(RESPONSE_WRITING_HEADERS);
 
         try {
-            socket.write(writeBuffer);
-            if (!writeBuffer.hasRemaining()) {
+            socket.write(headersByteBuffer);
+            if (!headersByteBuffer.hasRemaining()) {
+                return changeState(RESPONSE_WRITING_BODY);
+            }
+        } catch (IOException e) {
+            LOG.error("response write headers error", e);
+            close();
+        }
+
+        return false;
+    }
+
+    private boolean writeResponseBody() throws SpottyHttpException {
+        checkStateIs(RESPONSE_WRITING_BODY);
+
+        if (bodyByteBuffer == null) {
+            return changeState(RESPONSE_WRITE_COMPLETED);
+        }
+
+        try {
+            socket.write(bodyByteBuffer);
+            if (!bodyByteBuffer.hasRemaining()) {
                 return changeState(RESPONSE_WRITE_COMPLETED);
             }
         } catch (IOException e) {
-            LOG.error("response write error", e);
+            LOG.error("response write body error", e);
             close();
         }
 
@@ -543,7 +579,6 @@ public final class Connection extends StateMachine<ConnectionState> implements C
             }
         } finally {
             resetResponse();
-            request.reset();
         }
 
         changeState(READY_TO_READ);
@@ -557,8 +592,9 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     }
 
     private void resetResponse() {
-        this.writeBuffer = null;
         this.response.reset();
+        this.responseHeadersBuffer.reset();
+        this.bodyByteBuffer = null;
     }
 
     private void parseHeadLine(String line) {

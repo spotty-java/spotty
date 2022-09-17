@@ -63,6 +63,7 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
         var socket = new Socket(SPOTTY.host(), SPOTTY.port())
         var writer = new PrintWriter(socket.getOutputStream())
         var inputStream = socket.getInputStream()
+        var errorMessage = "invalid request head line: POST HTTP/1.1"
 
         when:
         writer.println("POST HTTP/1.1")
@@ -70,9 +71,10 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
         writer.println()
         writer.flush()
 
-        var buff = new byte[128]
+        var buff = new byte[256]
         var read = inputStream.read(buff)
-        var result = new String(buff, 0, read)
+        inputStream.read(buff, read, errorMessage.length())
+        var result = new String(buff).trim()
 
         then:
         result == """
@@ -81,7 +83,7 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
                     content-type: text/plain
                     connection: close
 
-                    invalid request head line: POST HTTP/1.1
+                    $errorMessage
                   """.stripIndent().trim()
     }
 
@@ -107,6 +109,7 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
         var socket = new Socket(SPOTTY.host(), SPOTTY.port())
         var writer = new PrintWriter(socket.getOutputStream())
         var inputStream = socket.getInputStream()
+        var errorMessage = "Spotty is supports HTTP/1.0, HTTP/1.1 protocols only"
 
         when:
         writer.println("POST / HTTP/2.0")
@@ -116,7 +119,8 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
 
         var buff = new byte[256]
         var read = inputStream.read(buff)
-        var result = new String(buff, 0, read)
+        inputStream.read(buff, read, errorMessage.length())
+        var result = new String(buff).trim()
 
         then:
         result == """
@@ -124,8 +128,8 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
                     content-length: 52
                     content-type: text/plain
                     connection: close
-                     
-                    Spotty is supports HTTP/1.0, HTTP/1.1 protocols only
+
+                    $errorMessage
                   """.stripIndent().trim()
     }
 
@@ -134,6 +138,7 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
         var socket = new Socket(SPOTTY.host(), SPOTTY.port())
         var writer = new PrintWriter(socket.getOutputStream())
         var inputStream = socket.getInputStream()
+        var errorMessage = "invalid header line: wrong header"
 
         when:
         writer.println("POST / HTTP/1.1")
@@ -143,7 +148,8 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
 
         var buff = new byte[256]
         var read = inputStream.read(buff)
-        var result = new String(buff, 0, read)
+        inputStream.read(buff, read, errorMessage.length())
+        var result = new String(buff).trim()
 
         then:
         result == """
@@ -152,7 +158,7 @@ class SpottyWrongRawRequestSpec extends AppTestContext {
                     content-type: text/plain
                     connection: close
                      
-                    invalid header line: wrong header
+                    $errorMessage
                   """.stripIndent().trim()
     }
 

@@ -20,8 +20,8 @@ import spotty.common.exception.SpottyException;
 
 import java.io.Closeable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -38,7 +38,7 @@ public final class ReactorWorker implements Closeable {
             maxWorkers,
             keepAliveTime,
             notNull("timeUnit", timeUnit),
-            new LinkedBlockingQueue<>(100),
+            new SynchronousQueue<>(),
             threadPool("spotty-reactor"),
             new RejectedHandler()
         );

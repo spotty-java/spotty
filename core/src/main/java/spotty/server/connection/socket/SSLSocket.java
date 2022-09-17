@@ -125,38 +125,37 @@ public final class SSLSocket implements SpottySocket {
 
     @Override
     public int write(ByteBuffer src) throws IOException {
+        myNetBuffer.clear();
+        myAppBuffer.clear();
+
+        bufferCopyRemaining(src, myAppBuffer);
+
+        myAppBuffer.flip();
+
+        Status status;
         int writeData = 0;
-        while (src.hasRemaining()) {
-            myNetBuffer.clear();
-            myAppBuffer.clear();
 
-            bufferCopyRemaining(src, myAppBuffer);
-
-            myAppBuffer.flip();
-
-            Status status;
-            do {
-                status = wrap(myAppBuffer, myNetBuffer);
-                LOG.debug("write.status {}", status);
-                switch (status) {
-                    case OK:
-                        myNetBuffer.flip();
-                        while (myNetBuffer.hasRemaining()) {
-                            writeData += socketChannel.write(myNetBuffer);
-                        }
-                        break;
-                    case BUFFER_OVERFLOW:
-                        myNetBuffer = enlargePacketBuffer(myNetBuffer);
-                        break;
-                    case BUFFER_UNDERFLOW:
-                        myAppBuffer = handleBufferUnderflow(myAppBuffer);
-                        break;
-                    case CLOSED:
-                        close();
-                        return writeData;
-                }
-            } while (status != OK);
-        }
+        do {
+            status = wrap(myAppBuffer, myNetBuffer);
+            LOG.debug("write.status {}", status);
+            switch (status) {
+                case OK:
+                    myNetBuffer.flip();
+                    while (myNetBuffer.hasRemaining()) {
+                        writeData += socketChannel.write(myNetBuffer);
+                    }
+                    break;
+                case BUFFER_OVERFLOW:
+                    myNetBuffer = enlargePacketBuffer(myNetBuffer);
+                    break;
+                case BUFFER_UNDERFLOW:
+                    myAppBuffer = handleBufferUnderflow(myAppBuffer);
+                    break;
+                case CLOSED:
+                    close();
+                    return writeData;
+            }
+        } while (status != OK);
 
         return writeData;
     }
