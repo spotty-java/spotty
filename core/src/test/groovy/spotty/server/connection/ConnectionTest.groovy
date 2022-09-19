@@ -5,8 +5,9 @@ import spotty.common.exception.SpottyHttpException
 import spotty.common.exception.SpottyStreamException
 import spotty.common.exception.SpottyValidationException
 import spotty.common.request.WebRequestTestData
-import spotty.common.response.ResponseWriter
+import spotty.common.response.ResponseHeadersWriter
 import spotty.common.response.SpottyResponse
+import spotty.common.stream.output.SpottyByteArrayOutputStream
 import spotty.server.connection.socket.SocketFactory
 import spotty.server.handler.EchoRequestHandler
 import spotty.server.registry.exception.ExceptionHandlerRegistry
@@ -29,10 +30,10 @@ import static spotty.server.connection.state.ConnectionState.READY_TO_WRITE
 class ConnectionTest extends Specification implements WebRequestTestData {
 
     private def socketFactory = new SocketFactory()
-    private def responseWriter = new ResponseWriter()
     private def exceptionService = new ExceptionHandlerRegistry()
     private def reactorWorker = new ReactorWorker(1, 1, 10, SECONDS)
     private def maxBodyLimit = 10 * 1024 * 1024 // 10Mb
+    private def data = new SpottyByteArrayOutputStream()
 
     def setup() {
         exceptionService.register(SpottyHttpException.class, (exception, request, response) -> {
@@ -84,7 +85,12 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.flip()
 
         var request = aSpottyRequest()
-        var expectedResponse = new String(responseWriter.write(aSpottyResponse(request)))
+        var response = aSpottyResponse(request)
+
+        ResponseHeadersWriter.write(data, response)
+        data.write(response.body())
+
+        var expectedResponse = data.toString()
 
         var connection = new Connection(socketFactory.createSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit, fullRequest.length())
         connection.markReadyToRead()
@@ -98,10 +104,10 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         connection.handle()
         socket.flip()
 
-        var response = new String(socket.getAllBytes())
+        var actualResponse = new String(socket.getAllBytes())
 
         then:
-        response == expectedResponse
+        actualResponse == expectedResponse
     }
 
     def "should throw exception when socket is blocking"() {
@@ -190,7 +196,10 @@ class ConnectionTest extends Specification implements WebRequestTestData {
             .contentType("text/plain")
             .body("some message")
 
-        var expectedResult = new String(responseWriter.write(response))
+        ResponseHeadersWriter.write(data, response)
+        data.write(response.body())
+
+        var expectedResult = data.toString()
 
         var socket = new SocketChannelStub()
         socket.configureBlocking(false)
@@ -233,7 +242,10 @@ class ConnectionTest extends Specification implements WebRequestTestData {
             .addHeader(CONNECTION, CLOSE.code)
             .body(MOVED_PERMANENTLY.statusMessage)
 
-        var expectedResult = new String(responseWriter.write(response))
+        ResponseHeadersWriter.write(data, response)
+        data.write(response.body())
+
+        var expectedResult = data.toString()
 
         var socket = new SocketChannelStub()
         socket.configureBlocking(false)

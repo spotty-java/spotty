@@ -112,7 +112,7 @@ public final class Session {
      *
      * @param key    key with which the specified value is to be associated
      * @param mapper the function to compute a value
-     * @param <T> return type
+     * @param <T>    return type
      * @return the current (existing or computed) value associated with
      * the specified key, or null if the computed value is null
      */
@@ -132,7 +132,7 @@ public final class Session {
      *
      * @param key    key with which the specified value is to be associated
      * @param mapper the function to compute a value
-     * @param <T> return type
+     * @param <T>    return type
      * @return the current (existing or computed) value associated with
      * the specified key, or null if the computed value is null
      */
@@ -154,7 +154,7 @@ public final class Session {
      *
      * @param key    key with which the specified value is to be associated
      * @param mapper the function to compute a value
-     * @param <T> return type
+     * @param <T>    return type
      * @return the new value associated with the specified key, or null if none
      */
     @SuppressWarnings("all")
@@ -192,7 +192,7 @@ public final class Session {
      *
      * @param key          the key whose associated value is to be returned
      * @param defaultValue the default mapping of the key
-     * @param <T> return type
+     * @param <T>          return type
      * @return the value to which the specified key is mapped, or
      * {@code defaultValue} if this map contains no mapping for the key
      */
@@ -209,14 +209,14 @@ public final class Session {
     }
 
     /**
-     * @return <tt>true</tt> if this session contains no key-value mappings
+     * @return true if this session contains no key-value mappings
      */
     public boolean isEmpty() {
         return data.isEmpty();
     }
 
     /**
-     * @return <tt>true</tt> if this session contains key-value mappings
+     * @return true if this session contains key-value mappings
      */
     public boolean isNotEmpty() {
         return data.size() > 0;
@@ -271,31 +271,31 @@ public final class Session {
     }
 
     /**
-     * Returns <tt>true</tt> if this session contains a mapping for the specified key.
+     * Returns true if this session contains a mapping for the specified key.
      *
      * @param key key whose presence in this session is to be tested
-     * @return <tt>true</tt> if this session contains a mapping for the specified key
+     * @return true if this session contains a mapping for the specified key
      */
     public boolean has(Object key) {
         return data.containsKey(key);
     }
 
     /**
-     * Returns <tt>true</tt> if this session contains no mapping for the specified key.
+     * Returns true if this session contains no mapping for the specified key.
      *
      * @param key key whose presence in this session is to be tested
-     * @return <tt>true</tt> if this session contains no mapping for the specified key
+     * @return true if this session contains no mapping for the specified key
      */
     public boolean hasNot(Object key) {
         return !data.containsKey(key);
     }
 
     /**
-     * Returns <tt>true</tt> if this session contains a value for the specified key and value is equal with given.
+     * Returns true if this session contains a value for the specified key and value is equal with given.
      *
      * @param key   key whose presence in this session is to be tested
      * @param value value whose presence in this session is to be tested
-     * @return <tt>true</tt> if this session contains a value for the specified key and value is equal with given.
+     * @return true if this session contains a value for the specified key and value is equal with given.
      */
     public boolean hasAndEqual(Object key, Object value) {
         final Object foundValue = data.get(key);

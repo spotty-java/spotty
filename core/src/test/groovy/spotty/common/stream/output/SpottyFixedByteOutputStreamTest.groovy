@@ -148,4 +148,28 @@ class SpottyFixedByteOutputStreamTest extends Specification {
         "he"           | 2
     }
 
+    def "should return original byte[] data when stream is full"() {
+        given:
+        var stream = new SpottyFixedByteOutputStream(12)
+
+        when:
+        stream.print("hello world!")
+
+        then:
+        // compare by link
+        stream.sourceData().equals(stream.toByteArray())
+    }
+
+    def "should return copy byte[] data when stream is not full"() {
+        given:
+        var stream = new SpottyFixedByteOutputStream(15)
+
+        when:
+        stream.print("hello world!")
+
+        then:
+        // compare by link
+        stream.sourceData().equals(stream.toByteArray()) == false
+    }
+
 }
