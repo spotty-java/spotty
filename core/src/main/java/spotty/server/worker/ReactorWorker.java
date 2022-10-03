@@ -69,7 +69,7 @@ public final class ReactorWorker implements Closeable {
      */
     private static class RejectedHandler implements RejectedExecutionHandler {
 
-        private final ExecutorService rejectedHandlerExecutor = newSingleThreadExecutor();
+        private final ExecutorService rejectedHandlerExecutor = newSingleThreadExecutor(threadPool("spotty-reactor-rejected-handler"));
 
         @Override
         public void rejectedExecution(Runnable task, ThreadPoolExecutor executor) {

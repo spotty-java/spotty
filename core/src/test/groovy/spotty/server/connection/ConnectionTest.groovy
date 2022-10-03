@@ -10,6 +10,7 @@ import spotty.common.response.SpottyResponse
 import spotty.common.stream.output.SpottyByteArrayOutputStream
 import spotty.server.connection.socket.SocketFactory
 import spotty.server.handler.EchoRequestHandler
+import spotty.server.handler.request.RequestHandler
 import spotty.server.registry.exception.ExceptionHandlerRegistry
 import spotty.server.worker.ReactorWorker
 import stub.SocketChannelStub
@@ -61,13 +62,14 @@ class ConnectionTest extends Specification implements WebRequestTestData {
 
     def "should read request correctly"() {
         given:
+        final RequestHandler delayHandler = (req, res) -> Thread.sleep(1000)
         var expectedRequest = aSpottyRequest()
         var socket = new SocketChannelStub(fullRequest.length())
         socket.configureBlocking(false)
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new Connection(socketFactory.createSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        var connection = new Connection(socketFactory.createSocket(socket), delayHandler, reactorWorker, exceptionService, maxBodyLimit)
         connection.markReadyToRead()
 
         when:

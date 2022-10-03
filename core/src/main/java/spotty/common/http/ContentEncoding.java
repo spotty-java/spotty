@@ -15,8 +15,12 @@
  */
 package spotty.common.http;
 
+import spotty.common.exception.SpottyException;
+
 import java.util.HashMap;
 import java.util.Map;
+
+import static java.util.Arrays.asList;
 
 public enum ContentEncoding {
     GZIP, DEFLATE;
@@ -31,6 +35,11 @@ public enum ContentEncoding {
     }
 
     public static ContentEncoding of(String name) {
-        return MAPPING.get(name);
+        final ContentEncoding contentEncoding = MAPPING.get(name);
+        if (contentEncoding == null) {
+            throw new SpottyException("Spotty supports " + asList(ContentEncoding.values()) + " compression");
+        }
+
+        return contentEncoding;
     }
 }
