@@ -9,6 +9,7 @@ import spotty.common.response.ResponseHeadersWriter
 import spotty.common.response.SpottyResponse
 import spotty.common.stream.output.SpottyByteArrayOutputStream
 import spotty.server.connection.socket.SocketFactory
+import spotty.server.event.ServerEvents
 import spotty.server.handler.EchoRequestHandler
 import spotty.server.handler.request.RequestHandler
 import spotty.server.registry.exception.ExceptionHandlerRegistry
@@ -26,10 +27,10 @@ import static spotty.common.http.HttpStatus.BAD_REQUEST
 import static spotty.common.http.HttpStatus.INTERNAL_SERVER_ERROR
 import static spotty.common.http.HttpStatus.MOVED_PERMANENTLY
 import static spotty.common.http.HttpStatus.TOO_MANY_REQUESTS
+import static spotty.server.connection.Connection.Builder.connection
 import static spotty.server.connection.state.ConnectionState.READY_TO_WRITE
 
 class ConnectionTest extends Specification implements WebRequestTestData {
-
     private def socketFactory = new SocketFactory()
     private def exceptionService = new ExceptionHandlerRegistry()
     private def reactorWorker = new ReactorWorker(1, 1, 10, SECONDS)
@@ -69,7 +70,11 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new Connection(socketFactory.createSocket(socket), delayHandler, reactorWorker, exceptionService, maxBodyLimit)
+        var connection = connectionBuilder()
+            .socket(socketFactory.createSocket(socket))
+            .requestHandler(delayHandler)
+            .build()
+
         connection.markReadyToRead()
 
         when:
@@ -94,7 +99,11 @@ class ConnectionTest extends Specification implements WebRequestTestData {
 
         var expectedResponse = data.toString()
 
-        var connection = new Connection(socketFactory.createSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit, fullRequest.length())
+        var connection = connectionBuilder()
+            .socket(socketFactory.createSocket(socket))
+            .bufferSize(fullRequest.length())
+            .build()
+
         connection.markReadyToRead()
 
         when:
@@ -118,7 +127,9 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.configureBlocking(true)
 
         when:
-        new Connection(socketFactory.createSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        connectionBuilder()
+            .socket(socketFactory.createSocket(socket))
+            .build()
             .markReadyToRead()
 
         then:
@@ -132,7 +143,10 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.write("wrong request head line\n")
         socket.flip()
 
-        var connection = new Connection(socketFactory.createSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        var connection = connectionBuilder()
+            .socket(socketFactory.createSocket(socket))
+            .build()
+
         connection.markReadyToRead()
 
         when:
@@ -166,7 +180,10 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.write("$HOST: localhost:4000\n\n")
         socket.flip()
 
-        var connection = new Connection(socketFactory.createSocket(socket), new EchoRequestHandler(), reactorWorker, exceptionService, maxBodyLimit)
+        var connection = connectionBuilder()
+            .socket(socketFactory.createSocket(socket))
+            .build()
+
         connection.markReadyToRead()
 
         when:
@@ -208,16 +225,14 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new Connection(
-            socketFactory.createSocket(socket),
-            { req, res ->
+        var connection = connectionBuilder()
+            .socket(socketFactory.createSocket(socket))
+            .requestHandler { req, res ->
                 throw new SpottyHttpException(TOO_MANY_REQUESTS, "some message")
-            },
-            reactorWorker,
-            exceptionService,
-            maxBodyLimit,
-            fullRequest.length()
-        )
+            }
+            .bufferSize(fullRequest.length())
+            .build()
+
         connection.markReadyToRead()
 
         when:
@@ -254,14 +269,12 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new Connection(
-            socketFactory.createSocket(socket),
-            { req, res -> res.redirect("https://google.com") },
-            reactorWorker,
-            exceptionService,
-            maxBodyLimit,
-            fullRequest.length()
-        )
+        var connection = connectionBuilder()
+            .socket(socketFactory.createSocket(socket))
+            .requestHandler { req, res -> res.redirect("https://google.com") }
+            .bufferSize(fullRequest.length())
+            .build()
+
         connection.markReadyToRead()
 
         when:
@@ -288,16 +301,15 @@ class ConnectionTest extends Specification implements WebRequestTestData {
         socket.write(fullRequest)
         socket.flip()
 
-        var connection = new Connection(
-            socketFactory.createSocket(socket),
-            { req, res ->
+        var connection = connectionBuilder()
+            .socket(socketFactory.createSocket(socket))
+            .requestHandler { req, res ->
                 throw new SpottyHttpException(TOO_MANY_REQUESTS, "some message")
-            },
-            reactorWorker,
-            exceptionService,
-            maxRequestBodySize,
-            fullRequest.length()
-        )
+            }
+            .maxRequestBodySize(maxRequestBodySize)
+            .bufferSize(fullRequest.length())
+            .build()
+
         connection.markReadyToRead()
 
         when:
@@ -321,6 +333,15 @@ class ConnectionTest extends Specification implements WebRequestTestData {
                      
                     maximum body size is $maxRequestBodySize bytes, but sent ${requestBody.length()}
                   """.stripIndent().trim()
+    }
+
+    def connectionBuilder() {
+        return connection()
+            .requestHandler(new EchoRequestHandler())
+            .serverEvents(new ServerEvents())
+            .reactorWorker(reactorWorker)
+            .exceptionHandlerRegistry(exceptionService)
+            .maxRequestBodySize(maxBodyLimit)
     }
 
 }

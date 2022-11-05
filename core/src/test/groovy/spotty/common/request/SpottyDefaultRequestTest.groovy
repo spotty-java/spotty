@@ -84,7 +84,6 @@ class SpottyDefaultRequestTest extends Specification {
         request.contentType() == contentType
         request.cookies() == cookies
         request.session() == session
-        request.body() == body.getBytes()
         request.bodyAsString() == body
         request.headers() == headers
         request.host() == host
