@@ -6,6 +6,7 @@ import spotty.common.exception.SpottyException;
 import spotty.server.connection.Connection;
 import spotty.server.connection.socket.SocketFactory;
 import spotty.server.connection.socket.SpottySocket;
+import spotty.server.event.ServerEvents;
 import spotty.server.handler.request.RequestHandler;
 import spotty.server.registry.exception.ExceptionHandlerRegistry;
 import spotty.server.worker.ReactorWorker;
@@ -24,20 +25,18 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.security.KeyStore;
-import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
-import static spotty.common.utils.ThreadUtils.threadPool;
 import static spotty.common.validation.Validation.isNotBlank;
 import static spotty.common.validation.Validation.notBlank;
 import static spotty.common.validation.Validation.notNull;
 import static spotty.common.validation.Validation.validate;
+import static spotty.server.connection.Connection.Builder.connection;
 import static spotty.server.connection.state.ConnectionState.CLOSED;
 import static spotty.server.connection.state.ConnectionState.DATA_REMAINING;
 import static spotty.server.connection.state.ConnectionState.INITIALIZED;
@@ -48,8 +47,6 @@ import static spotty.server.connection.state.ConnectionState.REQUEST_HANDLING;
 public final class Server implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
-    private final ExecutorService SERVER_RUN = Executors.newSingleThreadExecutor(threadPool("spotty-main", false));
-
     private volatile boolean running = false;
     private volatile boolean started = false;
     private volatile boolean enabledHttps = false;
@@ -57,11 +54,12 @@ public final class Server implements Closeable {
     private final AtomicInteger connections = new AtomicInteger();
 
     private final SocketFactory socketFactory = new SocketFactory();
+    private final ServerEvents serverEvents = new ServerEvents();
 
     private final int maxRequestBodySize;
     private final RequestHandler requestHandler;
     private final ExceptionHandlerRegistry exceptionHandlerRegistry;
-    private final ReactorWorker reactorWorker ;
+    private final ReactorWorker reactorWorker;
     private final InetSocketAddress socketAddress;
 
     public Server(int port, int maxRequestBodySize, RequestHandler requestHandler, ExceptionHandlerRegistry exceptionHandlerRegistry, ReactorWorker reactorWorker) {
@@ -80,7 +78,9 @@ public final class Server implements Closeable {
             return;
         }
 
-        SERVER_RUN.execute(this::serverInit);
+        final Thread main = new Thread(this::serverRun, "spotty-main");
+        main.setDaemon(false);
+        main.start();
     }
 
     public void enableHttps(String keyStorePath, String keyStorePassword, String trustStorePath, String trustStorePassword) {
@@ -130,7 +130,6 @@ public final class Server implements Closeable {
     @Override
     public synchronized void close() {
         stop();
-        SERVER_RUN.shutdownNow();
         reactorWorker.close();
     }
 
@@ -186,7 +185,7 @@ public final class Server implements Closeable {
         return sb.toString();
     }
 
-    private void serverInit() {
+    private void serverRun() {
         try (final ServerSocketChannel serverSocket = ServerSocketChannel.open();
              final Selector selector = Selector.open()) {
             // Binding this server on the port
@@ -202,14 +201,19 @@ public final class Server implements Closeable {
             final Thread currentThread = Thread.currentThread();
             while (running && !currentThread.isInterrupted()) {
                 selector.select(1000);
-                final Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-                while (keys.hasNext()) {
-                    final SelectionKey key = keys.next();
-                    keys.remove();
 
+                final Set<SelectionKey> keys = selector.selectedKeys();
+                serverEvents.add(keys);
+                keys.clear();
+
+                SelectionKey key;
+                while ((key = serverEvents.poll()) != null) {
                     if (!key.isValid()) {
                         final Connection connection = (Connection) key.attachment();
-                        connection.close();
+                        if (connection != null) {
+                            connection.close();
+                        }
+
                         key.cancel();
 
                         continue;
@@ -243,7 +247,15 @@ public final class Server implements Closeable {
 
         final SpottySocket socket = socketFactory.createSocket(channel);
 
-        final Connection connection = new Connection(socket, requestHandler, reactorWorker, exceptionHandlerRegistry, maxRequestBodySize);
+        final Connection connection = connection()
+            .socket(socket)
+            .serverEvents(serverEvents)
+            .requestHandler(requestHandler)
+            .reactorWorker(reactorWorker)
+            .exceptionHandlerRegistry(exceptionHandlerRegistry)
+            .maxRequestBodySize(maxRequestBodySize)
+            .build();
+
         LOG.debug("{} accepted, count={}", connection, connections.incrementAndGet());
 
         connection.whenStateIs(CLOSED, () -> {
