@@ -15,99 +15,210 @@
  */
 package spotty.common.stream.input;
 
-import spotty.common.stream.output.SpottyByteArrayOutputStream;
-import spotty.common.utils.IOUtils;
+import spotty.common.exception.SpottyStreamException;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 
-import static java.lang.Math.min;
+public final class SpottyInputStream extends InputStream {
+    private final byte[] data;
 
-public final class SpottyInputStream extends BufferedInputStream {
-    private final SpottyByteArrayOutputStream LINE = new SpottyByteArrayOutputStream(256);
+    private volatile int writeSequence = 0;
+    private volatile int readSequence = 0;
 
-    private long read = 0;
-    private long limitBytes = Long.MAX_VALUE;
+    private volatile boolean writeLock = false;
+    private volatile boolean readLock = false;
+    private volatile boolean writeCompleted = false;
+    private volatile boolean closed = false;
 
-    public SpottyInputStream(InputStream in) {
-        super(in, 1024);
+    private volatile int limit = Integer.MAX_VALUE;
+
+    public SpottyInputStream() {
+        this(2048);
     }
 
-    private SpottyInputStream(InputStream in, int bufferSize) {
-        super(in, bufferSize);
+    public SpottyInputStream(int bufferSize) {
+        this.data = new byte[bufferSize];
     }
 
-    public synchronized void fixedContentSize(long limitBytes) {
-        this.limitBytes = read + limitBytes;
+    public int limit() {
+        return limit;
+    }
+
+    public void limit(int limit) {
+        this.limit = limit;
+    }
+
+    public int remaining() {
+        return limit - writeSequence;
+    }
+
+    public boolean hasRemaining() {
+        return remaining() > 0;
+    }
+
+    public int write(ByteBuffer b) {
+        checkClosed();
+        if (writeLock || writeCompleted || !hasRemaining()) {
+            return 0;
+        }
+
+        try {
+            writeLock = true;
+
+            final int start = writeSequence;
+            while (isNotFull() && b.hasRemaining() && hasRemaining()) {
+                atomicWrite(b.get());
+            }
+
+            return writeSequence - start;
+        } finally {
+            if (!hasRemaining()) {
+                writeCompleted();
+            }
+
+            writeLock = false;
+            signalUnlock();
+        }
     }
 
     @Override
-    public synchronized int read() throws IOException {
-        if (read >= limitBytes) {
-            return -1;
-        }
+    public int read() {
+        checkClosed();
+        checkReadLock();
 
-        final int b = super.read();
-        read++;
+        try {
+            readLock = true;
+            if (writeCompleted && isEmpty()) {
+                return -1;
+            }
+
+            awaitData();
+            return atomicRead();
+        } finally {
+            readLock = false;
+        }
+    }
+
+    @Override
+    public int read(byte[] b) {
+        return read(b, 0, b.length);
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) {
+        checkClosed();
+        checkReadLock();
+
+        try {
+            readLock = true;
+            if (writeCompleted && isEmpty()) {
+                return -1;
+            }
+
+            awaitData();
+
+            int read = 0;
+            int index = off;
+            while (isNotEmpty() && read < len) {
+                b[index++] = atomicRead();
+                read++;
+            }
+
+            return read;
+        } finally {
+            readLock = false;
+        }
+    }
+
+    public void writeCompleted() {
+        writeCompleted = true;
+        signalUnlock();
+    }
+
+    public boolean isWriteCompleted() {
+        return writeCompleted;
+    }
+
+    @Override
+    public void close() {
+        closed = true;
+    }
+
+    public void clear() {
+        writeSequence = 0;
+        readSequence = 0;
+
+        writeLock = false;
+        readLock = false;
+        writeCompleted = false;
+
+        limit = Integer.MAX_VALUE;
+    }
+
+    private void atomicWrite(byte b) {
+        final int nextWriteSeq = writeSequence + 1;
+        data[nextWriteSeq % data.length] = b;
+        writeSequence = nextWriteSeq;
+    }
+
+    private byte atomicRead() {
+        final int nextReadSeq = readSequence + 1;
+        final byte b = data[nextReadSeq % data.length];
+        readSequence = nextReadSeq;
 
         return b;
     }
 
-    @Override
-    public synchronized int read(byte[] b, int off, int len) throws IOException {
-        int toRead = (int) min(len, limitBytes - read);
-        if (toRead <= 0) {
-            return -1;
-        }
-
-        final int read = super.read(b, off, toRead);
-        this.read += read;
-
-        return read;
+    private int size() {
+        return writeSequence - readSequence;
     }
 
-    /**
-     * Reads a line of text.  A line is considered to be terminated by any one
-     * of a line feed ('\n'), a carriage return ('\r'), a carriage return
-     * followed immediately by a line feed, or by reaching the end-of-file
-     * (EOF).
-     *
-     * @return A String containing the contents of the line, not including
-     * any line-termination characters, or null if the end of the
-     * stream has been reached without reading any characters
-     * @throws IOException If an I/O error occurs
-     */
-    public synchronized String readLine() throws IOException {
-        try {
-            boolean endOfLine = false;
+    private boolean isEmpty() {
+        return readSequence >= writeSequence;
+    }
 
-            int read;
-            while ((read = read()) >= 0) {
-                byte b = (byte) read;
-                if (b == '\r') {
-                    continue;
+    private boolean isFull() {
+        return size() >= data.length;
+    }
+
+    private boolean isNotEmpty() {
+        return !isEmpty();
+    }
+
+    private boolean isNotFull() {
+        return !isFull();
+    }
+
+    private void checkReadLock() {
+        if (readLock) {
+            throw new SpottyStreamException("only only thread can read");
+        }
+    }
+
+    private void checkClosed() {
+        if (closed) {
+            throw new SpottyStreamException("stream has been closed");
+        }
+    }
+
+    private void awaitData() {
+        if (isEmpty() && !writeCompleted) {
+            synchronized (data) {
+                try {
+                    while (isEmpty() && !writeCompleted) {
+                        data.wait(100);
+                    }
+                } catch (Exception e) {
+                    throw new SpottyStreamException(e);
                 }
-
-                if (b == '\n') {
-                    endOfLine = true;
-                    break;
-                }
-
-                LINE.write(b);
             }
-
-            if (!endOfLine && LINE.size() == 0)
-                return null;
-
-            return LINE.size() == 0 ? "" : LINE.toString();
-        } finally {
-            LINE.reset();
         }
     }
 
-    public byte[] readAllBytes() {
-        return IOUtils.toByteArray(this);
+    private void signalUnlock() {
+        synchronized (data) {
+            data.notifyAll();
+        }
     }
-
 }

@@ -2,100 +2,101 @@ package spotty.common.stream.input
 
 import spock.lang.Specification
 import spotty.common.request.WebRequestTestData
+import spotty.common.stream.output.SpottyByteArrayOutputStream
+
+import java.nio.ByteBuffer
 
 class SpottyInputStreamTest extends Specification implements WebRequestTestData {
 
-    def "should read all data from steam correctly"() {
+    def "should batch read/write to steam correctly"() {
         given:
-        var data = fullRequest.getBytes()
-        var input = new ByteArrayInputStream(data)
-        var spottyStream = new SpottyInputStream(input)
-        spottyStream.fixedContentSize(data.length)
+        var content = requestBody
+        var stream = new SpottyInputStream(16)
 
         when:
-        var actual = new String(spottyStream.readAllBytes())
-
-        then:
-        actual == fullRequest
-    }
-
-    def "should read all data line by line from steam correctly"() {
-        given:
-        var input = new SpottyInputStream(new ByteArrayInputStream(fullRequest.getBytes()))
-
-        when:
-        var result = ""
-        var line
-        while ((line = input.readLine()) != null) {
-            result += "$line\n"
-        }
-
-        result = result.trim()
-
-        then:
-        fullRequest == result
-    }
-
-    def "should read limited data from stream"() {
-        given:
-        var limit = 10
-        var data = fullRequest.getBytes()
-        var input = new ByteArrayInputStream(data)
-        var spottyStream = new SpottyInputStream(input)
-        spottyStream.fixedContentSize(limit)
-        var expected = new byte[limit]
-        System.arraycopy(data, 0, expected, 0, limit)
-
-        when:
-        var actual = spottyStream.readAllBytes()
-
-        then:
-        actual.length == limit
-        actual == expected
-    }
-
-    def "should read limited data with offset"() {
-        given:
-        var limit = 10
-        var offset = 5
-        var len = 5
-        var data = fullRequest.getBytes()
-        var input = new ByteArrayInputStream(data)
-        var spottyStream = new SpottyInputStream(input)
-        spottyStream.fixedContentSize(limit)
-        var expected = new byte[limit]
-        System.arraycopy(data, 0, expected, offset, len)
-
-        when:
-        var actual = new byte[limit]
-        var read = spottyStream.read(actual, offset, len)
-
-        then:
-        read == len
-        actual == expected
-    }
-
-    def "should read separately correctly"() {
-        given:
-        var inputText = "line1\r\nline2\r\n\r\nline3"
-        var expected = "line1\nline2\n\nline3"
-        var spottyStream = new SpottyInputStream(new ByteArrayInputStream(inputText.getBytes()))
-
-        when:
-        var content = ""
-        var line
-        while ((line = spottyStream.readLine()) != null) {
-            if (line == "") {
-                break
+        new Thread(() -> {
+            var input = ByteBuffer.wrap(content.getBytes())
+            while (input.hasRemaining()) {
+                stream.write(input)
             }
 
-            content += "$line\n"
-        }
+            stream.writeCompleted()
+        }).start()
 
-        spottyStream.fixedContentSize(5)
-        content = "$content\n" + new String(spottyStream.readAllBytes())
+        Thread.sleep(20)
+        var data = toString(stream)
+        stream.close()
 
         then:
-        expected == content
+        data == content
     }
+
+    def "should batch read/write content with limit correctly"() {
+        given:
+        var limit = 111
+        var content = requestBody.substring(0, limit)
+        var stream = new SpottyInputStream(16)
+        stream.limit(limit)
+
+        when:
+        new Thread(() -> {
+            var input = ByteBuffer.wrap(requestBody.getBytes())
+            while (input.hasRemaining() && stream.hasRemaining()) {
+                stream.write(input)
+            }
+
+            stream.writeCompleted()
+        }).start()
+
+        Thread.sleep(20)
+        var data = toString(stream)
+        stream.close()
+
+        then:
+        data == content
+    }
+
+    def "should read/write byte to byte correctly"() {
+        given:
+        var stream = new SpottyInputStream(16)
+
+        when:
+        new Thread(() -> {
+            var input = ByteBuffer.wrap(requestBody.getBytes())
+            while (input.hasRemaining()) {
+                stream.write(input)
+            }
+
+            stream.writeCompleted()
+        }).start()
+
+        Thread.sleep(20)
+
+        var sb = new StringBuilder()
+        var read
+        while ((read = stream.read()) != -1) {
+            sb.append((char) read)
+        }
+
+        stream.close()
+
+        then:
+        sb.toString() == requestBody
+    }
+
+    private static String toString(InputStream input) {
+        try (final SpottyByteArrayOutputStream out = new SpottyByteArrayOutputStream()) {
+            int read
+            final byte[] data = new byte[64]
+            while ((read = input.read(data)) != -1) {
+                Thread.sleep(10)
+                out.write(data, 0, read)
+            }
+
+            return new String(out.toByteArray())
+        } catch (Exception e) {
+            throw new RuntimeException(e)
+        }
+    }
+
 }

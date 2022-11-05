@@ -276,10 +276,6 @@ public final class Server implements Closeable {
             key.selector().wakeup();
         });
 
-        connection.whenStateIs(REQUEST_HANDLING, () -> {
-            key.interestOps(OP_CONNECT); // newer connect, make key is waiting ready to write
-        });
-
         connection.whenStateIs(CLOSED, key::cancel);
 
         // mark connection ready to ready if it's initialized

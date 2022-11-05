@@ -25,6 +25,7 @@ import spotty.server.compress.Compressor;
 import spotty.server.router.SpottyRouter;
 import spotty.server.session.SessionManager;
 
+import java.io.InputStream;
 import java.util.Collection;
 
 import static spotty.common.http.HttpHeaders.ACCEPT;
@@ -66,7 +67,7 @@ public final class DefaultRequestHandler implements RequestHandler {
             executeFilters(routeEntry.afterFilters(), request, response);
         }
 
-        byte[] body = response.body();
+        InputStream body = response.bodyAsStream();
         if (result != null) {
             body = render().render(result);
         }

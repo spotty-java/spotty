@@ -66,7 +66,7 @@ public final class IOUtils {
      *
      * @param src  buffer
      * @param dest buffer
-     * @return count read bytes
+     * @return count copied bytes
      */
     public static int bufferCopyRemaining(ByteBuffer src, ByteBuffer dest) {
         final int init = dest.position();

@@ -20,9 +20,11 @@ import spotty.common.exception.SpottyHttpException;
 import spotty.common.http.HttpHeaders;
 import spotty.common.http.HttpProtocol;
 import spotty.common.http.HttpStatus;
+import spotty.common.utils.IOUtils;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,7 +47,8 @@ public final class SpottyResponse {
 
     private HttpStatus status = OK;
     private String contentType = DEFAULT_CONTENT_TYPE;
-    private byte[] body;
+    private InputStream body;
+    private long contentLength = 0;
 
     private List<Cookie> cookies = emptyList();
 
@@ -95,7 +98,7 @@ public final class SpottyResponse {
      * @return body as bytes array
      */
     public byte[] body() {
-        return body;
+        return IOUtils.toByteArray(body);
     }
 
     /**
@@ -106,7 +109,11 @@ public final class SpottyResponse {
             return "";
         }
 
-        return new String(body);
+        return IOUtils.toString(body);
+    }
+
+    public InputStream bodyAsStream() {
+        return body;
     }
 
     /**
@@ -126,6 +133,12 @@ public final class SpottyResponse {
      * @return Response object
      */
     public SpottyResponse body(byte[] body) {
+        this.body = new ByteArrayInputStream(body);
+        this.contentLength = body.length;
+        return this;
+    }
+
+    public SpottyResponse body(InputStream body) {
         this.body = body;
         return this;
     }
@@ -133,8 +146,13 @@ public final class SpottyResponse {
     /**
      * @return content-length
      */
-    public int contentLength() {
-        return body == null ? 0 : body.length;
+    public long contentLength() {
+        return contentLength;
+    }
+
+    public SpottyResponse contentLength(long contentLength) {
+        this.contentLength = contentLength;
+        return this;
     }
 
     /**
@@ -420,6 +438,7 @@ public final class SpottyResponse {
         status = OK;
         contentType = DEFAULT_CONTENT_TYPE;
         body = null;
+        contentLength = 0;
         headers.clear();
         cookies = emptyList();
     }
@@ -433,15 +452,12 @@ public final class SpottyResponse {
         return Objects.equals(protocol, that.protocol)
             && status == that.status
             && Objects.equals(contentType, that.contentType)
-            && Arrays.equals(body, that.body)
             && Objects.equals(cookies, that.cookies)
             && Objects.equals(headers, that.headers);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(protocol, status, contentType, cookies, headers);
-        result = 31 * result + Arrays.hashCode(body);
-        return result;
+        return Objects.hash(protocol, status, contentType, cookies, headers);
     }
 }

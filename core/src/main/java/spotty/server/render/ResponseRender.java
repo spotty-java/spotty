@@ -15,7 +15,9 @@
  */
 package spotty.server.render;
 
+import java.io.InputStream;
+
 @FunctionalInterface
 public interface ResponseRender {
-    byte[] render(Object body);
+    InputStream render(Object body);
 }

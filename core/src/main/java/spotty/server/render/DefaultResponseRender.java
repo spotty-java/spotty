@@ -15,17 +15,24 @@
  */
 package spotty.server.render;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class DefaultResponseRender implements ResponseRender {
 
     @Override
-    public byte[] render(Object body) {
-        if (body instanceof byte[]) {
-            return (byte[]) body;
+    public InputStream render(Object body) {
+        if (body instanceof InputStream) {
+            return (InputStream) body;
         }
 
-        return body.toString().getBytes(UTF_8);
+        if (body instanceof byte[]) {
+            return new ByteArrayInputStream((byte[]) body);
+        }
+
+        return new ByteArrayInputStream(body.toString().getBytes(UTF_8));
     }
 
 }

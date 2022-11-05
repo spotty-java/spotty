@@ -20,6 +20,7 @@ import spotty.common.http.HttpMethod;
 import spotty.common.http.HttpProtocol;
 import spotty.common.session.Session;
 
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
 
@@ -144,5 +145,7 @@ public interface SpottyRequest {
      * @return request body as string
      */
     String bodyAsString();
+
+    InputStream bodyAsStream();
 
 }

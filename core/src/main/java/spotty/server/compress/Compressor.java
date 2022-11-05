@@ -17,39 +17,31 @@ package spotty.server.compress;
 
 import spotty.common.exception.SpottyException;
 import spotty.common.http.ContentEncoding;
-import spotty.common.stream.output.SpottyByteArrayOutputStream;
 
-import java.io.OutputStream;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.GZIPOutputStream;
+import java.io.InputStream;
+import java.util.zip.DeflaterInputStream;
+import java.util.zip.GZIPInputStream;
 
 import static spotty.common.validation.Validation.notNull;
 
 public final class Compressor {
 
-    public byte[] compress(ContentEncoding encoding, byte[] body) throws Exception {
+    public InputStream compress(ContentEncoding encoding, InputStream body) throws Exception {
         notNull("encoding", encoding);
+        notNull("body", body);
 
-        final SpottyByteArrayOutputStream out = new SpottyByteArrayOutputStream(body.length);
-        final OutputStream compressor;
         switch (encoding) {
             case GZIP:
-                compressor = new GZIPOutputStream(out);
+                body = new GZIPInputStream(body);
                 break;
             case DEFLATE:
-                compressor = new DeflaterOutputStream(out);
+                body = new DeflaterInputStream(body);
                 break;
             default:
                 throw new SpottyException(encoding + " unsupported compression algorithm");
         }
 
-        try {
-            compressor.write(body);
-        } finally {
-            compressor.close();
-        }
-
-        return out.toByteArray();
+        return body;
     }
 
 }

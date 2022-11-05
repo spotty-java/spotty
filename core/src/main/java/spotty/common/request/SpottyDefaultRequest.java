@@ -21,8 +21,10 @@ import spotty.common.http.HttpProtocol;
 import spotty.common.request.params.PathParams;
 import spotty.common.request.params.QueryParams;
 import spotty.common.session.Session;
+import spotty.common.utils.IOUtils;
 
-import java.util.Arrays;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -47,7 +49,7 @@ public final class SpottyDefaultRequest implements SpottyRequest {
     private IntSupplier port;
     private Map<String, String> cookies = emptyMap();
     private Session session;
-    private byte[] body;
+    private InputStream body;
     private Object attachment;
 
     private final HttpHeaders headers = new HttpHeaders();
@@ -237,7 +239,7 @@ public final class SpottyDefaultRequest implements SpottyRequest {
 
     @Override
     public byte[] body() {
-        return body;
+        return IOUtils.toByteArray(body);
     }
 
     @Override
@@ -246,10 +248,20 @@ public final class SpottyDefaultRequest implements SpottyRequest {
             return "";
         }
 
-        return new String(body);
+        return IOUtils.toString(body);
+    }
+
+    @Override
+    public InputStream bodyAsStream() {
+        return body;
     }
 
     public SpottyDefaultRequest body(byte[] body) {
+        this.body = notNull("body", new ByteArrayInputStream(body));
+        return this;
+    }
+
+    public SpottyDefaultRequest body(InputStream body) {
         this.body = notNull("body", body);
         return this;
     }
@@ -287,7 +299,6 @@ public final class SpottyDefaultRequest implements SpottyRequest {
             "port=" + (port == null ? "" : port.getAsInt()) + '\n' +
             "cookies=" + cookies + '\n' +
             "session=" + session + '\n' +
-            "body=" + (body == null ? "" : new String(body)) + '\n' +
             "attachment=" + attachment + '\n' +
             "headers={\n" + headers + "\n}\n" +
             "]";
@@ -318,7 +329,6 @@ public final class SpottyDefaultRequest implements SpottyRequest {
             && Objects.equals(host, thatHost)
             && Objects.equals(ip, thatIp)
             && port == thatPort
-            && Arrays.equals(body, that.body)
             && Objects.equals(headers, that.headers)
             && Objects.equals(cookies, that.cookies)
             && Objects.equals(session, that.session);
@@ -330,9 +340,7 @@ public final class SpottyDefaultRequest implements SpottyRequest {
         final String ip = this.ip == null ? null : this.ip.get();
         final int port = this.port == null ? 0 : this.port.getAsInt();
 
-        int result = Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, host, ip, port, headers, cookies, session);
-        result = 31 * result + Arrays.hashCode(body);
-        return result;
+        return Objects.hash(protocol, scheme, method, path, queryParams, pathParams, contentLength, contentType, host, ip, port, headers, cookies, session);
     }
 
 }

@@ -31,7 +31,7 @@ public final class ResponseHeadersWriter {
         writer.print(response.protocol().code); writer.write(SPACE); writer.print(response.status().toString());
         writer.println();
 
-        writer.write(CONTENT_LENGTH); writer.write(HEADER_SPLITTER); writer.print(Integer.toString(response.contentLength()));
+        writer.write(CONTENT_LENGTH); writer.write(HEADER_SPLITTER); writer.print(Long.toString(response.contentLength()));
         writer.println();
 
         if (response.contentType() != null) {
