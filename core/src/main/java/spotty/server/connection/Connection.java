@@ -35,6 +35,7 @@ import spotty.common.utils.ExceptionalCallable;
 import spotty.common.utils.ExceptionalRunnable;
 import spotty.server.connection.socket.SpottySocket;
 import spotty.server.connection.state.ConnectionState;
+import spotty.server.event.ServerEvents;
 import spotty.server.handler.exception.ExceptionHandler;
 import spotty.server.handler.request.RequestHandler;
 import spotty.server.registry.exception.ExceptionHandlerRegistry;
@@ -108,36 +109,26 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     private SpottySocket socket;
     private final ReactorWorker reactorWorker;
     private final ExceptionHandlerRegistry exceptionHandlerRegistry;
+    private final ServerEvents serverEvents;
     private final int maxRequestBodySize;
     private ByteBuffer readBuffer;
     private RequestHandler requestHandler;
+    private SelectionKey selectionKey;
 
     private ByteBuffer headersByteBuffer;
     private ByteBuffer bodyByteBuffer;
 
-    public Connection(SpottySocket socket,
-                      RequestHandler requestHandler,
-                      ReactorWorker reactorWorker,
-                      ExceptionHandlerRegistry exceptionHandlerRegistry,
-                      int maxRequestBodySize) throws SpottyStreamException {
-        this(socket, requestHandler, reactorWorker, exceptionHandlerRegistry, maxRequestBodySize, DEFAULT_BUFFER_SIZE);
-    }
-
-    public Connection(SpottySocket socket,
-                      RequestHandler requestHandler,
-                      ReactorWorker reactorWorker,
-                      ExceptionHandlerRegistry exceptionHandlerRegistry,
-                      int maxRequestBodySize,
-                      int bufferSize) throws SpottyStreamException {
+    private Connection(Builder builder) throws SpottyStreamException {
         super(INITIALIZED);
 
-        this.socket = notNull("socket", socket);
-        this.requestHandler = notNull("requestHandler", requestHandler);
-        this.reactorWorker = notNull("reactorWorker", reactorWorker);
-        this.exceptionHandlerRegistry = notNull("exceptionHandlerService", exceptionHandlerRegistry);
-        this.maxRequestBodySize = maxRequestBodySize;
+        this.socket = notNull("socket", builder.socket);
+        this.requestHandler = notNull("requestHandler", builder.requestHandler);
+        this.reactorWorker = notNull("reactorWorker", builder.reactorWorker);
+        this.exceptionHandlerRegistry = notNull("exceptionHandlerService", builder.exceptionHandlerRegistry);
+        this.serverEvents = notNull("serverEvents", builder.serverEvents);
+        this.maxRequestBodySize = builder.maxRequestBodySize;
 
-        this.readBuffer = ByteBuffer.allocate(bufferSize);
+        this.readBuffer = ByteBuffer.allocate(builder.bufferSize);
 
         this.stateHandlerGraph
             .filter(
@@ -204,7 +195,11 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     }
 
     public SelectionKey register(Selector selector) {
-        return exceptionHandler(() -> socket.register(selector, OP_CONNECT, this));
+        if (selectionKey != null) {
+            throw new SpottyException("connection has been registered already");
+        }
+
+        return selectionKey = exceptionHandler(() -> socket.register(selector, OP_CONNECT, this));
     }
 
     public void markDataRemaining() {
@@ -218,12 +213,15 @@ public final class Connection extends StateMachine<ConnectionState> implements C
     }
 
     public void handle() {
-        do {
-            exceptionHandler(
-                handleState,
-                afterExceptionHandler // if exception respond error to the client
-            );
-        } while (socket.readBufferHasRemaining() && state().isReading());
+        exceptionHandler(
+            handleState,
+            afterExceptionHandler // if exception respond error to the client
+        );
+
+        // if after connection handing socket buffer still has data then run handing in next tick
+        if (socket.readBufferHasRemaining() && state().isReading()) {
+            runHandleNextTick();
+        }
     }
 
     // optimization to not spawn callback objects each time
@@ -583,12 +581,16 @@ public final class Connection extends StateMachine<ConnectionState> implements C
 
         changeState(READY_TO_READ);
 
-        // has something did not process
+        // has something did not process, add it to handle in next tick
         if (readBuffer.position() > 0 || socket.readBufferHasRemaining()) {
-            handle();
+            runHandleNextTick();
         }
 
         return false;
+    }
+
+    private void runHandleNextTick() {
+        serverEvents.add(selectionKey);
     }
 
     private void resetResponse() {
@@ -678,6 +680,59 @@ public final class Connection extends StateMachine<ConnectionState> implements C
         }
 
         return null;
+    }
+
+    public static class Builder {
+        private SpottySocket socket;
+        private RequestHandler requestHandler;
+        private ReactorWorker reactorWorker;
+        private ExceptionHandlerRegistry exceptionHandlerRegistry;
+        private ServerEvents serverEvents;
+        private int maxRequestBodySize;
+        private int bufferSize = DEFAULT_BUFFER_SIZE;
+
+        public static Builder connection() {
+            return new Builder();
+        }
+
+        public Builder socket(SpottySocket socket) {
+            this.socket = socket;
+            return this;
+        }
+
+        public Builder requestHandler(RequestHandler requestHandler) {
+            this.requestHandler = requestHandler;
+            return this;
+        }
+
+        public Builder reactorWorker(ReactorWorker reactorWorker) {
+            this.reactorWorker = reactorWorker;
+            return this;
+        }
+
+        public Builder exceptionHandlerRegistry(ExceptionHandlerRegistry exceptionHandlerRegistry) {
+            this.exceptionHandlerRegistry = exceptionHandlerRegistry;
+            return this;
+        }
+
+        public Builder serverEvents(ServerEvents serverEvents) {
+            this.serverEvents = serverEvents;
+            return this;
+        }
+
+        public Builder maxRequestBodySize(int maxRequestBodySize) {
+            this.maxRequestBodySize = maxRequestBodySize;
+            return this;
+        }
+
+        public Builder bufferSize(int bufferSize) {
+            this.bufferSize = bufferSize;
+            return this;
+        }
+
+        public Connection build() {
+            return new Connection(this);
+        }
     }
 
 }
