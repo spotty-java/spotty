@@ -37,7 +37,7 @@ public final class StateHandlerGraph<S extends Enum<S>> {
     public void handleState(S state) {
         final Node node = nodes.get(state);
         if (node == null) {
-            throw new SpottyException(format("node not found for state %s", state));
+            throw new SpottyException("node not found for state %s", state);
         }
 
         final GraphFilter filter = filters.getOrDefault(state, GraphFilter.EMPTY);
