@@ -45,7 +45,12 @@ public final class RouterUtils {
     }
 
     public static String normalizePath(String path) {
-        return path.replaceAll(REGEX, "*$2");
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+
+        return path.replaceAll(REGEX, "*$2")
+            .replaceAll("\\*+", "*");
     }
 
     public static class Result {

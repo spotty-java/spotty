@@ -23,7 +23,11 @@ class RouterUtilsTest extends Specification {
         "/api/*"                              | "/api/*"
         "/api/*/product/*/category/:category" | "/api/*/product/*/category/*"
         "/:name/user/:id/*/delete"            | "/*/user/*/*/delete"
+        "*"                                   | "/*"
         "/*"                                  | "/*"
+        "/**"                                 | "/*"
+        "/******/***/*"                       | "/*/*/*"
+        "api/:name/***/**/*"                  | "/api/*/*/*/*"
     }
 
     def "should compile correctly"() {

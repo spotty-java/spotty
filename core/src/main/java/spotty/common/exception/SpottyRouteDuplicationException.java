@@ -13,22 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package spotty.server.files.detector;
+package spotty.common.exception;
 
-import org.apache.tika.Tika;
+public class SpottyRouteDuplicationException extends SpottyException {
 
-import java.net.URL;
-import java.util.function.Supplier;
-
-import static spotty.common.utils.Memoized.lazy;
-
-public final class FileTypeDetector implements TypeDetector {
-
-    private static final Supplier<Tika> tika = lazy(() -> new Tika());
-
-    @Override
-    public String detect(URL path) throws Exception {
-        return tika.get().detect(path);
+    public SpottyRouteDuplicationException(String message, Object... args) {
+        super(message, args);
     }
 
 }

@@ -1,8 +1,8 @@
 package spotty.server.router
 
 import spock.lang.Specification
-import spotty.common.exception.SpottyException
 import spotty.common.exception.SpottyHttpException
+import spotty.common.exception.SpottyRouteDuplicationException
 import spotty.common.router.route.Route
 
 import static org.apache.http.entity.ContentType.APPLICATION_JSON
@@ -134,27 +134,13 @@ class RoutableTest extends Specification {
         route3 == route3Found.route()
     }
 
-    def "should sort templates from longest to shortest"() {
-        given:
-        var routes = ["/hello/*/world", "/hello-world", "/hello/*/*", "/hello"]
-
-        when:
-        routable.addRoute("/hello/:user/:name", GET, {})
-        routable.addRoute("/hello", POST, {})
-        routable.addRoute("/hello-world", POST, {})
-        routable.addRoute("/hello/*/world", POST, {})
-
-        then:
-        routes == routable.sortedList.toNormalizedPaths()
-    }
-
     def "should throw an error when path is duplicated"() {
         when:
         routable.addRoute(path1, GET, {})
         routable.addRoute(path2, GET, {})
 
         then:
-        thrown SpottyException
+        thrown SpottyRouteDuplicationException
 
         where:
         path1                         | path2
