@@ -16,36 +16,32 @@
 package spotty.server.router;
 
 import com.google.common.annotations.VisibleForTesting;
-import spotty.common.exception.SpottyException;
 import spotty.common.exception.SpottyHttpException;
 import spotty.common.exception.SpottyNotFoundException;
+import spotty.common.exception.SpottyRouteDuplicationException;
 import spotty.common.http.HttpMethod;
 import spotty.common.router.route.Route;
 import spotty.common.router.route.RouteEntry;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
+import java.util.function.Function;
 
-import static java.util.Collections.emptyMap;
-import static java.util.stream.Collectors.toList;
 import static spotty.common.utils.RouterUtils.normalizePath;
 import static spotty.common.validation.Validation.notBlank;
 import static spotty.common.validation.Validation.notNull;
 import static spotty.server.router.SpottyRouter.DEFAULT_ACCEPT_TYPE;
 
 /**
- * Main Routing core class
+ * Main routing core class responsible for managing routes and handling requests.
+ * This class utilizes a Trie-based router for efficient route matching.
  */
 @VisibleForTesting
 final class Routable {
-    // store handlers by link, so removing from it is also affected this list
-    final SortedList sortedList = new SortedList();
+    private static final Function<?, Map<?, ?>> CREATE_NEW_MAP = __ -> new HashMap<>();
+
+    // store handlers by link, so removing from it is also affected trie
+    final TrieRoutes trieRoutes = new TrieRoutes();
 
     /*
     routing map
@@ -57,12 +53,27 @@ final class Routable {
         }
     }
      */
-    final Map<String, Map<HttpMethod, Map<String, RouteEntry>>> routes = new HashMap<>();
+    final Map<String, RouteNode> routes = new HashMap<>();
 
+    /**
+     * Adds a route to the routing table.
+     *
+     * @param routePath    The path of the route
+     * @param method       The HTTP method of the route
+     * @param route        The route to be added
+     */
     synchronized void addRoute(String routePath, HttpMethod method, Route route) {
         addRoute(routePath, method, DEFAULT_ACCEPT_TYPE, route);
     }
 
+    /**
+     * Adds a route to the routing table.
+     *
+     * @param routePath    The path of the route
+     * @param method       The HTTP method of the route
+     * @param acceptType   The accept type of the route
+     * @param route        The route to be added
+     */
     synchronized void addRoute(String routePath, HttpMethod method, String acceptType, Route route) {
         notNull("method", method);
         notBlank("acceptType", acceptType);
@@ -71,59 +82,75 @@ final class Routable {
         final String path = notBlank("path is empty", routePath).trim();
         final RouteEntry routeEntry = RouteEntryFactory.create(path, method, acceptType, route);
 
-        final Map<HttpMethod, Map<String, RouteEntry>> routeHandlers = routes.computeIfAbsent(
-            routeEntry.pathNormalized(),
-            pathNormalized -> {
-                final Map<HttpMethod, Map<String, RouteEntry>> handlers = new HashMap<>();
-                sortedList.add(new Value(pathNormalized, handlers, routeEntry.matcher()));
-
-                return handlers;
-            }
-        );
-
-        final Map<String, RouteEntry> routesWithAcceptType = routeHandlers.computeIfAbsent(method, __ -> new HashMap<>());
+        final RouteNode routeNode = routes.computeIfAbsent(routeEntry.pathNormalized(), pathNormalized -> trieRoutes.add(pathNormalized, new HashMap<>()));
+        final Map<String, RouteEntry> routesWithAcceptType = routeNode.handlers.computeIfAbsent(method, createEmptyMap());
         if (routesWithAcceptType.containsKey(acceptType)) {
-            throw new SpottyException("%s(%s) %s is exists already", method, acceptType, path);
+            throw new SpottyRouteDuplicationException("%s(%s) %s is exists already", method, acceptType, path);
         }
 
         routesWithAcceptType.put(acceptType, routeEntry);
     }
 
+    /**
+     * Clears all registered routes from the routing table.
+     */
     synchronized void clearRoutes() {
         routes.clear();
-        sortedList.clear();
+        trieRoutes.clear();
     }
 
+    /**
+     * Removes a route from the routing table by its path.
+     *
+     * @param routePath    The path of the route to be removed
+     * @return             True if the route was successfully removed, false otherwise
+     */
     synchronized boolean removeRoute(String routePath) {
         notBlank("routePath", routePath);
 
         final String normalizedPath = normalizePath(routePath);
-        return routes.remove(normalizedPath) != null && sortedList.removeByPath(normalizedPath);
+        return routes.remove(normalizedPath) != null && trieRoutes.removeExactly(normalizedPath);
     }
 
+    /**
+     * Removes a route from the routing table by its path and HTTP method.
+     *
+     * @param routePath    The path of the route to be removed
+     * @param method       The HTTP method of the route to be removed
+     * @return             True if the route was successfully removed, false otherwise
+     */
     synchronized boolean removeRoute(String routePath, HttpMethod method) {
         notBlank("routePath", routePath);
         notNull("method", method);
 
-        final Map<HttpMethod, Map<String, RouteEntry>> route = routes.get(normalizePath(routePath));
-        if (route == null) {
+        final RouteNode node = routes.get(normalizePath(routePath));
+        if (node == null) {
             return false;
         }
 
-        return route.remove(method) != null;
+        // remove method from handlers, this is not require update trieRoutes as handlers will be removed by link
+        return node.handlers.remove(method) != null;
     }
 
+    /**
+     * Removes a route from the routing table by its path, HTTP method, and accept type.
+     *
+     * @param routePath    The path of the route to be removed
+     * @param method       The HTTP method of the route to be removed
+     * @param acceptType   The accept type of the route to be removed
+     * @return             True if the route was successfully removed, false otherwise
+     */
     synchronized boolean removeRoute(String routePath, HttpMethod method, String acceptType) {
         notBlank("routePath", routePath);
         notNull("method", method);
         notBlank("acceptType", acceptType);
 
-        final Map<HttpMethod, Map<String, RouteEntry>> route = routes.get(normalizePath(routePath));
-        if (route == null) {
+        final RouteNode node = routes.get(normalizePath(routePath));
+        if (node == null) {
             return false;
         }
 
-        final Map<String, RouteEntry> acceptTypeRoutes = route.get(method);
+        final Map<String, RouteEntry> acceptTypeRoutes = node.handlers.get(method);
         if (acceptTypeRoutes == null) {
             return false;
         }
@@ -131,17 +158,38 @@ final class Routable {
         return acceptTypeRoutes.remove(acceptType) != null;
     }
 
+    /**
+     * Retrieves the route entry for a given raw path and HTTP method.
+     *
+     * @param rawPath      The raw path of the request
+     * @param method       The HTTP method of the request
+     * @return             The route entry matching the given path and method
+     * @throws SpottyHttpException if the route is not found
+     */
     RouteEntry getRoute(String rawPath, HttpMethod method) throws SpottyHttpException {
         return getRoute(rawPath, method, null);
     }
 
+    /**
+     * Retrieves the route entry for a given raw path, HTTP method, and accept type.
+     *
+     * @param rawPath      The raw path of the request
+     * @param method       The HTTP method of the request
+     * @param acceptType   The accept type of the request
+     * @return             The route entry matching the given path, method, and accept type
+     * @throws SpottyHttpException if the route is not found
+     */
     RouteEntry getRoute(String rawPath, HttpMethod method, String acceptType) throws SpottyHttpException {
-        Map<HttpMethod, Map<String, RouteEntry>> routes = this.routes.get(rawPath);
-        if (routes == null) {
-            routes = findMatch(rawPath);
+        RouteNode routeNode = this.routes.get(rawPath);
+        if (routeNode == null) {
+            routeNode = trieRoutes.findRouteNode(rawPath);
         }
 
-        final Map<String, RouteEntry> entry = routes.get(method);
+        if (routeNode == null) {
+            throw new SpottyNotFoundException("route not found for %s", rawPath);
+        }
+
+        final Map<String, RouteEntry> entry = routeNode.handlers.get(method);
         if (entry == null) {
             throw new SpottyNotFoundException("route not found for %s %s", method, rawPath);
         }
@@ -159,95 +207,8 @@ final class Routable {
         return routeEntry;
     }
 
-    private Map<HttpMethod, Map<String, RouteEntry>> findMatch(String rawPath) {
-        for (int i = 0; i < sortedList.size(); i++) {
-            final Value value = sortedList.get(i);
-            if (value.matches(rawPath)) {
-                return value.handlers;
-            }
-        }
-
-        return emptyMap();
-    }
-
-    /**
-     * <p>This class sorts the path list of routes by pathNormalized from longest to shortest (of path length).
-     * Upon receiving the request, the server will start searching in sequence
-     * from the longest path to the shortest path.</p>
-     *
-     * <p>Why sort from longest to shortest routes?</p>
-     *
-     * Take for example two routes:
-     * <ul>
-     *     <li>/user/*</li>
-     *     <li>/user/:id/password/reset</li>
-     * </ul>
-     *
-     * <p>If the server searches from shortest to longest instead,
-     * in this example it would take the request and match for any path (user/*),
-     * instead of the correct path (user/:id/password/reset).</p>
-     */
-    static class SortedList {
-        private static final Comparator<Value> FROM_LONGEST_TO_SHORTEST_COMPARATOR =
-            (a, b) -> b.pathNormalized.length() - a.pathNormalized.length();
-
-        private final ArrayList<Value> values = new ArrayList<>();
-
-        private void add(Value value) {
-            values.add(value);
-            values.sort(FROM_LONGEST_TO_SHORTEST_COMPARATOR);
-        }
-
-        private Value get(int index) {
-            return values.get(index);
-        }
-
-        private boolean removeByPath(String pathNormalized) {
-            for (int i = 0; i < values.size(); i++) {
-                if (values.get(i).pathNormalized.equals(pathNormalized)) {
-                    return values.remove(i) != null;
-                }
-            }
-
-            return false;
-        }
-
-        private void clear() {
-            values.clear();
-        }
-
-        private int size() {
-            return values.size();
-        }
-
-        void forEachRouteIf(Predicate<RouteEntry> predicate, Consumer<RouteEntry> consumer) {
-            values.stream()
-                .map(value -> value.handlers)
-                .flatMap(map -> map.values().stream())
-                .flatMap(map -> map.values().stream())
-                .filter(predicate)
-                .forEach(consumer);
-        }
-
-        @VisibleForTesting
-        List<String> toNormalizedPaths() {
-            return values.stream().map(v -> v.pathNormalized).collect(toList());
-        }
-    }
-
-    static class Value {
-        final String pathNormalized;
-        final Map<HttpMethod, Map<String, RouteEntry>> handlers;
-        final Pattern matcher;
-
-        private Value(String pathNormalized, Map<HttpMethod, Map<String, RouteEntry>> handlers, Pattern matcher) {
-            this.pathNormalized = pathNormalized;
-            this.handlers = handlers;
-            this.matcher = matcher;
-        }
-
-        boolean matches(String rawPath) {
-            return matcher.matcher(rawPath).matches();
-        }
+    @SuppressWarnings("unchecked")
+    private static <P, K, V> Function<P, Map<K, V>> createEmptyMap() {
+        return (Function<P, Map<K, V>>) (Function<?, ?>) CREATE_NEW_MAP;
     }
 }

@@ -490,7 +490,7 @@ public final class SpottyRouter {
     }
 
     private void addFilterToRoute(Pattern matcher, HttpMethod method, String acceptType, Filter filter, BiConsumer<RouteEntry, Filter> adder) {
-        routable.sortedList.forEachRouteIf(
+        routable.trieRoutes.forEachRouteIf(
             route -> {
                 if (!matcher.matcher(route.pathNormalized()).matches()) {
                     return false;

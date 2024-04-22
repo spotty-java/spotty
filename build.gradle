@@ -13,12 +13,7 @@ subprojects {
     apply plugin: 'jacoco'
     apply plugin: 'org.unbroken-dome.test-sets'
 
-    ext {
-        jvmVersion = JavaVersion.VERSION_1_8
-    }
-
-    sourceCompatibility = jvmVersion
-    targetCompatibility = jvmVersion
+    java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
     compileJava.options.encoding = 'UTF-8'
 

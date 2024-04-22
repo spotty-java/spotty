@@ -26,7 +26,7 @@ public final class Memoized {
 
     public static <T> Supplier<T> lazy(Supplier<T> supplier) {
         return new Supplier<T>() {
-            private T memoized;
+            private volatile T memoized;
 
             @Override
             public T get() {
@@ -41,8 +41,8 @@ public final class Memoized {
 
     public static IntSupplier lazy(IntSupplier supplier) {
         return new IntSupplier() {
-            private boolean isMemoized = false;
-            private int value;
+            private volatile boolean isMemoized = false;
+            private volatile int value;
 
             @Override
             public int getAsInt() {
