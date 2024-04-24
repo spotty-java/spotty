@@ -8,7 +8,7 @@ dependencies {
     implementation "org.apache.tika:tika-core:$apacheTika"
 
     testImplementation "org.apache.commons:commons-lang3:$apacheCommons"
-    testImplementation "org.apache.httpcomponents:httpclient:$apacheHttpClientVersion"
+    testImplementation "org.apache.httpcomponents.client5:httpclient5:$apacheHttpClientVersion"
     testImplementation "org.awaitility:awaitility:$awaitilityVersion"
     testImplementation "com.konghq:unirest-java:$unirestVersion"
 }

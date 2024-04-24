@@ -22,8 +22,7 @@ class SpottyStartSpec extends Specification {
         server.start()
 
         then:
-        !server.isStarted()
-        !server.isRunning()
+        server.isStarted() == false
     }
 
     def "should wait until started"() {
@@ -32,8 +31,34 @@ class SpottyStartSpec extends Specification {
         server.awaitUntilStart()
 
         then:
-        server.isStarted()
-        server.isRunning()
+        server.isStarted() == true
+    }
+
+    def "should not wait until stopped"() {
+        when:
+        server.start()
+        server.awaitUntilStart()
+
+        server.stop()
+
+        then:
+        server.isStarted() == true
+    }
+
+    def "should wait until stopped"() {
+        when:
+        server.start()
+        server.awaitUntilStart()
+
+        then:
+        server.isStarted() == true
+
+        when:
+        server.stop()
+        server.awaitUntilStop()
+
+        then:
+        server.isStarted() == false
     }
 
 }

@@ -31,11 +31,13 @@ subprojects {
         compileOnly "org.slf4j:slf4j-api:$slf4jApiVersion"
         runtimeOnly "ch.qos.logback:logback-classic:$logbackClassicVersion"
 
-        testImplementation "org.codehaus.groovy:groovy-all:$groovyVersion"
+        testImplementation "org.apache.groovy:groovy-all:$groovyVersion"
         testImplementation "org.spockframework:spock-core:$spockVersion"
+        testImplementation "org.objenesis:objenesis:$objenesis"
 
-        testIntegrationImplementation "org.codehaus.groovy:groovy-all:$groovyVersion"
+        testIntegrationImplementation "org.apache.groovy:groovy-all:$groovyVersion"
         testIntegrationImplementation "org.spockframework:spock-core:$spockVersion"
+        testIntegrationImplementation "org.objenesis:objenesis:$objenesis"
     }
 
     test {
