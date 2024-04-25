@@ -35,14 +35,14 @@ maven dependency
 <dependency>
   <groupId>com.spotty-server</groupId>
   <artifactId>core</artifactId>
-  <version>1.0.5</version>
+  <version>1.0.6</version>
 </dependency>
 ```
 
 gradle dependency
 ```groovy
 dependencies {
-    implementation "com.spotty-server:core:1.0.5"
+    implementation "com.spotty-server:core:1.0.6"
 }
 ```
 
