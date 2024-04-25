@@ -24,9 +24,9 @@ import static spotty.common.validation.Validation.validate;
 public final class Version implements Comparable<Version>, Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final int major;
-    private final int minor;
-    private final int patch;
+    public final int major;
+    public final int minor;
+    public final int patch;
 
     private final String toString;
     private final int hash;
@@ -53,18 +53,6 @@ public final class Version implements Comparable<Version>, Serializable {
         final int patch = Integer.parseInt(parts[2]);
 
         return new Version(major, minor, patch);
-    }
-
-    public int major() {
-        return major;
-    }
-
-    public int minor() {
-        return minor;
-    }
-
-    public int patch() {
-        return patch;
     }
 
     @Override

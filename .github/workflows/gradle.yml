@@ -27,5 +27,5 @@ jobs:
         if: failure()
         with:
           name: test-report
-          path: server/build/reports
+          path: core/build/reports
           retention-days: 1
